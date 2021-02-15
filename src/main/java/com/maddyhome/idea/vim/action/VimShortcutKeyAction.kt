@@ -159,6 +159,10 @@ internal class VimShortcutKeyAction : AnAction(), DumbAware/*, LightEditCompatib
       if ((keyCode == KeyEvent.VK_TAB || keyCode == KeyEvent.VK_ENTER) && editor.appCodeTemplateCaptured()) {
         return ActionEnableStatus.no("App code template is active", LogLevel.INFO)
       }
+      
+      if (keyCode == KeyEvent.VK_LEFT || keyCode == KeyEvent.VK_RIGHT || keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_HOME || keyCode == KeyEvent.VK_END) {
+        return ActionEnableStatus.no("Special keys", LogLevel.INFO)
+      }
 
       if (editor.inInsertMode) {
         if (keyCode == KeyEvent.VK_TAB) {
