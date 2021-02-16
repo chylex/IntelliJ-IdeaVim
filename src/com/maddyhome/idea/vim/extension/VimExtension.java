@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author vlan
  */
 public interface VimExtension {
-  @NotNull ExtensionPointName<ExtensionBeanClass> EP_NAME = ExtensionPointName.create("IdeaVIM.vimExtension");
+  @NotNull ExtensionPointName<ExtensionBeanClass> EP_NAME = ExtensionPointName.create("IdeaVIM-chylex.vimExtension");
 
   @VimNlsSafe
   @NotNull String getName();

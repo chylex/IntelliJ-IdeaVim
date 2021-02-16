@@ -1,6 +1,6 @@
-<idea-plugin url="https://plugins.jetbrains.com/plugin/164" xmlns:xi="http://www.w3.org/2001/XInclude">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>IdeaVim</name>
-  <id>IdeaVIM</id>
+  <id>IdeaVIM-chylex</id>
   <change-notes><![CDATA[
      <p>Not a lot of changes for this release. Focused on internal improvements.</p>
      <h3>Features:</h3>
@@ -42,7 +42,7 @@
         <li><a href="https://youtrack.jetbrains.com/issues/VIM">Issue tracker</a>: feature requests and bug reports</li>
       </ul>
     ]]></description>
-  <version>SNAPSHOT</version>
+  <version>chylex</version>
   <vendor>JetBrains</vendor>
 
   <!-- Please search for "[VERSION UPDATE]" in project in case you update the since-build version -->

@@ -79,7 +79,7 @@ import static com.maddyhome.idea.vim.group.KeyGroup.SHORTCUT_CONFLICTS_ELEMENT;
  */
 @State(name = "VimSettings", storages = {@Storage("$APP_CONFIG$/vim_settings.xml")})
 public class VimPlugin implements PersistentStateComponent<Element>, Disposable {
-  private static final String IDEAVIM_PLUGIN_ID = "IdeaVIM";
+  private static final String IDEAVIM_PLUGIN_ID = "IdeaVIM-chylex";
   public static final int STATE_VERSION = 7;
 
   private static long lastBeepTimeMillis;

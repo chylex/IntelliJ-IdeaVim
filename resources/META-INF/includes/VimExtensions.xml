@@ -1,5 +1,5 @@
 <idea-plugin>
-  <extensions defaultExtensionNs="IdeaVIM">
+  <extensions defaultExtensionNs="IdeaVIM-chylex">
     <vimExtension implementation="com.maddyhome.idea.vim.extension.surround.VimSurroundExtension" name="surround">
       <aliases>
         <alias name="https://github.com/tpope/vim-surround"/>

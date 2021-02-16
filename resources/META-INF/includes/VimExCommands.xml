@@ -1,5 +1,5 @@
 <idea-plugin>
-  <extensions defaultExtensionNs="IdeaVIM">
+  <extensions defaultExtensionNs="IdeaVIM-chylex">
     <vimExCommand implementation="com.maddyhome.idea.vim.ex.handler.ActionListHandler" names="actionlist"/>
     <vimExCommand implementation="com.maddyhome.idea.vim.ex.handler.AsciiHandler" names="as[cii]"/>
     <vimExCommand implementation="com.maddyhome.idea.vim.ex.handler.CmdFilterHandler" names="!"/>

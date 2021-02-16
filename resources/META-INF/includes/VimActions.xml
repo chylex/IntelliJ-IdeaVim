@@ -1,5 +1,5 @@
 <idea-plugin>
-  <extensions defaultExtensionNs="IdeaVIM">
+  <extensions defaultExtensionNs="IdeaVIM-chylex">
     <!-- Motions -->
     <vimAction implementation="com.maddyhome.idea.vim.action.motion.tabs.MotionPreviousTabAction" mappingModes="NXO" keys="gT"/>
     <vimAction implementation="com.maddyhome.idea.vim.action.motion.tabs.MotionNextTabAction" mappingModes="NXO" keys="gt"/>

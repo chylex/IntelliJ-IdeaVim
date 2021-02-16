@@ -31,7 +31,7 @@ import java.awt.event.KeyEvent;
 public class RegisterActions {
 
   public static final ExtensionPointName<ActionBeanClass> VIM_ACTIONS_EP =
-    ExtensionPointName.create("IdeaVIM.vimAction");
+    ExtensionPointName.create("IdeaVIM-chylex.vimAction");
 
   /**
    * Register all the key/action mappings for the plugin.

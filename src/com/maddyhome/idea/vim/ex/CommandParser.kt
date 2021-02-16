@@ -42,7 +42,7 @@ import java.util.regex.Pattern
 object CommandParser {
   private const val MAX_RECURSION = 100
   private val TRIM_WHITESPACE = Pattern.compile("[ \\t]*(.*)[ \\t\\n\\r]+", Pattern.DOTALL)
-  val EX_COMMAND_EP = ExtensionPointName.create<ExBeanClass>("IdeaVIM.vimExCommand")
+  val EX_COMMAND_EP = ExtensionPointName.create<ExBeanClass>("IdeaVIM-chylex.vimExCommand")
   private val logger = logger<CommandParser>()
 
   private val root = CommandNode()
