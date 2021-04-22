@@ -19,7 +19,9 @@
 package com.maddyhome.idea.vim.listener
 
 import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManagerListener
@@ -40,6 +42,7 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import com.intellij.util.PlatformUtils
 import com.maddyhome.idea.vim.EventFacade
 import com.maddyhome.idea.vim.KeyHandler
@@ -52,11 +55,14 @@ import com.maddyhome.idea.vim.helper.commandState
 import com.maddyhome.idea.vim.helper.fileSize
 import com.maddyhome.idea.vim.helper.getTopLevelEditor
 import com.maddyhome.idea.vim.helper.inNormalMode
+import com.maddyhome.idea.vim.helper.vimCommandState
 import com.maddyhome.idea.vim.option.IdeaRefactorMode
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
+import java.awt.event.KeyEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import javax.swing.KeyStroke
 
 /**
  * @author Alex Plate
@@ -76,6 +82,8 @@ object IdeaSpecifics {
     private val surrounderAction =
       "com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler\$InvokeSurrounderAction"
     private var editor: Editor? = null
+    private var completionPrevDocumentLength: Int? = null
+    private var completionPrevDocumentOffset: Int? = null
     override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
       if (!VimPlugin.isEnabled()) return
 
@@ -88,10 +96,47 @@ object IdeaSpecifics {
         val id: String? = ActionManager.getInstance().getId(action)
         VimPlugin.getNotifications(dataContext.getData(CommonDataKeys.PROJECT)).notifyActionId(id)
       }
+      
+      if (hostEditor != null && action is ChooseItemAction && hostEditor.vimCommandState?.isRecording == true) {
+        val lookup = LookupManager.getActiveLookup(hostEditor)
+        if (lookup != null) {
+          val charsToRemove = hostEditor.caretModel.primaryCaret.offset - lookup.lookupStart
+  
+          val register = VimPlugin.getRegister()
+          val backSpace = KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0)
+          repeat(charsToRemove) {
+            register.recordKeyStroke(backSpace)
+          }
+  
+          completionPrevDocumentLength = hostEditor.document.textLength - charsToRemove
+          completionPrevDocumentOffset = lookup.lookupStart
+        }
+      }
     }
 
     override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
       if (!VimPlugin.isEnabled()) return
+      
+      val editor = editor
+      if (editor != null && action is ChooseItemAction && editor.vimCommandState?.isRecording == true) {
+        val prevDocumentLength = completionPrevDocumentLength
+        val prevDocumentOffset = completionPrevDocumentOffset
+        
+        if (prevDocumentLength != null && prevDocumentOffset != null) {
+          val register = VimPlugin.getRegister()
+          val addedTextLength = editor.document.textLength - prevDocumentLength
+          val caretShift = addedTextLength - (editor.caretModel.primaryCaret.offset - prevDocumentOffset)
+          val leftArrow = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)
+  
+          register.recordText(editor.document.getText(TextRange(prevDocumentOffset, prevDocumentOffset + addedTextLength)))
+          repeat(caretShift.coerceAtLeast(0)) {
+            register.recordKeyStroke(leftArrow)
+          }
+        }
+        
+        this.completionPrevDocumentLength = null
+        this.completionPrevDocumentOffset = null
+      }
 
       //region Extend Selection for Rider
       if (PlatformUtils.isRider()) {
@@ -130,7 +175,7 @@ object IdeaSpecifics {
       }
       //endregion
 
-      editor = null
+      this.editor = null
     }
   }
 
