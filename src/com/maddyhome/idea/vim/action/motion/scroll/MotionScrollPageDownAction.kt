@@ -32,7 +32,6 @@ import java.awt.event.KeyEvent
 import java.util.*
 import javax.swing.KeyStroke
 
-
 class MotionScrollPageDownAction : VimActionHandler.SingleExecution() {
 
   override val type: Command.Type = Command.Type.OTHER_READONLY
@@ -40,7 +39,7 @@ class MotionScrollPageDownAction : VimActionHandler.SingleExecution() {
   override val flags: EnumSet<CommandFlags> = enumSetOf(FLAG_IGNORE_SCROLL_JUMP)
 
   override fun execute(editor: Editor, context: DataContext, cmd: Command): Boolean {
-    return VimPlugin.getMotion().scrollFullPage(editor, cmd.count)
+    return VimPlugin.getMotion().scrollFullPage(editor, editor.caretModel.primaryCaret, cmd.count)
   }
 }
 
@@ -55,6 +54,6 @@ class MotionScrollPageDownInsertModeAction : VimActionHandler.SingleExecution(),
   override val flags: EnumSet<CommandFlags> = enumSetOf(FLAG_IGNORE_SCROLL_JUMP, FLAG_CLEAR_STROKES)
 
   override fun execute(editor: Editor, context: DataContext, cmd: Command): Boolean {
-    return VimPlugin.getMotion().scrollFullPage(editor, cmd.count)
+    return VimPlugin.getMotion().scrollFullPage(editor, editor.caretModel.primaryCaret, cmd.count)
   }
 }

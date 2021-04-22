@@ -89,6 +89,7 @@ Here are some examples of supported vim features and commands:
 [Emulated Vim plugins](https://github.com/JetBrains/ideavim/wiki/Emulated-plugins):
 
 * vim-easymotion
+* NERDTree
 * vim-surround
 * vim-multiple-cursors
 * vim-commentary
@@ -221,7 +222,7 @@ extract the ids of executed command. This option can be found in "Search everywh
 
     <details>
         <summary><strong>"Track action Ids" Details</strong> (click to see)</summary>
-        <img src="resources/readme/track_action_id.gif" alt="track action ids"/>
+        <img src="assets/readme/track_action_id.gif" alt="track action ids"/>
     </details>
 
 Examples:

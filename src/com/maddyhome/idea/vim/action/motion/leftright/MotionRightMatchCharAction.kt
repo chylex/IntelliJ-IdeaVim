@@ -25,7 +25,9 @@ import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.command.CommandFlags
 import com.maddyhome.idea.vim.command.MotionType
 import com.maddyhome.idea.vim.group.MotionGroup
+import com.maddyhome.idea.vim.handler.Motion
 import com.maddyhome.idea.vim.handler.MotionActionHandler
+import com.maddyhome.idea.vim.handler.toMotionOrError
 import com.maddyhome.idea.vim.helper.enumSetOf
 import java.util.*
 
@@ -34,19 +36,18 @@ class MotionRightMatchCharAction : MotionActionHandler.ForEachCaret() {
 
   override val flags: EnumSet<CommandFlags> = enumSetOf(CommandFlags.FLAG_ALLOW_DIGRAPH)
 
-  override fun getOffset(editor: Editor,
-                         caret: Caret,
-                         context: DataContext,
-                         count: Int,
-                         rawCount: Int,
-                         argument: Argument?): Int {
-    if (argument == null) {
-      VimPlugin.indicateError()
-      return caret.offset
-    }
+  override fun getOffset(
+    editor: Editor,
+    caret: Caret,
+    context: DataContext,
+    count: Int,
+    rawCount: Int,
+    argument: Argument?
+  ): Motion {
+    if (argument == null) return Motion.Error
     val res = VimPlugin.getMotion().moveCaretToNextCharacterOnLine(editor, caret, count, argument.character)
     VimPlugin.getMotion().setLastFTCmd(MotionGroup.LAST_f, argument.character)
-    return res
+    return res.toMotionOrError()
   }
 
   override val motionType: MotionType = MotionType.INCLUSIVE

@@ -44,6 +44,8 @@ class ActionListHandler : CommandHandler.SingleExecution() {
     val searchPattern = cmd.argument.trim().toLowerCase().split("*")
     val actionManager = ActionManager.getInstance()
 
+    // [VERSION UPDATE] 203+
+    @Suppress("DEPRECATION")
     val actions = actionManager.getActionIds("")
       .sortedWith(String.CASE_INSENSITIVE_ORDER)
       .map { actionName ->
@@ -54,7 +56,6 @@ class ActionListHandler : CommandHandler.SingleExecution() {
       }
       .filter { line -> searchPattern.all { it in line.toLowerCase() } }
       .joinToString(lineSeparator)
-
 
     ExOutputModel.getInstance(editor).output(MessageHelper.message("ex.show.all.actions.0.1", lineSeparator, actions))
     return true

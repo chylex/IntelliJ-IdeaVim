@@ -25,7 +25,10 @@ import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.command.CommandFlags
 import com.maddyhome.idea.vim.command.MotionType
+import com.maddyhome.idea.vim.handler.Motion
 import com.maddyhome.idea.vim.handler.MotionActionHandler
+import com.maddyhome.idea.vim.handler.toMotion
+import com.maddyhome.idea.vim.helper.EditorHelper
 import com.maddyhome.idea.vim.helper.enumSetOf
 import java.util.*
 
@@ -34,13 +37,16 @@ class MotionGotoLineFirstAction : MotionActionHandler.ForEachCaret() {
 
   override val flags: EnumSet<CommandFlags> = enumSetOf(CommandFlags.FLAG_SAVE_JUMP)
 
-  override fun getOffset(editor: Editor,
-                         caret: Caret,
-                         context: DataContext,
-                         count: Int,
-                         rawCount: Int,
-                         argument: Argument?): Int {
-    return VimPlugin.getMotion().moveCaretGotoLineFirst(editor, count - 1)
+  override fun getOffset(
+    editor: Editor,
+    caret: Caret,
+    context: DataContext,
+    count: Int,
+    rawCount: Int,
+    argument: Argument?
+  ): Motion {
+    val line = EditorHelper.normalizeLine(editor, count - 1)
+    return VimPlugin.getMotion().moveCaretToLineWithStartOfLineOption(editor, line, caret).toMotion()
   }
 }
 
@@ -49,12 +55,15 @@ class MotionGotoLineFirstInsertAction : MotionActionHandler.ForEachCaret() {
 
   override val flags: EnumSet<CommandFlags> = enumSetOf(CommandFlags.FLAG_CLEAR_STROKES)
 
-  override fun getOffset(editor: Editor,
-                         caret: Caret,
-                         context: DataContext,
-                         count: Int,
-                         rawCount: Int,
-                         argument: Argument?): Int {
-    return VimPlugin.getMotion().moveCaretGotoLineFirst(editor, count - 1)
+  override fun getOffset(
+    editor: Editor,
+    caret: Caret,
+    context: DataContext,
+    count: Int,
+    rawCount: Int,
+    argument: Argument?
+  ): Motion {
+    val line = EditorHelper.normalizeLine(editor, count - 1)
+    return VimPlugin.getMotion().moveCaretToLineStart(editor, line).toMotion()
   }
 }

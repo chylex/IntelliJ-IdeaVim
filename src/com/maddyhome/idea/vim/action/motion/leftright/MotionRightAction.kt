@@ -25,20 +25,24 @@ import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.action.ComplicatedKeysAction
 import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.command.MotionType
+import com.maddyhome.idea.vim.handler.Motion
 import com.maddyhome.idea.vim.handler.MotionActionHandler
+import com.maddyhome.idea.vim.handler.toMotionOrError
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
 class MotionRightAction : MotionActionHandler.ForEachCaret() {
   override val motionType: MotionType = MotionType.EXCLUSIVE
 
-  override fun getOffset(editor: Editor,
-                         caret: Caret,
-                         context: DataContext,
-                         count: Int,
-                         rawCount: Int,
-                         argument: Argument?): Int {
-    return VimPlugin.getMotion().getOffsetOfHorizontalMotion(editor, caret, count, true)
+  override fun getOffset(
+    editor: Editor,
+    caret: Caret,
+    context: DataContext,
+    count: Int,
+    rawCount: Int,
+    argument: Argument?
+  ): Motion {
+    return VimPlugin.getMotion().getOffsetOfHorizontalMotion(editor, caret, count, true).toMotionOrError()
   }
 }
 
@@ -50,12 +54,14 @@ class MotionRightInsertAction : MotionActionHandler.ForEachCaret(), ComplicatedK
     listOf(KeyStroke.getKeyStroke(KeyEvent.VK_KP_RIGHT, 0))
   )
 
-  override fun getOffset(editor: Editor,
-                         caret: Caret,
-                         context: DataContext,
-                         count: Int,
-                         rawCount: Int,
-                         argument: Argument?): Int {
-    return VimPlugin.getMotion().getOffsetOfHorizontalMotion(editor, caret, count, true)
+  override fun getOffset(
+    editor: Editor,
+    caret: Caret,
+    context: DataContext,
+    count: Int,
+    rawCount: Int,
+    argument: Argument?
+  ): Motion {
+    return VimPlugin.getMotion().getOffsetOfHorizontalMotion(editor, caret, count, true).toMotionOrError()
   }
 }

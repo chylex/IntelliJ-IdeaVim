@@ -50,7 +50,7 @@ class DeleteCharacterRightActionTest : VimTestCase() {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
@@ -58,7 +58,7 @@ class DeleteCharacterRightActionTest : VimTestCase() {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     configureByText(before)
     typeText(keys)
     myFixture.checkResult(after)
@@ -104,7 +104,7 @@ class DeleteCharacterRightActionTest : VimTestCase() {
     // Hitting 'x' on the character before the inlay should place the cursor after the inlay
     // Before: "I f|o|«test:»und it in a legendary land."
     // After: "I f«test:»|u|nd it in a legendary land."
-    addInlay(4, true, 5)
+    addInlay(4, false, 5)
 
     typeText(keys)
     myFixture.checkResult(after)

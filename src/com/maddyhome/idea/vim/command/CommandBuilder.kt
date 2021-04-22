@@ -46,8 +46,7 @@ class CommandBuilder(private var currentCommandPartNode: CommandPartNode<ActionB
   var expectedArgumentType: Argument.Type? = null
     private set
 
-  var prevExpectedArgumentType: Argument.Type? = null
-    private set
+  private var prevExpectedArgumentType: Argument.Type? = null
 
   val isReady get() = commandState == CurrentCommandState.READY
   val isBad get() = commandState == CurrentCommandState.BAD_COMMAND
@@ -85,7 +84,7 @@ class CommandBuilder(private var currentCommandPartNode: CommandPartNode<ActionB
   fun fallbackToCharacterArgument() {
     // Finished handling DIGRAPH. We either succeeded, in which case handle the converted character, or failed to parse,
     // in which case try to handle input as a character argument.
-    assert(expectedArgumentType == Argument.Type.DIGRAPH) { "Cannot move state from $expectedArgumentType to CHARACTER"}
+    assert(expectedArgumentType == Argument.Type.DIGRAPH) { "Cannot move state from $expectedArgumentType to CHARACTER" }
     expectedArgumentType = Argument.Type.CHARACTER
   }
 
@@ -170,8 +169,7 @@ class CommandBuilder(private var currentCommandPartNode: CommandPartNode<ActionB
         next.register = command.register
         command.register = null
         command = next
-      }
-      else {
+      } else {
         command.argument = Argument(next)
         assert(commandParts.size == 0)
       }

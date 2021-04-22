@@ -23,6 +23,8 @@ import com.maddyhome.idea.vim.ex.vimscript.VimScriptParser
 import com.maddyhome.idea.vim.helper.StringHelper
 import com.maddyhome.idea.vim.helper.commandState
 import junit.framework.TestCase
+import org.jetbrains.plugins.ideavim.SkipNeovimReason
+import org.jetbrains.plugins.ideavim.TestWithoutNeovim
 import org.jetbrains.plugins.ideavim.VimTestCase
 import org.jetbrains.plugins.ideavim.waitAndAssert
 
@@ -30,12 +32,15 @@ import org.jetbrains.plugins.ideavim.waitAndAssert
  * @author vlan
  */
 class MapCommandTest : VimTestCase() {
+  @TestWithoutNeovim(reason = SkipNeovimReason.UNCLEAR)
   fun testMapKtoJ() {
-    configureByText("""
+    configureByText(
+      """
   ${c}foo
   bar
   
-  """.trimIndent())
+      """.trimIndent()
+    )
     typeText(commandToKeys("nmap k j"))
     assertPluginError(false)
     assertOffset(0)
@@ -43,6 +48,7 @@ class MapCommandTest : VimTestCase() {
     assertOffset(4)
   }
 
+  @TestWithoutNeovim(reason = SkipNeovimReason.DIFFERENT)
   fun testInsertMapJKtoEsc() {
     configureByText("${c}World!\n")
     typeText(commandToKeys("imap jk <Esc>"))
@@ -92,17 +98,21 @@ class MapCommandTest : VimTestCase() {
     typeText(commandToKeys("nmap ,f <Plug>Foo"))
     typeText(commandToKeys("nmap <Plug>Foo iHello<Esc>"))
     typeText(commandToKeys("imap"))
-    assertExOutput("""
+    assertExOutput(
+      """
   i  <C-Down>      <C-O>gt
   i  bar           <Esc>
   i  foo           bar
   
-  """.trimIndent())
+      """.trimIndent()
+    )
     typeText(commandToKeys("map"))
-    assertExOutput("""   <C-Down>      gt
+    assertExOutput(
+      """   <C-Down>      gt
 n  <Plug>Foo     iHello<Esc>
 n  ,f            <Plug>Foo
-""")
+"""
+    )
   }
 
   fun testRecursiveMapping() {
@@ -128,28 +138,35 @@ n  ,f            <Plug>Foo
     typeText(commandToKeys("inoremap jj <Esc>"))
     typeText(commandToKeys("imap foo bar"))
     typeText(commandToKeys("imap"))
-    assertExOutput("""
+    assertExOutput(
+      """
   i  foo           bar
   i  jj          * <Esc>
   
-  """.trimIndent())
+      """.trimIndent()
+    )
   }
 
+  @TestWithoutNeovim(reason = SkipNeovimReason.DIFFERENT)
   fun testNop() {
-    configureByText("""
+    configureByText(
+      """
   ${c}foo
   bar
   
-  """.trimIndent())
+      """.trimIndent()
+    )
     typeText(commandToKeys("noremap <Right> <nop>"))
     assertPluginError(false)
     typeText(StringHelper.parseKeys("l", "<Right>"))
     assertPluginError(false)
-    myFixture.checkResult("""
+    myFixture.checkResult(
+      """
   foo
   bar
   
-  """.trimIndent())
+      """.trimIndent()
+    )
     assertOffset(1)
     typeText(commandToKeys("nmap"))
     assertExOutput("n  <Right>     * <Nop>\n")
@@ -165,14 +182,16 @@ n  ,f            <Plug>Foo
     typeText(commandToKeys("nmap <expr> ,f /f<CR>"))
     typeText(commandToKeys("nmap <unique> ,g /g<CR>"))
     typeText(commandToKeys("nmap"))
-    assertExOutput("""
+    assertExOutput(
+      """
   n  ,a            /a<CR>
   n  ,b            /b<CR>
   n  ,c            /c<CR>
   n  ,d            /d<CR>
   n  ,g            /g<CR>
   
-  """.trimIndent())
+      """.trimIndent()
+    )
   }
 
   // VIM-645 |:nmap|
@@ -246,18 +265,22 @@ n  ,f            <Plug>Foo
 
   // VIM-679 |:map|
   fun testCancelCharacterInVimRc() {
-    configureByText("""
+    configureByText(
+      """
   ${c}foo
   bar
   
-  """.trimIndent())
+      """.trimIndent()
+    )
     VimScriptParser.executeText(VimScriptParser.readText("map \u0018i dd\n"))
     typeText(StringHelper.parseKeys("i", "#", "<Esc>"))
-    myFixture.checkResult("""
+    myFixture.checkResult(
+      """
   #foo
   bar
   
-  """.trimIndent())
+      """.trimIndent()
+    )
     assertMode(CommandState.Mode.COMMAND)
     typeText(commandToKeys("map"))
     assertExOutput("   <C-X>i        dd\n")
@@ -387,6 +410,7 @@ n  ,f            <Plug>Foo
     myFixture.checkResult("123${c}567890")
   }
 
+  @TestWithoutNeovim(reason = SkipNeovimReason.DIFFERENT)
   fun testMapZero() {
     configureByText("A quick ${c}brown fox jumps over the lazy dog")
     typeText(commandToKeys("nmap 0 w"))
@@ -394,6 +418,7 @@ n  ,f            <Plug>Foo
     assertOffset(14)
   }
 
+  @TestWithoutNeovim(reason = SkipNeovimReason.DIFFERENT)
   fun testMapZeroIgnoredInCount() {
     configureByText("A quick ${c}brown fox jumps over the lazy dog. A quick brown fox jumps over the lazy dog")
     typeText(commandToKeys("nmap 0 w"))
@@ -401,6 +426,7 @@ n  ,f            <Plug>Foo
     assertOffset(51)
   }
 
+  @TestWithoutNeovim(reason = SkipNeovimReason.DIFFERENT)
   fun testMapNonZeroDigit() {
     configureByText("A quick ${c}brown fox jumps over the lazy dog")
     typeText(commandToKeys("nmap 2 w"))
@@ -408,6 +434,7 @@ n  ,f            <Plug>Foo
     assertOffset(14)
   }
 
+  @TestWithoutNeovim(reason = SkipNeovimReason.DIFFERENT)
   fun testMapNonZeroDigitNotIncludedInCount() {
     configureByText("A quick ${c}brown fox jumps over the lazy dog. A quick brown fox jumps over the lazy dog")
     typeText(commandToKeys("nmap 2 w"))
@@ -447,132 +474,156 @@ n  ,f            <Plug>Foo
   }
 
   fun `test comment line with action`() {
-    configureByJavaText("""
+    configureByJavaText(
+      """
         -----
         1<caret>2345
         abcde
         -----
-        """.trimIndent())
+      """.trimIndent()
+    )
     typeText(commandToKeys("map k <Action>(CommentByLineComment)"))
     typeText(StringHelper.parseKeys("k"))
-    myFixture.checkResult("""
+    myFixture.checkResult(
+      """
         -----
         //12345
         abcde
         -----
-        """.trimIndent())
+      """.trimIndent()
+    )
   }
 
   fun `test execute two actions with two mappings`() {
-    configureByJavaText("""
+    configureByJavaText(
+      """
           -----
           1<caret>2345
           abcde
           -----
-          """.trimIndent())
+      """.trimIndent()
+    )
     typeText(commandToKeys("map k <Action>(CommentByLineComment)"))
     typeText(StringHelper.parseKeys("kk"))
-    myFixture.checkResult("""
+    myFixture.checkResult(
+      """
           -----
           //12345
           //abcde
           -----
-          """.trimIndent())
+      """.trimIndent()
+    )
   }
 
   fun `test execute two actions with single mappings`() {
-    configureByJavaText("""
+    configureByJavaText(
+      """
           -----
           1<caret>2345
           abcde
           -----
-          """.trimIndent())
+      """.trimIndent()
+    )
     typeText(commandToKeys("map k <Action>(CommentByLineComment)<Action>(CommentByLineComment)"))
     typeText(StringHelper.parseKeys("k"))
-    myFixture.checkResult("""
+    myFixture.checkResult(
+      """
           -----
           //12345
           //abcde
           -----
-          """.trimIndent())
+      """.trimIndent()
+    )
   }
 
   fun `test execute three actions with single mappings`() {
-    configureByJavaText("""
+    configureByJavaText(
+      """
           -----
           1<caret>2345
           abcde
           -----
-          """.trimIndent())
+      """.trimIndent()
+    )
     typeText(commandToKeys("map k <Action>(CommentByLineComment)<Action>(CommentByLineComment)<Action>(CommentByLineComment)"))
     typeText(StringHelper.parseKeys("k"))
-    myFixture.checkResult("""
+    myFixture.checkResult(
+      """
           -----
           //12345
           //abcde
           //-----
-          """.trimIndent())
+      """.trimIndent()
+    )
   }
 
   fun `test execute action from insert mode`() {
-    configureByJavaText("""
+    configureByJavaText(
+      """
           -----
           1<caret>2345
           abcde
           -----
-          """.trimIndent())
+      """.trimIndent()
+    )
     typeText(commandToKeys("imap k <Action>(CommentByLineComment)"))
     typeText(StringHelper.parseKeys("ik"))
-    myFixture.checkResult("""
+    myFixture.checkResult(
+      """
           -----
           //12345
           abcde
           -----
-          """.trimIndent())
+      """.trimIndent()
+    )
   }
 
+  @TestWithoutNeovim(reason = SkipNeovimReason.DIFFERENT)
   fun `test execute mapping with a delay`() {
     val text = """
           -----
           1${c}2345
           abcde
           -----
-          """.trimIndent()
+    """.trimIndent()
     configureByJavaText(text)
 
     typeText(commandToKeys("map kk l"))
     typeText(StringHelper.parseKeys("k"))
 
-    checkDelayedMapping(text,
+    checkDelayedMapping(
+      text,
       """
-              -${c}----
+              -$c----
               12345
               abcde
               -----
-              """.trimIndent()
+      """.trimIndent()
     )
   }
 
+  @TestWithoutNeovim(reason = SkipNeovimReason.DIFFERENT)
   fun `test execute mapping with a delay and second mapping`() {
     val text = """
           -----
           1${c}2345
           abcde
           -----
-          """.trimIndent()
+    """.trimIndent()
     configureByJavaText(text)
 
     typeText(commandToKeys("map k j"))
     typeText(commandToKeys("map kk l"))
     typeText(StringHelper.parseKeys("k"))
 
-    checkDelayedMapping(text,
+    checkDelayedMapping(
+      text,
       """
               -----
               12345
               a${c}bcde
               -----
-              """.trimIndent()
+      """.trimIndent()
     )
   }
 
@@ -583,7 +634,7 @@ n  ,f            <Plug>Foo
           1${c}2345
           abcde
           -----
-          """.trimIndent()
+    """.trimIndent()
     configureByJavaText(text)
 
     typeText(commandToKeys("map k j"))
@@ -592,13 +643,14 @@ n  ,f            <Plug>Foo
     typeText(commandToKeys("map jz w"))
     typeText(StringHelper.parseKeys("k"))
 
-    checkDelayedMapping(text,
+    checkDelayedMapping(
+      text,
       """
               -----
               ${c}12345
               abcde
               -----
-              """.trimIndent()
+      """.trimIndent()
     )
   }
 
@@ -608,7 +660,7 @@ n  ,f            <Plug>Foo
           1${c}2345
           abcde
           -----
-          """.trimIndent()
+    """.trimIndent()
     configureByJavaText(text)
 
     typeText(commandToKeys("map k j"))
@@ -623,7 +675,7 @@ n  ,f            <Plug>Foo
               12345
               ${c}abcde
               -----
-              """.trimIndent()
+      """.trimIndent()
     )
   }
 
@@ -633,7 +685,7 @@ n  ,f            <Plug>Foo
           1${c}2345
           abcde
           -----
-          """.trimIndent()
+    """.trimIndent()
     configureByJavaText(text)
 
     typeText(commandToKeys("map x y"))
@@ -649,7 +701,7 @@ n  ,f            <Plug>Foo
           1${c}2345
           abcde
           -----
-          """.trimIndent()
+    """.trimIndent()
     configureByJavaText(text)
 
     typeText(commandToKeys("map b wbb"))

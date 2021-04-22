@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.maddyhome.idea.vim.group.visual.VimSelection
+import com.maddyhome.idea.vim.handler.Motion
 import com.maddyhome.idea.vim.handler.MotionActionHandler
 import java.util.*
 
@@ -46,10 +47,14 @@ class Argument private constructor(
 
   companion object {
     @JvmField
-    val EMPTY_COMMAND = Command(0, object : MotionActionHandler.SingleExecution() {
-      override fun getOffset(editor: Editor, context: DataContext, count: Int, rawCount: Int, argument: Argument?) = 0
+    val EMPTY_COMMAND = Command(
+      0,
+      object : MotionActionHandler.SingleExecution() {
+        override fun getOffset(editor: Editor, context: DataContext, count: Int, rawCount: Int, argument: Argument?) = Motion.NoMotion
 
-      override val motionType: MotionType = MotionType.EXCLUSIVE
-    }, Command.Type.MOTION, EnumSet.noneOf(CommandFlags::class.java))
+        override val motionType: MotionType = MotionType.EXCLUSIVE
+      },
+      Command.Type.MOTION, EnumSet.noneOf(CommandFlags::class.java)
+    )
   }
 }

@@ -24,20 +24,24 @@ import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.command.CommandFlags
 import com.maddyhome.idea.vim.command.MotionType
+import com.maddyhome.idea.vim.handler.Motion
 import com.maddyhome.idea.vim.handler.MotionActionHandler
+import com.maddyhome.idea.vim.handler.toMotionOrError
 import com.maddyhome.idea.vim.helper.enumSetOf
 import java.util.*
 
 class MotionMethodPreviousEndAction : MotionActionHandler.ForEachCaret() {
   override val flags: EnumSet<CommandFlags> = enumSetOf(CommandFlags.FLAG_SAVE_JUMP)
 
-  override fun getOffset(editor: Editor,
-                         caret: Caret,
-                         context: DataContext,
-                         count: Int,
-                         rawCount: Int,
-                         argument: Argument?): Int {
-    return VimPlugin.getMotion().moveCaretToMethodEnd(editor, caret, -count)
+  override fun getOffset(
+    editor: Editor,
+    caret: Caret,
+    context: DataContext,
+    count: Int,
+    rawCount: Int,
+    argument: Argument?
+  ): Motion {
+    return VimPlugin.getMotion().moveCaretToMethodEnd(editor, caret, -count).toMotionOrError()
   }
 
   override val motionType: MotionType = MotionType.EXCLUSIVE

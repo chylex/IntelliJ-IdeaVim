@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-package org.intellij.examples.simple.plugin.steps
+package ui.utils
 
 import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.stepsProcessing.step
@@ -25,21 +25,21 @@ import ui.pages.DialogFixture.Companion.byTitle
 import ui.pages.IdeaFrame
 
 class JavaExampleSteps(private val remoteRobot: RemoteRobot) {
-  private val keyboard: Keyboard
+  @Suppress("unused")
+  private val keyboard: Keyboard = Keyboard(remoteRobot)
 
   fun closeTipOfTheDay() {
-    step("Close Tip of the Day if it appears", Runnable {
-      val idea: IdeaFrame = remoteRobot.find(IdeaFrame::class.java)
-      idea.dumbAware {
-        try {
-          idea.find(DialogFixture::class.java, byTitle("Tip of the Day")).button("Close").click()
-        } catch (ignore: Throwable) {
+    step(
+      "Close Tip of the Day if it appears",
+      Runnable {
+        val idea: IdeaFrame = remoteRobot.find(IdeaFrame::class.java)
+        idea.dumbAware {
+          try {
+            idea.find(DialogFixture::class.java, byTitle("Tip of the Day")).button("Close").click()
+          } catch (ignore: Throwable) {
+          }
         }
       }
-    })
-  }
-
-  init {
-    keyboard = Keyboard(remoteRobot)
+    )
   }
 }

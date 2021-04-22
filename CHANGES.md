@@ -24,8 +24,40 @@ usual beta standards.
 
 ## To Be Released
 
+### Fixes:
+* [VIM-2230](https://youtrack.jetbrains.com/issue/VIM-2230) Tweak caret position with inline rename options inlay
+* [VIM-2177](https://youtrack.jetbrains.com/issue/VIM-2177) Fix scrolling issues near bottom of file
+* [VIM-2276](https://youtrack.jetbrains.com/issue/VIM-2276) `:ls` returns correct path for files on Microsoft Windows.
+* [VIM-1953](https://youtrack.jetbrains.com/issue/VIM-1953) Execute live testing for `:w` command
+* [VIM-2284](https://youtrack.jetbrains.com/issue/VIM-2284) Values are not duplicated in set command
+
+### Merged PRs:
+* [280](https://github.com/JetBrains/ideavim/pull/280) by [Matt Ellis](https://github.com/citizenmatt): Caret position and view scrolling fixes
+* [289](https://github.com/JetBrains/ideavim/pull/289) by [MichalPlacek](https://github.com/MichalPlacek): VIM-2276 ls returns "absolute path" for files on Microsoft Windows.
+
+## 0.66, 2021-04-09
+
+Not a lot of changes for this release. Focused on internal improvements.
+
+### Features:
+* Support `startofline` option
+
+### Fixes:
+* [VIM-2238](https://youtrack.jetbrains.com/issue/VIM-2238) Fix `M` command for small files
+
+### Merged PRs:
+* [275](https://github.com/JetBrains/ideavim/pull/275) by [Matt Ellis](https://github.com/citizenmatt): Fix edge cases for H, L and M and introduce 'startofline' option
+* [276](https://github.com/JetBrains/ideavim/pull/276) by [Matt Ellis](https://github.com/citizenmatt): More refactoring of SearchGroup
+
+## 0.65, 2021-02-17
+
 ### Features:
 * Support `NERDTree` extension [VIM-1042](https://youtrack.jetbrains.com/issue/VIM-1042) | [NERDTree](https://github.com/preservim/nerdtree)
+  
+    * <details>
+            <summary><strong>Click to see details</strong></summary>
+            <img src="assets/changes/0.65/nerdtree.gif" alt="NERDTree example"/>
+    </details>
 * Support `maxmapdepth` option to define the maximum depth of mappings
 
 ### Fixes:
@@ -36,6 +68,7 @@ usual beta standards.
 * [VIM-2218](https://youtrack.jetbrains.com/issue/VIM-2218) Fix some shortcuts for 2021.+
 * [VIM-2217](https://youtrack.jetbrains.com/issue/VIM-2217) Fix adding new line at the end of the file for the AppCode
 * [VIM-2220](https://youtrack.jetbrains.com/issue/VIM-2220) Do not try to get a commandState for null editor
+* [VIM-2153](https://youtrack.jetbrains.com/issue/VIM-2153) Fix storing special characters after IDE closing
 
 ### Merged PRs:
 * [269](https://github.com/JetBrains/ideavim/pull/269) by [大牙(Henry Zhu)](https://github.com/daya0576): fix invalid link of submodule docs
@@ -156,7 +189,7 @@ Use `set ideavimsupport=` to disable IdeaVim in dialog editors.
 
     * <details>
             <summary><strong>Click to see details</strong></summary>
-            <img src="resources/changes/0.59/highlight_yank.gif" alt="highlight yank"/>
+            <img src="assets/changes/0.59/highlight_yank.gif" alt="highlight yank"/>
       </details>
 
 * [VIM-2068](https://youtrack.jetbrains.com/issue/VIM-2068) `:tabclose` command
@@ -181,7 +214,7 @@ Use `set ideavimsupport=` to disable IdeaVim in dialog editors.
 
     * <details>
             <summary><strong>Click to see details</strong></summary>
-            <img src="resources/changes/0.58/reload_ideavimrc.png" alt="IdeaVimRc reload"/>
+            <img src="assets/changes/0.58/reload_ideavimrc.png" alt="IdeaVimRc reload"/>
       </details>
 
 * Add `:buffer` command.

@@ -214,16 +214,6 @@ public class ExTextField extends JTextField {
     resetFont(string);
   }
 
-  /**
-   * @deprecated Use getActualText()
-   * Using this method can include prompt characters used when entering digraphs or register text
-   */
-  @Override
-  @Deprecated
-  public String getText() {
-    return super.getText();
-  }
-
   @NotNull
   String getActualText() {
     if (actualText != null) {
@@ -233,6 +223,8 @@ public class ExTextField extends JTextField {
     return text == null ? "" : text;
   }
 
+  // I'm not sure how to deal with these dispose issues and deprecations
+  @SuppressWarnings("deprecation")
   void setEditor(@NotNull Editor editor, DataContext context) {
     this.editor = editor;
     this.context = context;
@@ -457,6 +449,8 @@ public class ExTextField extends JTextField {
       }
     }
 
+    // Java 9+
+    @SuppressWarnings("deprecation")
     private void updateDamage() {
       try {
         Rectangle r = getComponent().getUI().modelToView(getComponent(), getDot(), getDotBias());
@@ -488,6 +482,8 @@ public class ExTextField extends JTextField {
       updateDamage();
     }
 
+    // Java 9+
+    @SuppressWarnings("deprecation")
     @Override
     public void paint(Graphics g) {
       if (!isVisible()) return;
@@ -496,7 +492,6 @@ public class ExTextField extends JTextField {
         final JTextComponent component = getComponent();
         g.setColor(component.getCaretColor());
 
-        // We have to use the deprecated version because we still support 1.8
         final Rectangle r = component.getUI().modelToView(component, getDot(), getDotBias());
         FontMetrics fm = g.getFontMetrics();
         final int boundsHeight = fm.getHeight();
@@ -562,7 +557,7 @@ public class ExTextField extends JTextField {
 
   private Editor editor;
   private DataContext context;
-  private CommandLineCaret caret;
+  private final CommandLineCaret caret;
   private String lastEntry;
   private String actualText;
   private List<HistoryGroup.HistoryEntry> history;

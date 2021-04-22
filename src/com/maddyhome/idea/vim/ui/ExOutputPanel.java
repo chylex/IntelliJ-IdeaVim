@@ -22,15 +22,11 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.IJSwingUtilities;
 import com.maddyhome.idea.vim.VimPlugin;
-import com.maddyhome.idea.vim.helper.EditorDataContext;
-import com.maddyhome.idea.vim.helper.MessageHelper;
-import com.maddyhome.idea.vim.helper.UiHelper;
-import com.maddyhome.idea.vim.helper.UserDataManager;
+import com.maddyhome.idea.vim.helper.*;
 import com.maddyhome.idea.vim.option.OptionsManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -251,12 +247,11 @@ public class ExOutputPanel extends JPanel {
         myScrollPane.getVerticalScrollBar().getMaximum() - myScrollPane.getVerticalScrollBar().getVisibleAmount()) {
       myAtEnd = true;
       myLabel.setText(MessageHelper.message("hit.enter.or.type.command.to.continue"));
-      myLabel.setFont(UiHelper.selectFont(myLabel.getText()));
     }
     else {
       myLabel.setText(MessageHelper.message("ex.output.panel.more"));
-      myLabel.setFont(UiHelper.selectFont(myLabel.getText()));
     }
+    myLabel.setFont(UiHelper.selectFont(myLabel.getText()));
   }
 
   private void positionPanel() {
@@ -363,7 +358,7 @@ public class ExOutputPanel extends JPanel {
     public void lookAndFeelChanged(@NotNull LafManager source) {
       if (!VimPlugin.isEnabled()) return;
       // Calls updateUI on this and child components
-      for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      for (Editor editor : HelperKt.localEditors()) {
         if (!ExOutputPanel.isPanelActive(editor)) continue;
         IJSwingUtilities.updateComponentTreeUI(ExOutputPanel.getInstance(editor));
       }

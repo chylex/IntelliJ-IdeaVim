@@ -22,18 +22,22 @@ import com.intellij.openapi.editor.Editor
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.command.MotionType
+import com.maddyhome.idea.vim.handler.Motion
 import com.maddyhome.idea.vim.handler.MotionActionHandler
+import com.maddyhome.idea.vim.handler.toMotionOrError
 
 /**
  * @author oleg
  */
 class MotionNextTabAction : MotionActionHandler.SingleExecution() {
-  override fun getOffset(editor: Editor,
-                         context: DataContext,
-                         count: Int,
-                         rawCount: Int,
-                         argument: Argument?): Int {
-    return VimPlugin.getMotion().moveCaretGotoNextTab(editor, context, rawCount)
+  override fun getOffset(
+    editor: Editor,
+    context: DataContext,
+    count: Int,
+    rawCount: Int,
+    argument: Argument?
+  ): Motion {
+    return VimPlugin.getMotion().moveCaretGotoNextTab(editor, context, rawCount).toMotionOrError()
   }
 
   override val motionType: MotionType = MotionType.INCLUSIVE

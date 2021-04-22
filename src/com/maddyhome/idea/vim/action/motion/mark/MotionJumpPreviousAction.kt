@@ -23,11 +23,20 @@ import com.intellij.openapi.editor.Editor
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.command.MotionType
+import com.maddyhome.idea.vim.handler.Motion
 import com.maddyhome.idea.vim.handler.MotionActionHandler
+import com.maddyhome.idea.vim.handler.toMotionOrError
 
 class MotionJumpPreviousAction : MotionActionHandler.ForEachCaret() {
-  override fun getOffset(editor: Editor, caret: Caret, context: DataContext, count: Int, rawCount: Int, argument: Argument?): Int {
-    return VimPlugin.getMotion().moveCaretToJump(editor, -count)
+  override fun getOffset(
+    editor: Editor,
+    caret: Caret,
+    context: DataContext,
+    count: Int,
+    rawCount: Int,
+    argument: Argument?
+  ): Motion {
+    return VimPlugin.getMotion().moveCaretToJump(editor, -count).toMotionOrError()
   }
 
   override val motionType: MotionType = MotionType.EXCLUSIVE

@@ -2,22 +2,32 @@
   <name>IdeaVim</name>
   <id>IdeaVIM</id>
   <change-notes><![CDATA[
-    <h3>Features:</h3>
-    <ul>
-      <li>Support <code>NERDTree</code> extension <a href="https://youtrack.jetbrains.com/issue/VIM-1042">VIM-1042</a> | <a
-          href="https://github.com/preservim/nerdtree">NERDTree</a></li>
-      <li>Support <code>maxmapdepth</code> option to define the maximum depth of mappings</li>
-    </ul>
+     <p>Not a lot of changes for this release. Focused on internal improvements.</p>
+     <h3>Features:</h3>
+     <ul>
+     <li>Support <code>startofline</code> option</li>
+     </li>
+     </ul>
 
-    <h3>Fixes:</h3>
-    <ul>
-      <li><a href="https://youtrack.jetbrains.com/issue/VIM-2202">VIM-2202</a> Fix macro recording for ex command and search
-      </li>
-      <li><a href="https://youtrack.jetbrains.com/issue/VIM-1799">VIM-1799</a>
-        <a href="https://youtrack.jetbrains.com/issue/VIM-179a">VIM-1794</a>
-        Special characters are not interpreted on yanking
-      </li>
-    </ul>
+     <h3>Fixes:</h3>
+     <ul>
+     <li>
+       <a href="https://youtrack.jetbrains.com/issue/VIM-2238">VIM-2238</a>
+       Fix <code>M</code> command for small files
+     </li>
+     </ul>
+
+     <h3>Merged PRs:</h3>
+     <ul>
+     <li>
+       <a href="https://github.com/JetBrains/ideavim/pull/275">275</a>
+       by <a href="https://github.com/citizenmatt">Matt Ellis</a>: Fix edge cases for H, L and M and introduce 'startofline' option
+     </li>
+     <li>
+       <a href="https://github.com/JetBrains/ideavim/pull/276">276</a>
+       by <a href="https://github.com/citizenmatt">Matt Ellis</a>: More refactoring of SearchGroup
+     </li>
+     </ul>
     ]]>
   </change-notes>
   <description><![CDATA[

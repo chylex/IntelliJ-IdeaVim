@@ -38,6 +38,9 @@ internal object NeovimTesting {
 
   private var neovimTestsCounter = 0
 
+  private var currentTestName = ""
+  private val untested = mutableListOf<String>()
+
   fun setUp(test: VimTestCase) {
     if (!neovimEnabled(test)) return
     val nvimPath = System.getenv("ideavim.nvim.path") ?: "nvim"
@@ -45,19 +48,25 @@ internal object NeovimTesting {
     neovim = pb.start()
     val neovimConnection = ProcessRpcConnection(neovim, true)
     neovimApi = NeovimApis.getApiForConnection(neovimConnection)
+    currentTestName = test.name
   }
 
   fun tearDown(test: VimTestCase) {
     if (!neovimEnabled(test)) return
     println("Tested with neovim: $neovimTestsCounter")
     neovim.destroy()
+    if (currentTestName.isNotBlank()) {
+      untested.add(currentTestName)
+      println("----")
+      println(untested)
+    }
   }
 
   private fun neovimEnabled(test: VimTestCase): Boolean {
     val method = test.javaClass.getMethod(test.name)
-    return !method.isAnnotationPresent(VimBehaviorDiffers::class.java)
-      && !method.isAnnotationPresent(TestWithoutNeovim::class.java)
-      && System.getProperty("ideavim.nvim.test", "false")!!.toBoolean()
+    return !method.isAnnotationPresent(VimBehaviorDiffers::class.java) &&
+      !method.isAnnotationPresent(TestWithoutNeovim::class.java) &&
+      System.getProperty("ideavim.nvim.test", "false")!!.toBoolean()
   }
 
   fun setupEditor(editor: Editor, test: VimTestCase) {
@@ -74,6 +83,7 @@ internal object NeovimTesting {
 
   fun assertState(editor: Editor, test: VimTestCase) {
     if (!neovimEnabled(test)) return
+    currentTestName = ""
     neovimTestsCounter++
     assertText(editor)
     assertCaret(editor)
@@ -146,6 +156,7 @@ annotation class TestWithoutNeovim(val reason: SkipNeovimReason, val description
 enum class SkipNeovimReason {
   PLUGIN,
   MULTICARET,
+  @Suppress("unused")
   INLAYS,
   OPTION,
   UNCLEAR,
@@ -154,6 +165,14 @@ enum class SkipNeovimReason {
   SELECT_MODE,
   VISUAL_BLOCK_MODE,
   DIFFERENT,
+
+  // This test doesn't check vim behaviour
+  NOT_VIM_TESTING,
+
+  SHOW_CMD,
+  SCROLL,
+  TEMPLATES,
+  EDITOR_MODIFICATION,
 }
 
 fun LogicalPosition.toVimCoords(): VimCoords {

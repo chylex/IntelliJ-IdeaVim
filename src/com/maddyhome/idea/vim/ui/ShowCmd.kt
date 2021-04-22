@@ -41,6 +41,7 @@ import java.awt.event.MouseEvent
 object ShowCmd {
   // https://github.com/vim/vim/blob/b376ace1aeaa7614debc725487d75c8f756dd773/src/vim.h#L1721
   private const val SHOWCMD_COLS = 10
+
   @NonNls
   internal const val ID = "IdeaVim::ShowCmd"
 
@@ -113,7 +114,9 @@ class ShowCmdStatusBarWidgetFactory : StatusBarWidgetFactory/*, LightEditCompati
 //
 // We only need to show partial commands, since the standard PositionPanel shows the other information already, with
 // the exception of "{lines}x{columns}" (it shows "x carets" instead)
-class Widget(project: Project) : EditorBasedWidget(project), StatusBarWidget.Multiframe,
+class Widget(project: Project) :
+  EditorBasedWidget(project),
+  StatusBarWidget.Multiframe,
   StatusBarWidget.TextPresentation {
 
   override fun ID() = ShowCmd.ID

@@ -83,8 +83,10 @@ class VimExchangeExtension : VimExtension {
   companion object {
     @NonNls
     const val EXCHANGE_CMD = "<Plug>(Exchange)"
+
     @NonNls
     const val EXCHANGE_CLEAR_CMD = "<Plug>(ExchangeClear)"
+
     @NonNls
     const val EXCHANGE_LINE_CMD = "<Plug>(ExchangeLine)"
 
@@ -97,7 +99,6 @@ class VimExchangeExtension : VimExtension {
       }
 
       fun getHighlighter(): RangeHighlighter? = myHighlighter
-
     }
 
     fun clearExchange(editor: Editor) {
@@ -199,7 +200,10 @@ class VimExchangeExtension : VimExtension {
 
     private fun exchange(editor: Editor, ex1: Exchange, ex2: Exchange, reverse: Boolean, expand: Boolean) {
       fun pasteExchange(sourceExchange: Exchange, targetExchange: Exchange) {
-        VimPlugin.getMark().setChangeMarks(editor, TextRange(editor.getMarkOffset(targetExchange.start), editor.getMarkOffset(targetExchange.end) + 1))
+        VimPlugin.getMark().setChangeMarks(
+          editor,
+          TextRange(editor.getMarkOffset(targetExchange.start), editor.getMarkOffset(targetExchange.end) + 1)
+        )
         // do this instead of direct text manipulation to set change marks
         setRegister('z', stringToKeys(sourceExchange.text), SelectionType.fromSubMode(sourceExchange.type))
         executeNormalWithoutMapping(stringToKeys("`[${targetExchange.type.getString()}`]\"zp"), editor)
@@ -212,10 +216,20 @@ class VimExchangeExtension : VimExtension {
         } else {
           if (ex1.start.logicalLine == ex2.start.logicalLine) {
             val horizontalOffset = ex1.end.col - ex2.end.col
-            primaryCaret.moveToInlayAwareLogicalPosition(LogicalPosition(ex1.start.logicalLine, ex1.start.col - horizontalOffset))
+            primaryCaret.moveToInlayAwareLogicalPosition(
+              LogicalPosition(
+                ex1.start.logicalLine,
+                ex1.start.col - horizontalOffset
+              )
+            )
           } else if (ex1.end.logicalLine - ex1.start.logicalLine != ex2.end.logicalLine - ex2.start.logicalLine) {
             val verticalOffset = ex1.end.logicalLine - ex2.end.logicalLine
-            primaryCaret.moveToInlayAwareLogicalPosition(LogicalPosition(ex1.start.logicalLine - verticalOffset, ex1.start.col))
+            primaryCaret.moveToInlayAwareLogicalPosition(
+              LogicalPosition(
+                ex1.start.logicalLine - verticalOffset,
+                ex1.start.col
+              )
+            )
           }
         }
       }
@@ -227,7 +241,7 @@ class VimExchangeExtension : VimExtension {
       runWriteAction {
         // TODO handle:
         // 	" Compare using =~ because "'==' != 0" returns 0
-        //	let indent = s:get_setting('exchange_indent', 1) !~ 0 && a:x.type ==# 'V' && a:y.type ==# 'V'
+        // 	let indent = s:get_setting('exchange_indent', 1) !~ 0 && a:x.type ==# 'V' && a:y.type ==# 'V'
         pasteExchange(ex1, ex2)
         if (!expand) {
           pasteExchange(ex2, ex1)
@@ -325,8 +339,8 @@ class VimExchangeExtension : VimExtension {
       if (isVisual) {
         executeNormalWithoutMapping(parseKeys("gvy"), editor)
         // TODO: handle
-        //if &selection ==# 'exclusive' && start != end
-        //			let end.column -= len(matchstr(@@, '\_.$'))
+        // if &selection ==# 'exclusive' && start != end
+        // 			let end.column -= len(matchstr(@@, '\_.$'))
       } else {
         selectionEnd = selectionEnd.let {
           VimMark.create(

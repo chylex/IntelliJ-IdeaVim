@@ -70,11 +70,12 @@ object OptionsManager {
   val scrolloff = addOption(NumberOption(ScrollOffData.name, "so", 0))
   val selection = addOption(BoundStringOption("selection", "sel", "inclusive", arrayOf("old", "inclusive", "exclusive")))
   val selectmode = addOption(SelectModeOptionData.option)
-  val showcmd = addOption(ToggleOption("showcmd", "sc", true))  // Vim: Off by default on platforms with possibly slow tty. On by default elsewhere.
+  val showcmd = addOption(ToggleOption("showcmd", "sc", true)) // Vim: Off by default on platforms with possibly slow tty. On by default elsewhere.
   val showmode = addOption(ToggleOption("showmode", "smd", false))
   val sidescroll = addOption(NumberOption("sidescroll", "ss", 0))
   val sidescrolloff = addOption(NumberOption("sidescrolloff", "siso", 0))
   val smartcase = addOption(ToggleOption(SmartCaseOptionsData.name, SmartCaseOptionsData.abbr, false))
+  val startofline = addOption(ToggleOption("startofline", "sol", true))
   val ideajoin = addOption(IdeaJoinOptionsData.option)
   val timeout = addOption(ToggleOption("timeout", "to", true))
   val timeoutlen = addOption(NumberOption("timeoutlen", "tm", 1000, -1, Int.MAX_VALUE))
@@ -95,6 +96,8 @@ object OptionsManager {
 
   // This should be removed in the next versions
   val ideacopypreprocess = addOption(ToggleOption("ideacopypreprocess", "ideacopypreprocess", false))
+
+  val ideatracetime = addOption(ToggleOption("ideatracetime", "ideatracetime", false))
 
   fun isSet(name: String): Boolean {
     val option = getOption(name)
@@ -268,7 +271,7 @@ object OptionsManager {
                 }
               } else {
                 error = Msg.e_invarg
-              }// boolean option - no good
+              } // boolean option - no good
             } else {
               error = Msg.unkopt
             }
@@ -480,7 +483,6 @@ object IdeaRefactorMode {
 
   fun keepMode(): Boolean = OptionsManager.idearefactormode.value == keep
   fun selectMode(): Boolean = OptionsManager.idearefactormode.value == select
-  fun visualMode(): Boolean = OptionsManager.idearefactormode.value == visual
 
   fun correctSelection(editor: Editor) {
     val action: () -> Unit = {

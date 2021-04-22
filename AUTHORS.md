@@ -348,13 +348,17 @@ Contributors:
   [![icon][github]](https://github.com/daya0576)
   &nbsp;
   大牙(Henry Zhu)
+* [![icon][mail]](mailto:mplacek@skilltech.pl)
+  [![icon][github]](https://github.com/MichalPlacek)
+  &nbsp;
+  MichalPlacek
                         
 If you are a contributor and your name is not listed here, feel free to
 contact the maintainers.
 
 <a href="https://icons8.com">Icons by Icons8</a>
 
-[mail]: resources/icons/mail.png
-[github]: resources/icons/github.png
+[mail]: assets/icons/mail.png
+[github]: assets/icons/github.png
 
-[github-off]: resources/icons/github-off.png
+[github-off]: assets/icons/github-off.png

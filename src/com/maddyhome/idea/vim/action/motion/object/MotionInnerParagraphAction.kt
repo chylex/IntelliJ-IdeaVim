@@ -30,14 +30,20 @@ import com.maddyhome.idea.vim.handler.TextObjectActionHandler
 import com.maddyhome.idea.vim.helper.enumSetOf
 import java.util.*
 
-
 class MotionInnerParagraphAction : TextObjectActionHandler() {
 
   override val flags: EnumSet<CommandFlags> = enumSetOf(CommandFlags.FLAG_TEXT_BLOCK)
 
   override val visualType: TextObjectVisualType = TextObjectVisualType.LINE_WISE
 
-  override fun getRange(editor: Editor, caret: Caret, context: DataContext, count: Int, rawCount: Int, argument: Argument?): TextRange? {
+  override fun getRange(
+    editor: Editor,
+    caret: Caret,
+    context: DataContext,
+    count: Int,
+    rawCount: Int,
+    argument: Argument?
+  ): TextRange? {
     return VimPlugin.getMotion().getParagraphRange(editor, caret, count, false)
   }
 }

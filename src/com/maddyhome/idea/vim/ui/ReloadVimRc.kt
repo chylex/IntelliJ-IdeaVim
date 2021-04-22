@@ -56,6 +56,7 @@ object VimRcFileState {
   private var modificationStamp = 0L
 
   // This is a pattern used in ideavimrc parsing for a long time. It removes all trailing/leading spaced and blank lines
+  @Suppress("unused")
   private val EOL_SPLIT_PATTERN = Pattern.compile(" *(\r\n|\n)+ *")
 
   var filePath: String? = null
@@ -107,7 +108,19 @@ object VimRcFileState {
 
 class ReloadVimRc : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val editor = e.getData(PlatformDataKeys.EDITOR) ?: return
+    val editor = e.getData(PlatformDataKeys.EDITOR) ?: run {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE) ?: run {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    if (virtualFile.path != VimRcFileState.filePath) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
 
     // XXX: Actually, it worth to add e.presentation.description, but it doesn't work because of some reason
     val sameDoc = VimRcFileState.equalTo(editor.document)
@@ -115,8 +128,7 @@ class ReloadVimRc : DumbAwareAction() {
     e.presentation.text = if (sameDoc) MessageHelper.message("action.no.changes.text")
     else MessageHelper.message("action.reload.text")
 
-    val virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE)
-    e.presentation.isEnabledAndVisible = virtualFile != null && virtualFile.path == VimRcFileState.filePath
+    e.presentation.isEnabledAndVisible = true
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -131,12 +143,14 @@ class ReloadVimRc : DumbAwareAction() {
 class ReloadFloatingToolbar : AbstractFloatingToolbarProvider(ACTION_GROUP) {
   override val autoHideable: Boolean = false
 
+  // [VERSION UPDATE] 212+
+  @Suppress("OverridingDeprecatedMember")
   override val priority: Int = 0
 
-  override fun register(toolbar: FloatingToolbarComponent, parentDisposable: Disposable) {
-    super.register(toolbar, parentDisposable)
+  override fun register(component: FloatingToolbarComponent, parentDisposable: Disposable) {
+    super.register(component, parentDisposable)
     VimRcFileState.whenFileStateSaved {
-      toolbar.scheduleShow()
+      component.scheduleShow()
     }
   }
 }

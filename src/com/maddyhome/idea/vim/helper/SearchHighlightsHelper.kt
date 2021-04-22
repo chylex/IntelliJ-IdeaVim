@@ -21,7 +21,6 @@
 package com.maddyhome.idea.vim.helper
 
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.EffectType
@@ -80,15 +79,20 @@ fun addSubstitutionConfirmationHighlight(editor: Editor, start: Int, end: Int): 
  * Refreshes current search highlights for all editors of currently active text editor/document
  */
 private fun updateSearchHighlights(
-  pattern: String?, shouldIgnoreSmartCase: Boolean, showHighlights: Boolean,
-  initialOffset: Int, searchRange: LineRange?, forwards: Boolean, forceUpdate: Boolean
+  pattern: String?,
+  shouldIgnoreSmartCase: Boolean,
+  showHighlights: Boolean,
+  initialOffset: Int,
+  searchRange: LineRange?,
+  forwards: Boolean,
+  forceUpdate: Boolean
 ): Int {
   var currentMatchOffset = -1
   val projectManager = ProjectManager.getInstanceIfCreated() ?: return currentMatchOffset
   for (project in projectManager.openProjects) {
     val current = FileEditorManager.getInstance(project).selectedTextEditor ?: continue
     // [VERSION UPDATE] 202+ Use editors
-    val editors = EditorFactory.getInstance().getEditors(current.document, project) ?: continue
+    val editors = localEditors(current.document, project) ?: continue
     for (editor in editors) {
       // Try to keep existing highlights if possible. Update if hlsearch has changed or if the pattern has changed.
       // Force update for the situations where the text is the same, but the ignore case values have changed.

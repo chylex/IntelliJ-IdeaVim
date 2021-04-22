@@ -18,10 +18,8 @@
 
 package org.jetbrains.plugins.ideavim.action.scroll
 
-import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.helper.StringHelper.parseKeys
 import com.maddyhome.idea.vim.option.OptionsManager
-import junit.framework.Assert
 import org.jetbrains.plugins.ideavim.VimTestCase
 
 /*
@@ -155,7 +153,81 @@ class ScrollPageUpActionTest : VimTestCase() {
     configureByPages(5)
     setPositionAndScroll(0, 25)
     typeText(parseKeys("<C-B>"))
-    Assert.assertTrue(VimPlugin.isError())
+    assertPluginError(true)
+  }
+
+  fun `test scroll page up too many times causes beep`() {
+    configureByPages(5)
+    setPositionAndScroll(40, 65)
+    typeText(parseKeys("20<C-B>"))
+    assertPluginError(true)
+  }
+
+  fun `test scroll page up too many times moves caret to correct location`() {
+    configureByPages(5)
+    setPositionAndScroll(40, 65)
+    typeText(parseKeys("20<C-B>"))
+    // Essentially, move top line up a multiple of (window height minus 2) +1. Not sure where the +1 comes from, but it
+    // matches Vim behaviour
+    assertPosition(8, 0)
+    assertVisibleArea(0, 34)
+    assertPluginError(true)
+  }
+
+  fun `test scroll page up too many times moves caret to correct location 2`() {
+    configureByPages(5)
+    setPositionAndScroll(50, 65)
+    typeText(parseKeys("20<C-B>"))
+    // Essentially, move top line up a multiple of (window height minus 2) +1. Not sure where the +1 comes from, but it
+    // matches Vim behaviour
+    assertPosition(18, 0) // Hard to explain, but matches Vim
+    assertVisibleArea(0, 34)
+    assertPluginError(true)
+  }
+
+  fun `test scroll page up too many times moves caret to correct location 3`() {
+    configureByPages(5)
+    setPositionAndScroll(66, 90)
+    typeText(parseKeys("20<C-B>"))
+    // Essentially, move top line up a multiple of (window height minus 2) +1. Not sure where the +1 comes from, but it
+    // matches Vim behaviour
+    assertPosition(34, 0) // Hard to explain, but matches Vim
+    assertVisibleArea(0, 34)
+    assertPluginError(true)
+  }
+
+  fun `test scroll page up too many times moves caret to bottom of screen plus scrolloff`() {
+    OptionsManager.scrolloff.set(10)
+    configureByPages(5)
+    setPositionAndScroll(40, 60)
+    typeText(parseKeys("20<C-B>"))
+    assertPosition(8, 0)
+    assertVisibleArea(0, 34)
+    assertPluginError(true)
+  }
+
+  fun `test scroll page up positions last page with only two lines correctly`() {
+    // Vim normally scrolls up window height minus two. When there is a last page with only one or two lines, due to
+    // virtual space, it scrolls up window height minus one, or windows height.
+    configureByPages(5)
+    setEditorVirtualSpace()
+    // Vim allows top line to be 175. IntelliJ doesn't. We match the behaviour of Vim at 174, so with 2 lines
+    setPositionAndScroll(174, 175)
+    typeText(parseKeys("<C-B>"))
+    assertPosition(174, 0)
+    assertVisibleArea(140, 174)
+    assertPluginError(false)
+  }
+
+  fun `test scroll page up positions last page with only two lines correctly 2`() {
+    configureByPages(5)
+    setEditorVirtualSpace()
+    // Vim allows top line to be 175. IntelliJ doesn't. We match the behaviour of Vim at 174, so with 2 lines
+    setPositionAndScroll(174, 174)
+    typeText(parseKeys("<C-B>"))
+    assertPosition(174, 0)
+    assertVisibleArea(140, 174)
+    assertPluginError(false)
   }
 
   fun `test scroll page up on second page moves cursor to previous top`() {
@@ -164,5 +236,22 @@ class ScrollPageUpActionTest : VimTestCase() {
     typeText(parseKeys("<C-B>"))
     assertPosition(11, 0)
     assertVisibleArea(0, 34)
+  }
+
+  fun `test scroll page up puts cursor on first non-blank column`() {
+    configureByLines(100, "    I found it in a legendary land")
+    setPositionAndScroll(50, 60, 14)
+    typeText(parseKeys("<C-B>"))
+    assertPosition(51, 4)
+    assertVisibleArea(17, 51)
+  }
+
+  fun `test scroll page up keeps same column with nostartofline`() {
+    OptionsManager.startofline.reset()
+    configureByLines(100, "    I found it in a legendary land")
+    setPositionAndScroll(50, 60, 14)
+    typeText(parseKeys("<C-B>"))
+    assertPosition(51, 14)
+    assertVisibleArea(17, 51)
   }
 }

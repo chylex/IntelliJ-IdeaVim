@@ -86,9 +86,11 @@ public class PsiHelper {
     return navigationOffsets.get(resultIndex);
   }
 
-  private static void addNavigationElements(@NotNull TreeElement root, @NotNull TIntArrayList navigationOffsets, boolean start) {
+  private static void addNavigationElements(@NotNull TreeElement root,
+                                            @NotNull TIntArrayList navigationOffsets,
+                                            boolean start) {
     if (root instanceof PsiTreeElementBase) {
-      PsiElement element = ((PsiTreeElementBase)root).getValue();
+      PsiElement element = ((PsiTreeElementBase<?>)root).getValue();
       int offset;
       if (start) {
         offset = element.getTextRange().getStartOffset();

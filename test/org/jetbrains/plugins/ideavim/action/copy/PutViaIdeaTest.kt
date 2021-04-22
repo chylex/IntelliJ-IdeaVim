@@ -77,7 +77,8 @@ class PutViaIdeaTest : VimTestCase() {
     CopyPasteManager.getInstance().setContents(TextBlockTransferable("Fill", emptyList(), null))
     CopyPasteManager.getInstance().setContents(TextBlockTransferable("Buffer", emptyList(), null))
 
-    VimPlugin.getRegister().storeText(myFixture.editor, before rangeOf "legendary$randomUUID", SelectionType.CHARACTER_WISE, false)
+    VimPlugin.getRegister()
+      .storeText(myFixture.editor, before rangeOf "legendary$randomUUID", SelectionType.CHARACTER_WISE, false)
 
     val sizeBefore = CopyPasteManager.getInstance().allContents.size
     typeText(StringHelper.parseKeys("ve", "p"))
@@ -91,10 +92,15 @@ class PutViaIdeaTest : VimTestCase() {
             I found it in a legendary land
             
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     configureByText(before)
 
-    VimPlugin.getRegister().storeText(myFixture.editor, before rangeOf "\nI found it in a legendary land\n", SelectionType.CHARACTER_WISE, false)
+    VimPlugin.getRegister().storeText(
+      myFixture.editor,
+      before rangeOf "\nI found it in a legendary land\n",
+      SelectionType.CHARACTER_WISE,
+      false
+    )
 
     typeText(StringHelper.parseKeys("p"))
     val after = """
@@ -105,7 +111,7 @@ class PutViaIdeaTest : VimTestCase() {
             I found it in a legendary land
             
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     myFixture.checkResult(after)
   }
 }

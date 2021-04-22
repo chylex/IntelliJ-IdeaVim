@@ -21,7 +21,10 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.Editor
 
-class EditorDataContext @Deprecated("Please use `init` method") constructor(private val editor: Editor, private val contextDelegate: DataContext? = null) : DataContext {
+class EditorDataContext @Deprecated("Please use `init` method") constructor(
+  private val editor: Editor,
+  private val contextDelegate: DataContext? = null
+) : DataContext {
   /**
    * Returns the object corresponding to the specified data identifier. Some of the supported data identifiers are
    * defined in the [PlatformDataKeys] class.
@@ -37,6 +40,7 @@ class EditorDataContext @Deprecated("Please use `init` method") constructor(priv
   }
 
   companion object {
+    @Suppress("DEPRECATION")
     @JvmStatic
     fun init(editor: Editor, contextDelegate: DataContext? = null): EditorDataContext {
       return if (contextDelegate is EditorDataContext) {

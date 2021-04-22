@@ -22,7 +22,7 @@ package org.jetbrains.plugins.ideavim.action.change.delete
 
 import com.maddyhome.idea.vim.command.CommandState
 import com.maddyhome.idea.vim.helper.StringHelper.parseKeys
-import com.maddyhome.idea.vim.helper.VimBehaviorDiffers
+import com.maddyhome.idea.vim.option.OptionsManager
 import com.maddyhome.idea.vim.option.VirtualEditData
 import org.jetbrains.plugins.ideavim.SkipNeovimReason
 import org.jetbrains.plugins.ideavim.TestWithoutNeovim
@@ -43,66 +43,74 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
             ${c}all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
   @TestWithoutNeovim(SkipNeovimReason.OPTION)
   @VimOptionTestConfiguration(VimTestOption(VirtualEditData.name, VimTestOptionType.VALUE, [VirtualEditData.onemore]))
   fun `test virtual edit delete middle to end`() {
-    doTest("D", """
+    doTest(
+      "D",
+      """
             Yesterday it w${c}orked
             Today it is not working
             The test is like that.
-        """.trimIndent(), """
+      """.trimIndent(),
+      """
             Yesterday it w${c}
             Today it is not working
             The test is like that.
-        """.trimIndent(), CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
+      """.trimIndent(),
+      CommandState.Mode.COMMAND, CommandState.SubMode.NONE
+    )
   }
 
   @TestWithoutNeovim(SkipNeovimReason.OPTION)
   @VimOptionTestConfiguration(VimTestOption(VirtualEditData.name, VimTestOptionType.VALUE, [VirtualEditData.onemore]))
   fun `test virtual edit delete end to end`() {
-    doTest("D", """
+    doTest(
+      "D",
+      """
             Yesterday it worke${c}d
             Today it is not working
             The test is like that.
-        """.trimIndent(), """
+      """.trimIndent(),
+      """
             Yesterday it worke${c}
             Today it is not working
             The test is like that.
-        """.trimIndent(), CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
+      """.trimIndent(),
+      CommandState.Mode.COMMAND, CommandState.SubMode.NONE
+    )
   }
 
   @TestWithoutNeovim(SkipNeovimReason.OPTION)
   @VimOptionTestConfiguration(VimTestOption(VirtualEditData.name, VimTestOptionType.VALUE, [VirtualEditData.onemore]))
   fun `test virtual edit delete to end from virtual space`() {
-    doTest("D", """
+    doTest(
+      "D",
+      """
             Yesterday it worked${c}
             Today it is not working
             The test is like that.
-        """.trimIndent(), """
+      """.trimIndent(),
+      """
             Yesterday it worke${c}
             Today it is not working
             The test is like that.
-        """.trimIndent(), CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
+      """.trimIndent(),
+      CommandState.Mode.COMMAND, CommandState.SubMode.NONE
+    )
   }
 
-  @VimBehaviorDiffers(originalVimAfter = """
-            A Discovery
-
-                ${c}all rocks and lavender and tufted grass,
-            where it was settled on some sodden sand
-            hard by the torrent of a mountain pass.
-    """)
   @VimOptionDefaultAll
   fun `test simple deletion with indent`() {
     val keys = listOf("v", "D")
@@ -113,14 +121,37 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
                 all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
-            ${c}    all rocks and lavender and tufted grass,
+                ${c}all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
+    doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
+  }
+
+  @VimOptionDefaultAll
+  @TestWithoutNeovim(reason = SkipNeovimReason.OPTION)
+  fun `test simple deletion with indent and nostartofline`() {
+    OptionsManager.startofline.reset()
+    val keys = listOf("v", "D")
+    val before = """
+            A Discovery
+
+            I ${c}found it in a legendary land
+                all rocks and lavender and tufted grass,
+            where it was settled on some sodden sand
+            hard by the torrent of a mountain pass.
+    """.trimIndent()
+    val after = """
+            A Discovery
+
+              ${c}  all rocks and lavender and tufted grass,
+            where it was settled on some sodden sand
+            hard by the torrent of a mountain pass.
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -134,14 +165,14 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
             ${c}I found it in a legendary land
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -156,7 +187,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             where it was settled on some sodden sand
             hard by the ${c}torrent of a mountain pass.
 
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
@@ -164,7 +195,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             ${c}
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -178,14 +209,14 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             ${c}
             I found it in a legendary land
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -200,7 +231,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
 
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
@@ -208,7 +239,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             ${c}
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -221,14 +252,15 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             I found it in a legendary land
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
-            hard by the ${c}torrent of a mountain pass.""".trimIndent()
+            hard by the ${c}torrent of a mountain pass.
+    """.trimIndent()
     val after = """
             A Discovery
 
             I found it in a legendary land
             all rocks and lavender and tufted grass,
             ${c}where it was settled on some sodden sand
-            """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -242,13 +274,13 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
             ${c}where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -262,19 +294,20 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all ${c}rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
             ${c}where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
   @VimOptionDefaultAll
   fun `test delete visual lines end action`() {
-    typeTextInFile(parseKeys("v", "2j", "D"),
+    typeTextInFile(
+      parseKeys("v", "2j", "D"),
       """
                     a${c}bcde
                     abcde
@@ -284,7 +317,8 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
                     abcde
                     abcde
 
-                    """.trimIndent())
+      """.trimIndent()
+    )
     myFixture.checkResult("${c}abcde\n${c}")
   }
 
@@ -298,24 +332,17 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
             ${c}all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
-  @VimBehaviorDiffers(originalVimAfter = """
-            A Discovery
-
-                ${c}all rocks and lavender and tufted grass,
-            where it was settled on some sodden sand
-            hard by the torrent of a mountain pass.
-    """)
   @VimOptionDefaultAll
   fun `test line deletion with indent`() {
     val keys = listOf("V", "D")
@@ -326,14 +353,37 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
                 all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
-            ${c}    all rocks and lavender and tufted grass,
+                ${c}all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
+    doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
+  }
+
+  @VimOptionDefaultAll
+  @TestWithoutNeovim(reason = SkipNeovimReason.OPTION)
+  fun `test line deletion with indent and nostartofline`() {
+    OptionsManager.startofline.reset()
+    val keys = listOf("V", "D")
+    val before = """
+            A Discovery
+
+            I ${c}found it in a legendary land
+                all rocks and lavender and tufted grass,
+            where it was settled on some sodden sand
+            hard by the torrent of a mountain pass.
+    """.trimIndent()
+    val after = """
+            A Discovery
+
+              ${c}  all rocks and lavender and tufted grass,
+            where it was settled on some sodden sand
+            hard by the torrent of a mountain pass.
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -347,14 +397,14 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
             ${c}I found it in a legendary land
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -369,7 +419,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             where it was settled on some sodden sand
             hard by the ${c}torrent of a mountain pass.
 
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
@@ -377,7 +427,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             ${c}
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -390,14 +440,15 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             I found it in a legendary land
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
-            hard by the ${c}torrent of a mountain pass.""".trimIndent()
+            hard by the ${c}torrent of a mountain pass.
+    """.trimIndent()
     val after = """
             A Discovery
 
             I found it in a legendary land
             all rocks and lavender and tufted grass,
             ${c}where it was settled on some sodden sand
-            """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -411,13 +462,13 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
             ${c}where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -431,19 +482,20 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all ${c}rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
             ${c}where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
   @VimOptionDefaultAll
   fun `test line delete visual lines end action`() {
-    typeTextInFile(parseKeys("V", "2j", "D"),
+    typeTextInFile(
+      parseKeys("V", "2j", "D"),
       """
                     a${c}bcde
                     abcde
@@ -453,7 +505,8 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
                     abcde
                     abcde
 
-                    """.trimIndent())
+      """.trimIndent()
+    )
     myFixture.checkResult("${c}abcde\n${c}")
   }
 
@@ -467,7 +520,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
@@ -475,7 +528,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -489,7 +542,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
             ${c}
@@ -497,7 +550,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -512,7 +565,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             where it was settled on some sodden sand
             hard by the${c} torrent of a mountain pass.
 
-        """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
@@ -521,7 +574,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             where it was settled on some sodden sand
             hard by the
 
-        """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -534,14 +587,16 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             I found it in a legendary land
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
-            hard by the${c} torrent of a mountain pass.""".trimIndent()
+            hard by the${c} torrent of a mountain pass.
+    """.trimIndent()
     val after = """
             A Discovery
 
             I found it in a legendary land
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
-            hard by the""".trimIndent()
+            hard by the
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -555,7 +610,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
@@ -563,7 +618,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             a
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
@@ -577,7 +632,7 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all${c} rocks and lavender and tufted grass,
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     val after = """
             A Discovery
 
@@ -585,13 +640,14 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
             all
             where it was settled on some sodden sand
             hard by the torrent of a mountain pass.
-            """.trimIndent()
+    """.trimIndent()
     doTest(keys, before, after, CommandState.Mode.COMMAND, CommandState.SubMode.NONE)
   }
 
   @VimOptionDefaultAll
   fun `test delete visual block line end action`() {
-    typeTextInFile(parseKeys("<C-V>", "2j", "2l", "D"),
+    typeTextInFile(
+      parseKeys("<C-V>", "2j", "2l", "D"),
       """
                     abcde
                     a${c}bcde
@@ -599,14 +655,19 @@ class DeleteVisualLinesEndActionTest : VimOptionTestCase(VirtualEditData.name) {
                     abcde
                     abcde
 
-                    """.trimIndent())
-    myFixture.checkResult(("""
+      """.trimIndent()
+    )
+    myFixture.checkResult(
+      (
+        """
     abcde
     ${c}a
     a
     a
     abcde
 
-    """.trimIndent()))
+        """.trimIndent()
+        )
+    )
   }
 }

@@ -31,6 +31,7 @@ import com.maddyhome.idea.vim.extension.VimExtensionHandler;
 import com.maddyhome.idea.vim.handler.TextObjectActionHandler;
 import com.maddyhome.idea.vim.helper.InlayHelperKt;
 import com.maddyhome.idea.vim.helper.MessageHelper;
+import com.maddyhome.idea.vim.helper.VimNlsSafe;
 import com.maddyhome.idea.vim.listener.SelectionVimListenerSuppressor;
 import com.maddyhome.idea.vim.listener.VimListenerSuppressor;
 import org.jetbrains.annotations.Nls;
@@ -205,8 +206,9 @@ public class VimArgTextObjExtension implements VimExtension {
           try {
             bracketPairs = BracketPairs.fromBracketPairList(bracketPairsVar);
           } catch (BracketPairs.ParseException parseException) {
-            VimPlugin.showMessage(
-              MessageHelper.message("argtextobj.invalid.value.of.g.argtextobj.pairs.0", parseException.getMessage()));
+            @VimNlsSafe String message =
+              MessageHelper.message("argtextobj.invalid.value.of.g.argtextobj.pairs.0", parseException.getMessage());
+            VimPlugin.showMessage(message);
             VimPlugin.indicateError();
             return null;
           }
@@ -249,6 +251,7 @@ public class VimArgTextObjExtension implements VimExtension {
       int count = Math.max(1, commandState.getCommandBuilder().getCount());
 
       final ArgumentTextObjectHandler textObjectHandler = new ArgumentTextObjectHandler(isInner);
+      //noinspection DuplicatedCode
       if (!commandState.isOperatorPending()) {
         editor.getCaretModel().runForEachCaret((Caret caret) -> {
           final TextRange range = textObjectHandler.getRange(editor, caret, context, count, 0, null);

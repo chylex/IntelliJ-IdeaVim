@@ -59,6 +59,7 @@ import com.maddyhome.idea.vim.group.visual.VimSelection;
 import com.maddyhome.idea.vim.group.visual.VisualGroupKt;
 import com.maddyhome.idea.vim.group.visual.VisualModeHelperKt;
 import com.maddyhome.idea.vim.handler.EditorActionHandlerBase;
+import com.maddyhome.idea.vim.handler.Motion;
 import com.maddyhome.idea.vim.helper.*;
 import com.maddyhome.idea.vim.listener.SelectionVimListenerSuppressor;
 import com.maddyhome.idea.vim.listener.VimInsertListener;
@@ -98,7 +99,7 @@ public class ChangeGroup {
 
   private @Nullable Command lastInsert;
 
-  private List<VimInsertListener> insertListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<VimInsertListener> insertListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private void setInsertRepeat(int lines, int column, boolean append) {
     repeatLines = lines;
@@ -170,16 +171,24 @@ public class ChangeGroup {
   public void insertNewLineAbove(final @NotNull Editor editor, @NotNull DataContext context) {
     if (editor.isOneLineMode()) return;
 
+    // See also EditorStartNewLineBefore. That will move the caret to line start, call EditorEnter to create a new line,
+    // and then move up and call EditorLineEnd. We get better indent positioning by going to the line end of the
+    // previous line and hitting enter, especially with plain text files.
+
+    // Note that we're deliberately bypassing MotionGroup.moveCaret to avoid side effects, most notably unncessary
+    // scrolling
     Set<Caret> firstLiners = new HashSet<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      final int offset;
       if (caret.getVisualPosition().line == 0) {
-        MotionGroup.moveCaret(editor, caret, VimPlugin.getMotion().moveCaretToLineStart(editor, caret));
+        // Fake indenting for the first line. Works well for plain text to match the existing indent
+        offset = VimPlugin.getMotion().moveCaretToLineStartSkipLeading(editor, caret);
         firstLiners.add(caret);
       }
       else {
-        MotionGroup.moveCaret(editor, caret, VimPlugin.getMotion().moveCaretVertical(editor, caret, -1));
-        MotionGroup.moveCaret(editor, caret, VimPlugin.getMotion().moveCaretToLineEnd(editor, caret));
+        offset = VimPlugin.getMotion().moveCaretToLineEnd(editor, caret.getLogicalPosition().line - 1, true);
       }
+      caret.moveToOffset(offset);
     }
 
     initInsert(editor, context, CommandState.Mode.INSERT);
@@ -187,9 +196,12 @@ public class ChangeGroup {
 
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       if (firstLiners.contains(caret)) {
-        MotionGroup.moveCaret(editor, caret, VimPlugin.getMotion().moveCaretVertical(editor, caret, -1));
+        final int offset = VimPlugin.getMotion().moveCaretToLineEnd(editor, 0,true);
+        MotionGroup.moveCaret(editor, caret, offset);
       }
     }
+
+    MotionGroup.scrollCaretIntoView(editor);
   }
 
   /**
@@ -236,6 +248,8 @@ public class ChangeGroup {
 
     initInsert(editor, context, CommandState.Mode.INSERT);
     runEnterAction(editor, context);
+
+    MotionGroup.scrollCaretIntoView(editor);
   }
 
   /**
@@ -258,7 +272,7 @@ public class ChangeGroup {
     if (!state.isDotRepeatInProgress()) {
       // While repeating the enter action has been already executed because `initInsert` repeats the input
       final ActionManager actionManager = ActionManager.getInstance();
-      final AnAction action = actionManager.getAction("EditorEnter");
+      final AnAction action = actionManager.getAction(IdeActions.ACTION_EDITOR_ENTER);
       if (action != null) {
         strokes.add(action);
         KeyHandler.executeAction(action, context);
@@ -308,14 +322,11 @@ public class ChangeGroup {
   public boolean insertRegister(@NotNull Editor editor, @NotNull DataContext context, char key) {
     final Register register = VimPlugin.getRegister().getRegister(key);
     if (register != null) {
-      final String text = register.getText();
-      if (text != null) {
-        final int length = text.length();
-        for (int i = 0; i < length; i++) {
-          processKey(editor, context, KeyStroke.getKeyStroke(text.charAt(i)));
-        }
-        return true;
+      final List<KeyStroke> keys = register.getKeys();
+      for (KeyStroke k:keys) {
+        processKey(editor, context, k);
       }
+      return true;
     }
 
     return false;
@@ -368,7 +379,13 @@ public class ChangeGroup {
         deleteTo = pointer + 1;
       }
       else {
-        deleteTo = VimPlugin.getMotion().findOffsetOfNextWord(editor, pointer + 1, -1, false);
+        Motion motion = VimPlugin.getMotion().findOffsetOfNextWord(editor, pointer + 1, -1, false);
+        if (motion instanceof Motion.AbsoluteOffset) {
+          deleteTo = ((Motion.AbsoluteOffset)motion).getOffset();
+        }
+        else {
+          return false;
+        }
       }
     }
     if (deleteTo < 0) {
@@ -634,15 +651,16 @@ public class ChangeGroup {
               insertText(editor, caret, offset, pad);
             }
           }
+          int updatedCount = started ? (i == 0 ? count : count + 1) : count;
           if (repeatColumn >= MotionGroup.LAST_COLUMN) {
             caret.moveToOffset(VimPlugin.getMotion().moveCaretToLineEnd(editor, logicalLine + i, true));
-            repeatInsertText(editor, context, started ? (i == 0 ? count : count + 1) : count);
+            repeatInsertText(editor, context, updatedCount);
           }
           else if (EditorHelper.getVisualLineLength(editor, visualLine + i) >= repeatColumn) {
             VisualPosition visualPosition = new VisualPosition(visualLine + i, repeatColumn);
             int inlaysCount = InlayHelperKt.amountOfInlaysBeforeVisualPosition(editor, visualPosition);
             caret.moveToVisualPosition(new VisualPosition(visualLine + i, repeatColumn + inlaysCount));
-            repeatInsertText(editor, context, started ? (i == 0 ? count : count + 1) : count);
+            repeatInsertText(editor, context, updatedCount);
           }
         }
 
@@ -717,11 +735,17 @@ public class ChangeGroup {
     final int endOffset = VimPlugin.getMotion().getOffsetOfHorizontalMotion(editor, caret, count, true);
     if (endOffset != -1) {
       final boolean res = deleteText(editor, new TextRange(caret.getOffset(), endOffset), SelectionType.CHARACTER_WISE);
+
       final int pos = caret.getOffset();
       final int norm = EditorHelper.normalizeOffset(editor, caret.getLogicalPosition().line, pos, isChange);
       if (norm != pos || editor.offsetToVisualPosition(norm) != EditorUtil.inlayAwareOffsetToVisualPosition(editor, norm)) {
         MotionGroup.moveCaret(editor, caret, norm);
       }
+      // Always move the caret. Our position might or might not have changed, but an inlay might have been moved to our
+      // location, or deleting the character(s) might have caused us to scroll sideways in long files. Moving the caret
+      // will make sure it's in the right place, and visible
+      final int offset = EditorHelper.normalizeOffset(editor, caret.getLogicalPosition().line, caret.getOffset(), isChange);
+      MotionGroup.moveCaret(editor, caret, offset);
 
       return res;
     }
@@ -778,6 +802,7 @@ public class ChangeGroup {
     int startOffset = initialOffset;
     if (offset == initialOffset && offset != lineStart) startOffset--; // handle delete from virtual space
 
+    //noinspection ConstantConditions
     if (offset != -1) {
       final TextRange rangeToDelete = new TextRange(startOffset, offset);
       editor.getCaretModel().getAllCarets().stream().filter(c -> c != caret && rangeToDelete.contains(c.getOffset()))
@@ -842,7 +867,7 @@ public class ChangeGroup {
       CommandProcessor.getInstance().executeCommand(editor.getProject(), () -> ApplicationManager.getApplication()
                                                       .runWriteAction(() -> KeyHandler.getInstance().getOriginalHandler().execute(editor, key.getKeyChar(), context)),
                                                     "", doc, UndoConfirmationPolicy.DEFAULT, doc);
-
+      MotionGroup.scrollCaretIntoView(editor);
       return true;
     }
 
@@ -1139,6 +1164,9 @@ public class ChangeGroup {
                              @Nullable SelectionType type,
                              boolean isChange) {
 
+    // Update the last column before we delete, or we might be retrieving the data for a line that no longer exists
+    UserDataManager.setVimLastColumn(caret, InlayHelperKt.getInlayAwareVisualColumn(caret));
+
     boolean removeLastNewLine = removeLastNewLine(editor, range, type);
     final boolean res = deleteText(editor, range, type);
     if (removeLastNewLine) {
@@ -1149,7 +1177,7 @@ public class ChangeGroup {
     if (res) {
       int pos = EditorHelper.normalizeOffset(editor, range.getStartOffset(), isChange);
       if (type == SelectionType.LINE_WISE) {
-        pos = VimPlugin.getMotion().moveCaretToLineStart(editor, editor.offsetToLogicalPosition(pos).line);
+        pos = VimPlugin.getMotion().moveCaretToLineWithStartOfLineOption(editor, editor.offsetToLogicalPosition(pos).line, caret);
       }
       MotionGroup.moveCaret(editor, caret, pos);
     }
@@ -1423,16 +1451,6 @@ public class ChangeGroup {
     replaceText(editor, start, end, sb.toString());
   }
 
-  public void autoIndentLines(@NotNull Editor editor, @NotNull Caret caret, @NotNull DataContext context, int count) {
-    final int startLine = caret.getLogicalPosition().line;
-    final int endLine = startLine + count - 1;
-
-    if (endLine <= EditorHelper.getLineCount(editor)) {
-      final TextRange range = new TextRange(caret.getOffset(), editor.getDocument().getLineEndOffset(endLine));
-      autoIndentRange(editor, caret, context, range);
-    }
-  }
-
   /**
    * Deletes the range of text and enters insert mode
    *
@@ -1440,7 +1458,6 @@ public class ChangeGroup {
    * @param caret   The caret to be moved after range deletion
    * @param range   The range to change
    * @param type    The type of the range
-   * @param context
    * @return true if able to delete the range, false if not
    */
   public boolean changeRange(@NotNull Editor editor,
@@ -1457,7 +1474,7 @@ public class ChangeGroup {
         col = MotionGroup.LAST_COLUMN;
       }
     }
-    boolean after = range.getEndOffset() >= EditorHelper.getFileSize(editor, true);
+    boolean after = range.getEndOffset() >= EditorHelperRt.getFileSize(editor);
 
     final LogicalPosition lp =
       editor.offsetToLogicalPosition(VimPlugin.getMotion().moveCaretToLineStartSkipLeading(editor, caret));
@@ -1659,6 +1676,9 @@ public class ChangeGroup {
       logger.debug("count=" + count);
     }
 
+    // Update the last column before we indent, or we might be retrieving the data for a line that no longer exists
+    UserDataManager.setVimLastColumn(caret, InlayHelperKt.getInlayAwareVisualColumn(caret));
+
     IndentConfig indentConfig = IndentConfig.create(editor, context);
 
     final int sline = editor.offsetToLogicalPosition(range.getStartOffset()).line;
@@ -1720,7 +1740,7 @@ public class ChangeGroup {
 
     if (!CommandStateHelper.inInsertMode(editor)) {
       if (!range.isMultiple()) {
-        MotionGroup.moveCaret(editor, caret, VimPlugin.getMotion().moveCaretToLineStartSkipLeading(editor, sline));
+        MotionGroup.moveCaret(editor, caret, VimPlugin.getMotion().moveCaretToLineWithStartOfLineOption(editor, sline, caret));
       }
       else {
         MotionGroup.moveCaret(editor, caret, range.getStartOffset());

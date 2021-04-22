@@ -72,7 +72,11 @@ inline fun waitAndAssert(timeInMillis: Int = 1000, condition: () -> Boolean) {
   fail()
 }
 
-fun waitAndAssertMode(fixture: CodeInsightTestFixture, mode: CommandState.Mode, timeInMillis: Int = OptionsManager.visualEnterDelay.value() + 1000) {
+fun waitAndAssertMode(
+  fixture: CodeInsightTestFixture,
+  mode: CommandState.Mode,
+  timeInMillis: Int = OptionsManager.visualEnterDelay.value() + 1000
+) {
   waitAndAssert(timeInMillis) { fixture.editor.mode == mode }
 }
 
@@ -94,6 +98,7 @@ fun assertHappened(timeInMillis: Int = 1000, precision: Int, condition: () -> Bo
   waitAndAssert(precision * 2) { condition() }
 }
 
+@Suppress("unused")
 fun waitCondition(
   durationMillis: Long,
   interval: Long = 500,

@@ -48,6 +48,7 @@ import javax.swing.KeyStroke
  *  - [MotionActionHandler]: ........... Motion commands. .... E.g.: k, w, <Up>
  *  - [ChangeEditorActionHandler]: ..... Change commands. .... E.g.: s, r, gU
  *  - [VisualOperatorActionHandler]: ... Visual commands.
+ *  - [IdeActionHandler]: .............. Commands handled by existing IDE actions.
  *
  *  SpecialKeyHandlers are not presented here because these handlers are created to a limited set of commands and they
  *    are already implemented.
@@ -108,7 +109,8 @@ abstract class EditorActionHandlerBase(private val myRunForEachCaret: Boolean) {
       StringHelper.parseKeys(keyStrings[it])
     }.toSet()
 
-    @NonNls private const val VimActionPrefix = "Vim"
+    @NonNls
+    private const val VimActionPrefix = "Vim"
 
     @NonNls
     fun getActionId(classFullName: String): String {

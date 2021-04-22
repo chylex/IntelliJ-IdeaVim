@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ThrowableComputable
 import com.maddyhome.idea.vim.VimPlugin
@@ -63,10 +62,13 @@ object CommandParser {
   private fun registerEpListener() {
     // IdeaVim doesn't support contribution to ex_command_ep extension point, so technically we can skip this update,
     //   but let's support dynamic plugins in a more classic way and reload handlers on every EP change.
-    EX_COMMAND_EP.getPoint(null).addExtensionPointListener(ExtensionPointChangeListener {
-      unregisterHandlers()
-      registerHandlers()
-    }, false, VimPlugin.getInstance())
+    EX_COMMAND_EP.addChangeListener(
+      Runnable {
+        unregisterHandlers()
+        registerHandlers()
+      },
+      VimPlugin.getInstance()
+    )
   }
 
   /**
@@ -102,8 +104,11 @@ object CommandParser {
 
   @kotlin.jvm.Throws(ExException::class)
   private fun processCommand(
-    editor: Editor, context: DataContext, cmd: String,
-    count: Int, aliasCountdown: Int
+    editor: Editor,
+    context: DataContext,
+    cmd: String,
+    count: Int,
+    aliasCountdown: Int
   ) {
     // Nothing entered
     if (cmd.isEmpty()) {
@@ -147,7 +152,7 @@ object CommandParser {
     val handler = getCommandHandler(command)
     if (handler == null) {
       val message = message(Msg.NOT_EX_CMD, command.command)
-      throw InvalidCommandException(message, cmd)
+      throw InvalidCommandException(message, null)
     }
     if (handler.argFlags.access === CommandHandler.Access.WRITABLE && !editor.document.isWritable) {
       VimPlugin.indicateError()
@@ -203,7 +208,7 @@ object CommandParser {
     val argument = StringBuilder() // The command's argument(s)
     var location: StringBuffer? = null // The current range text
     var offsetSign = 1 // Sign of current range offset
-    var offsetNumber = 0 // The value of the current range offset
+    var offsetNumber = -1 // The value of the current range offset
     var offsetTotal = 0 // The sum of all the current range offsets
     var move = false // , vs. ; separated ranges (true=; false=,)
     var patternType = 0.toChar() // ? or /
@@ -225,7 +230,7 @@ object CommandParser {
           } else {
             state = State.RANGE
           }
-          State.COMMAND ->             // For commands that start with a non-letter, treat other non-letter characters as part of
+          State.COMMAND -> // For commands that start with a non-letter, treat other non-letter characters as part of
             // the argument except for !, <, or >
             if (Character.isLetter(ch) ||
               command.isEmpty() && "~<>@=#*&!".indexOf(ch) >= 0 ||
@@ -246,7 +251,7 @@ object CommandParser {
           State.RANGE -> {
             location = StringBuffer()
             offsetTotal = 0
-            offsetNumber = 0
+            offsetNumber = -1
             move = false
             if (ch in '0'..'9') {
               state = State.RANGE_LINE
@@ -276,7 +281,7 @@ object CommandParser {
               state = State.RANGE_PATTERN
               reprocess = false
             } else {
-              error = message(Msg.e_badrange, Character.toString(ch))
+              error = message(Msg.e_badrange, ch.toString())
               state = State.ERROR
               reprocess = false
             }
@@ -291,18 +296,20 @@ object CommandParser {
             }
             reprocess = false
           }
-          State.RANGE_PATTERN ->             // No trailing / or ? required if there is no command so look for newline to tell us we are done
+          State.RANGE_PATTERN -> // No trailing / or ? required if there is no command so look for newline to tell us we are done
             if (ch == '\n') {
               location!!.append(patternType)
               state = State.RANGE_MAYBE_DONE
             } else {
               // We need to skip over [ ] ranges. The ] is valid right after the [ or [^
               location!!.append(ch)
+              val cBracketCond = !(
+                location[location.length - 2] == '[' ||
+                  location.length >= 3 && location.substring(location.length - 3) == "[^]"
+                )
               if (ch == '[' && !inBrackets) {
                 inBrackets = true
-              } else if (ch == ']' && inBrackets && !(location[location.length - 2] == '[' ||
-                  location.length >= 3 && location.substring(location.length - 3) == "[^]")
-              ) {
+              } else if (ch == ']' && inBrackets && cBracketCond) {
                 inBrackets = false
               } else if (ch == '\\') {
                 backCount++
@@ -332,11 +339,17 @@ object CommandParser {
           }
           State.RANGE_LINE -> if (ch in '0'..'9') {
             location!!.append(ch)
-            state = State.RANGE_MAYBE_DONE
+            state = State.RANGE_LINE_MAYBE_DONE
             reprocess = false
           } else {
             state = State.RANGE_MAYBE_DONE
           }
+          State.RANGE_LINE_MAYBE_DONE ->
+            state = if (ch in '0'..'9') {
+              State.RANGE_LINE
+            } else {
+              State.RANGE_MAYBE_DONE
+            }
           State.RANGE_CURRENT -> {
             location!!.append(ch)
             state = State.RANGE_MAYBE_DONE
@@ -365,8 +378,9 @@ object CommandParser {
           State.RANGE_DONE -> {
             val range = createRange(location.toString(), offsetTotal, move)
             if (range == null) {
-              error = message(Msg.e_badrange, Character.toString(ch))
+              error = message(Msg.e_badrange, ch.toString())
               state = State.ERROR
+              @Suppress("UNUSED_VALUE")
               reprocess = false
               break@loop
             }
@@ -381,28 +395,28 @@ object CommandParser {
               state = State.RANGE
             }
           }
-          State.RANGE_MAYBE_DONE ->             // The range has an offset after it
-            state = if (ch == '+' || ch == '-') {
+          State.RANGE_MAYBE_DONE ->
+            state = if (ch == '+' || ch == '-' || ch in '0'..'9') {
+              // The range has an offset after it
               State.RANGE_OFFSET
             } else if (ch == ',' || ch == ';') {
               State.RANGE_SEPARATOR
-            } else if (ch in '0'..'9') {
-              State.RANGE_LINE
             } else {
               State.RANGE_DONE
             }
           State.RANGE_OFFSET -> {
             // Figure out the sign of the offset and reset the offset value
-            offsetNumber = 0
+            offsetNumber = -1
+            offsetSign = 1
             if (ch == '+') {
-              offsetSign = 1
+              reprocess = false
             } else if (ch == '-') {
               offsetSign = -1
+              reprocess = false
             }
             state = State.RANGE_OFFSET_MAYBE_DONE
-            reprocess = false
           }
-          State.RANGE_OFFSET_MAYBE_DONE ->             // We found an offset value
+          State.RANGE_OFFSET_MAYBE_DONE -> // We found an offset value
             state = if (ch in '0'..'9') {
               State.RANGE_OFFSET_NUM
             } else {
@@ -410,7 +424,7 @@ object CommandParser {
             }
           State.RANGE_OFFSET_DONE -> {
             // No number implies a one
-            if (offsetNumber == 0) {
+            if (offsetNumber == -1) {
               offsetNumber = 1
             }
             // Update offset total for this range
@@ -423,9 +437,9 @@ object CommandParser {
               State.RANGE_MAYBE_DONE
             }
           }
-          State.RANGE_OFFSET_NUM ->             // Update the value of the current offset
+          State.RANGE_OFFSET_NUM -> // Update the value of the current offset
             if (ch in '0'..'9') {
-              offsetNumber = offsetNumber * 10 + (ch - '0')
+              offsetNumber = (if (offsetNumber == -1) 0 else offsetNumber) * 10 + (ch - '0')
               state = State.RANGE_OFFSET_MAYBE_DONE
               reprocess = false
             } else if (ch == '+' || ch == '-') {
@@ -469,13 +483,13 @@ object CommandParser {
   fun addHandler(handlerHolder: ExBeanClass) {
     // Iterator through each command name alias
     val names: Array<CommandName> = when {
-        handlerHolder.names != null -> {
-          commands(*handlerHolder.names!!.split(",").toTypedArray())
-        }
-        handlerHolder.instance is ComplicatedNameExCommand -> {
-          (handlerHolder.instance as ComplicatedNameExCommand).names
-        }
-        else -> throw RuntimeException("Cannot create an ex command: $handlerHolder")
+      handlerHolder.names != null -> {
+        commands(*handlerHolder.names!!.split(",").toTypedArray())
+      }
+      handlerHolder.instance is ComplicatedNameExCommand -> {
+        (handlerHolder.instance as ComplicatedNameExCommand).names
+      }
+      else -> throw RuntimeException("Cannot create an ex command: $handlerHolder")
     }
     for (name in names) {
       var node = root
@@ -517,6 +531,6 @@ object CommandParser {
     CMD_ARG,
     RANGE, RANGE_LINE, RANGE_CURRENT, RANGE_LAST, RANGE_MARK, RANGE_MARK_CHAR, RANGE_ALL, RANGE_PATTERN,
     RANGE_SHORT_PATTERN, RANGE_PATTERN_MAYBE_DONE, RANGE_OFFSET, RANGE_OFFSET_NUM, RANGE_OFFSET_DONE,
-    RANGE_OFFSET_MAYBE_DONE, RANGE_SEPARATOR, RANGE_MAYBE_DONE, RANGE_DONE, ERROR
+    RANGE_LINE_MAYBE_DONE, RANGE_OFFSET_MAYBE_DONE, RANGE_SEPARATOR, RANGE_MAYBE_DONE, RANGE_DONE, ERROR
   }
 }
