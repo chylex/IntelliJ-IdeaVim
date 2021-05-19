@@ -34,7 +34,7 @@ import com.maddyhome.idea.vim.helper.vimLastColumn
 import com.maddyhome.idea.vim.option.OptionsManager
 
 class MotionEndAction : NonShiftedSpecialKeyHandler() {
-  override val motionType: MotionType = MotionType.EXCLUSIVE
+  override val motionType: MotionType = MotionType.INCLUSIVE
 
   override fun offset(
     editor: Editor,
@@ -42,7 +42,7 @@ class MotionEndAction : NonShiftedSpecialKeyHandler() {
     context: DataContext,
     count: Int,
     rawCount: Int,
-    argument: Argument?
+    argument: Argument?,
   ): Int {
     var allow = false
     if (editor.inInsertMode) {

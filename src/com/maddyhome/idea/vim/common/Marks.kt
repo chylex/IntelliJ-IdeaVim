@@ -20,6 +20,8 @@ package com.maddyhome.idea.vim.common
 
 import com.intellij.ide.bookmarks.Bookmark
 import com.intellij.ide.bookmarks.BookmarkManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.maddyhome.idea.vim.group.MarkGroup
 import org.jetbrains.annotations.NonNls
@@ -34,6 +36,8 @@ interface Mark {
 
   fun isClear(): Boolean
   fun clear()
+
+  fun offset(editor: Editor): Int = editor.logicalPositionToOffset(LogicalPosition(logicalLine, col))
 
   object KeySorter : Comparator<Mark> {
     @NonNls
@@ -50,7 +54,7 @@ data class VimMark(
   override var logicalLine: Int,
   override val col: Int,
   override val filename: String,
-  override val protocol: String
+  override val protocol: String,
 ) : Mark {
 
   private var cleared = false

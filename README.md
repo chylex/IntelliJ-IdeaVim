@@ -41,8 +41,8 @@ See the [detailed instructions](https://www.jetbrains.com/help/idea/managing-plu
 - Use the `~/.ideavimrc` file as an analog of `~/.vimrc` ([learn more](#Files)). The XDG standard is supported, as well.
 
 - Shortcut conflicts can be resolved by using:
-     - On Linux & Windows: `File | Settings | Editor | Vim Emulation` & `File | Settings | Keymap`,
-     - On macOS: `Preferences | Editor | Vim Emulation` & `Preferences | Keymap`,
+     - On Linux & Windows: `File | Settings | Editor | Vim` & `File | Settings | Keymap`,
+     - On macOS: `Preferences | Editor | Vim` & `Preferences | Keymap`,
      - Regular Vim mappings in the  `~/.ideavimrc` file.
 
 Get Early Access
@@ -52,7 +52,7 @@ Would you like to try new features and fixes? Join the Early Access Program and
 receive EAP builds as updates!  
 
 1. Click the  IdeaVim icon <img src="resources/META-INF/pluginIcon_noBorders.svg" width="16" height="16" alt="icon"/>
-in the status bar  | `EAP` | `Get Early Access...`
+in the status bar  | `Early Access Program` | `Subscibe to EAP`
 
 
 Or subscribe to EAP updates manually:
@@ -98,6 +98,7 @@ Here are some examples of supported vim features and commands:
 * ReplaceWithRegister
 * vim-exchange
 * vim-highlightedyank
+* vim-paragraph-motion [To Be Released]
 
 See also:
 
@@ -166,11 +167,11 @@ map <leader>o <Action>(FileStructurePopup)
 Here is also a list of the suggested options from [defaults.vim](https://github.com/vim/vim/blob/master/runtime/defaults.vim)
 
 ```vim
-" Show a few lines of context around the cursor.  Note that this makes the
+" Show a few lines of context around the cursor. Note that this makes the
 " text scroll if you mouse-click near the start or end of the window.
 set scrolloff=5
 
-" Do incremental searching
+" Do incremental searching.
 set incsearch
 
 " Don't use Ex mode, use Q for formatting.
@@ -207,13 +208,13 @@ Executing IDE Actions
 IdeaVim adds various commands for listing and executing arbitrary IDE actions as
 Ex commands or via `:map` command mappings:
 
-**Executing actions:**
+### Executing actions:
 * `:action {action_id}`
     * Execute an action by id. Works from Ex command line.
 * `<Action>(*action_id*)`
     * For the mappings you can use a special `<Action>` keyword. Don't forget the parentheses.
 
-**Finding actions:**
+### Finding actions:
 * `:actionlist [pattern]`
     * Find IDE actions by id or keymap pattern (E.g. `:actionlist extract`, `:actionlist <C-D`)
     
@@ -225,7 +226,7 @@ extract the ids of executed command. This option can be found in "Search everywh
         <img src="assets/readme/track_action_id.gif" alt="track action ids"/>
     </details>
 
-Examples:
+##### Examples:
 
 ```vim
 " Map \r to the Reformat Code action
@@ -236,6 +237,14 @@ Examples:
 
 " Map \b to toggle the breakpoint on the current line
 :map \b <Action>(ToggleLineBreakpoint)
+```
+
+##### Some popular actions:
+
+```
+QuickJavaDoc - Quick Documentation (not only for java, all languages)
+ShowErrorDescription - Show description of the error under the caret (cursor hovering)
+QuickImplementations - Quick Definition
 ```
 
 :gem: Contributing

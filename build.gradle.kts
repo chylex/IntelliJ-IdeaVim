@@ -1,6 +1,7 @@
 import dev.feedforward.markdownto.DownParser
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.detekt
+import org.intellij.markdown.ast.getTextInNode
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -11,16 +12,19 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.71")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.0")
         classpath("com.github.AlexPl292:mark-down-to-slack:1.1.2")
+        classpath("org.eclipse.jgit:org.eclipse.jgit:5.11.1.202105131744-r")
+        classpath("org.kohsuke:github-api:1.128")
+        classpath("org.jetbrains:markdown:0.1.45")
     }
 }
 
 plugins {
     java
-    kotlin("jvm") version "1.3.71"
+    kotlin("jvm") version "1.5.0"
 
-    id("org.jetbrains.intellij") version "0.7.2"
+    id("org.jetbrains.intellij") version "0.7.3"
     id("io.gitlab.arturbosch.detekt") version "1.15.0"
     id("org.jetbrains.changelog") version "1.1.2"
 
@@ -36,7 +40,6 @@ val downloadIdeaSources: String by project
 val instrumentPluginCode: String by project
 
 val publishChannels: String by project
-val publishUsername: String by project
 val publishToken: String by project
 
 val slackUrl: String by project
@@ -44,7 +47,7 @@ val slackUrl: String by project
 repositories {
     mavenCentral()
     jcenter()
-    maven { url = uri("https://jetbrains.bintray.com/intellij-third-party-dependencies") }
+    maven { url = uri("https://cache-redirector.jetbrains.com/intellij-dependencies") }
 }
 
 dependencies {
@@ -55,7 +58,7 @@ dependencies {
     testImplementation("com.ensarsarajcic.neovim.java:neovim-api:0.2.3")
     testImplementation("com.ensarsarajcic.neovim.java:core-rpc:0.2.3")
 
-    testImplementation("com.intellij.remoterobot:remote-robot:0.10.3")
+    testImplementation("com.intellij.remoterobot:remote-robot:0.11.2")
     testImplementation("com.intellij.remoterobot:remote-fixtures:1.1.18")
 }
 
@@ -72,12 +75,14 @@ tasks {
     compileKotlin {
         kotlinOptions {
             jvmTarget = javaVersion
+            apiVersion = "1.3"
 //            allWarningsAsErrors = true
         }
     }
     compileTestKotlin {
         kotlinOptions {
             jvmTarget = javaVersion
+            apiVersion = "1.3"
 //            allWarningsAsErrors = true
         }
     }
@@ -119,7 +124,6 @@ tasks {
 
     publishPlugin {
         channels(publishChannels.split(","))
-        username(publishUsername)
         token(publishToken)
     }
 
@@ -248,3 +252,83 @@ tasks.register("slackNotification") {
         }
     }
 }
+
+// --- Update authors
+
+tasks.register("updateAuthors") {
+    doLast {
+        val uncheckedEmails = setOf(
+            "aleksei.plate@jetbrains.com",
+            "aleksei.plate@teamcity",
+            "aleksei.plate@TeamCity",
+            "alex.plate@192.168.0.109"
+        )
+        UpdateAuthors().update(uncheckedEmails)
+    }
+}
+
+class UpdateAuthors {
+    fun update(uncheckedEmails: Set<String>) {
+        println("Start update authors")
+        println(projectDir)
+        val repository = org.eclipse.jgit.lib.RepositoryBuilder().setGitDir(File("$projectDir/.git")).build()
+        val git = org.eclipse.jgit.api.Git(repository)
+        val emails = git.log().call().take(20).mapTo(HashSet()) { it.authorIdent.emailAddress }
+
+        println("Emails: $emails")
+        val gitHub = org.kohsuke.github.GitHub.connect()
+        val searchUsers = gitHub.searchUsers()
+        val users = mutableListOf<Author>()
+        for (email in emails) {
+            if (email in uncheckedEmails) continue
+            val githubUsers = searchUsers.q(email).list().toList()
+            if (githubUsers.isEmpty()) error("Cannot find user $email")
+            val user = githubUsers.single()
+            val htmlUrl = user.htmlUrl.toString()
+            val name = user.name
+            users.add(Author(name, htmlUrl, email))
+        }
+
+        val authorsFile = File("$projectDir/AUTHORS.md")
+        val authors = authorsFile.readText()
+        val parser =
+            org.intellij.markdown.parser.MarkdownParser(org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor())
+        val tree = parser.buildMarkdownTreeFromString(authors)
+
+        val contributorsSection = tree.children[24]
+        val existingEmails = mutableSetOf<String>()
+        for (child in contributorsSection.children) {
+            if (child.children.size > 1) {
+                existingEmails.add(
+                    child.children[1].children[0].children[2].children[2].getTextInNode(authors).toString()
+                )
+            }
+        }
+
+        val newAuthors = users.filterNot { it.mail in existingEmails }
+        if (newAuthors.isEmpty()) return
+
+        val insertionString = newAuthors.toMdString()
+        val resultingString = StringBuffer(authors).insert(contributorsSection.endOffset, insertionString).toString()
+
+        authorsFile.writeText(resultingString)
+    }
+}
+
+fun List<Author>.toMdString(): String {
+    return this.joinToString() {
+        """
+          |
+          |* [![icon][mail]](mailto:${it.mail})
+          |  [![icon][github]](${it.url})
+          |  &nbsp;
+          |  ${it.name}
+        """.trimMargin()
+    }
+}
+
+data class Author(
+    val name: String,
+    val url: String,
+    val mail: String
+)

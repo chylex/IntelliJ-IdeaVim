@@ -6,15 +6,15 @@ History of changes in IdeaVim for the IntelliJ platform.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project DOES NOT adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Stable versions use X.Y format.
-EAP versions use X.Y.Z format.
+Stable versions use X.Y format.  
+EAP ([Early Access Program](https://jb.gg/ideavim-eap)) versions use X.Y.Z format.
 
 
 Get an Early Access
 -------------------
 
 Would you like to try new features and fixes? Join the Early Access Program and
-receive EAP builds as updates! Use the `EAP` option in the status bar or
+receive EAP builds as updates! Use the `Early Access Program` option in the status bar or
 add this URL to "Settings | Plugins | Manage Plugin Repositories":
 `https://plugins.jetbrains.com/plugins/eap/ideavim`
 
@@ -24,16 +24,31 @@ usual beta standards.
 
 ## To Be Released
 
+### Features:
+* Support `sethandler` command to configure shortcuts conflicts via `~/.ideavimrc` file. See [docs](https://jb.gg/vim-sethandler).
+* Support `vim-paragraph-motion` extension [VIM-2290](https://youtrack.jetbrains.com/issue/VIM-2290) | [vim-paragraph-motion](https://github.com/dbakker/vim-paragraph-motion) 
+* Add "Reset Handlers" button for "Conflicting Shortcuts" setting table
+
+### Changes:
+* Rename "Vim Emulation" in settings to "Vim"
+
 ### Fixes:
 * [VIM-2230](https://youtrack.jetbrains.com/issue/VIM-2230) Tweak caret position with inline rename options inlay
 * [VIM-2177](https://youtrack.jetbrains.com/issue/VIM-2177) Fix scrolling issues near bottom of file
 * [VIM-2276](https://youtrack.jetbrains.com/issue/VIM-2276) `:ls` returns correct path for files on Microsoft Windows.
 * [VIM-1953](https://youtrack.jetbrains.com/issue/VIM-1953) Execute live testing for `:w` command
 * [VIM-2284](https://youtrack.jetbrains.com/issue/VIM-2284) Values are not duplicated in set command
+* [VIM-2289](https://youtrack.jetbrains.com/issue/VIM-2289) Fix `<End>` command behaviour
+* [VIM-1476](https://youtrack.jetbrains.com/issue/VIM-1476) Last inserted text is stored in `.` register
+* [VIM-2295](https://youtrack.jetbrains.com/issue/VIM-2295) Fix `<S-Space>` in insert mode with an existing mapping
+* [VIM-1401](https://youtrack.jetbrains.com/issue/VIM-1401) IdeaVim triggers readonly handler
+* [VIM-1856](https://youtrack.jetbrains.com/issue/VIM-1856) Support defining shortcuts in .ideavimrc
+* [VIM-1523](https://youtrack.jetbrains.com/issue/VIM-1523) Allow different shortcut handlers in different modes
 
 ### Merged PRs:
 * [280](https://github.com/JetBrains/ideavim/pull/280) by [Matt Ellis](https://github.com/citizenmatt): Caret position and view scrolling fixes
 * [289](https://github.com/JetBrains/ideavim/pull/289) by [MichalPlacek](https://github.com/MichalPlacek): VIM-2276 ls returns "absolute path" for files on Microsoft Windows.
+* [295](https://github.com/JetBrains/ideavim/pull/295) by [MichalPlacek](https://github.com/MichalPlacek): VIM-1476
 
 ## 0.66, 2021-04-09
 

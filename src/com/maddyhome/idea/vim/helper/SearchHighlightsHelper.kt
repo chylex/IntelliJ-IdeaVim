@@ -44,7 +44,7 @@ fun updateSearchHighlights(
   pattern: String?,
   shouldIgnoreSmartCase: Boolean,
   showHighlights: Boolean,
-  forceUpdate: Boolean
+  forceUpdate: Boolean,
 ) {
   updateSearchHighlights(pattern, shouldIgnoreSmartCase, showHighlights, -1, null, true, forceUpdate)
 }
@@ -54,7 +54,7 @@ fun updateIncsearchHighlights(
   pattern: String,
   forwards: Boolean,
   caretOffset: Int,
-  searchRange: LineRange?
+  searchRange: LineRange?,
 ): Int {
   val searchStartOffset =
     if (searchRange != null) EditorHelper.getLineStartOffset(editor, searchRange.startLine) else caretOffset
@@ -85,14 +85,14 @@ private fun updateSearchHighlights(
   initialOffset: Int,
   searchRange: LineRange?,
   forwards: Boolean,
-  forceUpdate: Boolean
+  forceUpdate: Boolean,
 ): Int {
   var currentMatchOffset = -1
   val projectManager = ProjectManager.getInstanceIfCreated() ?: return currentMatchOffset
   for (project in projectManager.openProjects) {
     val current = FileEditorManager.getInstance(project).selectedTextEditor ?: continue
     // [VERSION UPDATE] 202+ Use editors
-    val editors = localEditors(current.document, project) ?: continue
+    val editors = localEditors(current.document, project)
     for (editor in editors) {
       // Try to keep existing highlights if possible. Update if hlsearch has changed or if the pattern has changed.
       // Force update for the situations where the text is the same, but the ignore case values have changed.
