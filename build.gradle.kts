@@ -48,7 +48,7 @@ plugins {
   // NOTE: Unignore "test block comment falls back to line comment when not available" test
   //   After changing this version. It supposed to work on the next version of the gradle plugin
   //   Or go report to the devs that this test still fails.
-  id("org.jetbrains.intellij.platform") version "2.18.0"
+  id("org.jetbrains.intellij.platform") version "2.18.1"
 
   id("org.jetbrains.changelog") version "2.5.0"
   id("com.dorongold.task-tree") version "4.0.2"
@@ -138,6 +138,8 @@ dependencies {
     bundledModule("intellij.spellchecker")
     if (bookmarksIsSeparatePlugin) bundledPlugin("intellij.bookmarks.plugin")
     bundledModule("intellij.platform.kernel.impl")
+
+    compatiblePlugin("com.intellij.classic.ui")
   }
 
   moduleSources(project(":vim-engine", "sourcesJarArtifacts"))
@@ -264,6 +266,7 @@ tasks {
 
   runIde {
     systemProperty("ideavim.use.debug.ideavimrc", "true")
+    systemProperty("idea.trust.all.projects", "true")
   }
 
   val runPycharm by intellijPlatformTesting.runIde.registering {
@@ -461,11 +464,6 @@ tasks {
       }
     })
   }
-
-  buildPlugin {
-    dependsOn(sourcesJar)
-    from(sourcesJar) { into("lib/src") }
-  }
 }
 
 java {
@@ -536,13 +534,7 @@ intellijPlatform {
     })
 
     ideaVersion {
-      // Let the Gradle plugin set the since-build version. It defaults to the version of the IDE we're building against
-      // specified as two components, `{branch}.{build}` (e.g., "241.15989"). There is no third component specified.
-      // The until-build version defaults to `{branch}.*`, but we want to support _all_ future versions, so we set it
-      // with a null provider (the provider is important).
-      // By letting the Gradle plugin handle this, the Plugin DevKit IntelliJ plugin cannot help us with the "Usage of
-      // IntelliJ API not available in older IDEs" inspection. However, since our since-build is the version we compile
-      // against, we can never get an API that's newer - it would be an unresolved symbol.
+      sinceBuild.set("253")
       untilBuild.set(provider { null })
     }
   }
