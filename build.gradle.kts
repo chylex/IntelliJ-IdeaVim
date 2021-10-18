@@ -70,7 +70,7 @@ plugins {
   application
   id("java-test-fixtures")
 
-  id("org.jetbrains.intellij") version "1.17.0"
+  id("org.jetbrains.intellij") version "1.17.1"
   id("org.jetbrains.changelog") version "2.2.0"
 
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
@@ -305,28 +305,26 @@ tasks {
     from(createOpenApiSourceJar) { into("lib/src") }
   }
 
-  val pluginVersion = version
-  // Don't forget to update plugin.xml
-  patchPluginXml {
-    sinceBuild.set("233.11799.30")
-
-    // Get the latest available change notes from the changelog file
-    changeNotes.set(
-      provider {
-        with(changelog) {
-          val log = try {
-            getUnreleased()
-          } catch (e: MissingVersionException) {
-            getOrNull(pluginVersion.toString()) ?: getLatest()
-          }
-          renderItem(
-            log,
-            org.jetbrains.changelog.Changelog.OutputType.HTML,
-          )
-        }
-      },
-    )
-  }
+    val pluginVersion = version
+    // Don't forget to update plugin.xml
+    patchPluginXml {
+        // Get the latest available change notes from the changelog file
+        changeNotes.set(
+            provider {
+                with(changelog) {
+                    val log = try {
+                        getUnreleased()
+                    } catch (e: MissingVersionException) {
+                        getOrNull(pluginVersion.toString()) ?: getLatest()
+                    }
+                    renderItem(
+                        log,
+                        org.jetbrains.changelog.Changelog.OutputType.HTML,
+                    )
+                }
+            },
+        )
+    }
 }
 
 // --- Tests
