@@ -137,6 +137,7 @@ dependencies {
 
     // AceJump is an optional dependency. We use their SessionManager class to check if it's active
     plugin("AceJump", "3.8.19")
+    plugin("com.intellij.classic.ui", "251.23774.318")
 
     bundledPlugins("org.jetbrains.plugins.terminal", "com.intellij.modules.json")
   }
@@ -242,6 +243,8 @@ tasks {
   }
 
   compileTestKotlin {
+    enabled = false
+    
     kotlinOptions {
       jvmTarget = javaVersion
       apiVersion = "2.0"
@@ -257,6 +260,7 @@ tasks {
   // a custom task (see below)
   runIde {
     systemProperty("octopus.handler", System.getProperty("octopus.handler") ?: true)
+    systemProperty("idea.trust.all.projects", "true")
   }
 
   // Uncomment to run the plugin in a custom IDE, rather than the IDE specified as a compile target in dependencies
