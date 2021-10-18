@@ -85,7 +85,7 @@ public class ProcessGroup extends VimProcessGroupBase {
     injector.getMarkService().setVisualSelectionMarks(editor);
     VimStateMachine.Companion.getInstance(editor).setMode(Mode.CMD_LINE.INSTANCE);
     ExEntryPanel panel = ExEntryPanel.getInstance();
-    panel.activate(((IjVimEditor) editor).getEditor(), ((IjEditorExecutionContext) context).getContext(), ":", initText, 1);
+    panel.activate(((IjVimEditor) editor).getEditor(), ((IjEditorExecutionContext) context).getContext(), ":", initText, cmd.getCount());
   }
 
   @Override
@@ -116,7 +116,7 @@ public class ProcessGroup extends VimProcessGroupBase {
 
       logger.debug("processing command");
 
-      final String text = panel.getText();
+      String text = panel.getText();
 
       if (!panel.getLabel().equals(":")) {
         // Search is handled via Argument.Type.EX_STRING. Although ProcessExEntryAction is registered as the handler for
@@ -127,7 +127,15 @@ public class ProcessGroup extends VimProcessGroupBase {
 
       if (logger.isDebugEnabled()) logger.debug("swing=" + SwingUtilities.isEventDispatchThread());
 
-      VimInjectorKt.getInjector().getVimscriptExecutor().execute(text, editor, context, skipHistory(editor), true, CommandLineVimLContext.INSTANCE);
+      int repeat = 1;
+      if (text.contains("raction ")) {
+        text = text.replace("raction ", "action ");
+        repeat = panel.getCount();
+      }
+
+      for (int i = 0; i < repeat; i++) {
+        VimInjectorKt.getInjector().getVimscriptExecutor().execute(text, editor, context, skipHistory(editor), true, CommandLineVimLContext.INSTANCE);
+      }
     }
     catch (ExException e) {
       VimPlugin.showMessage(e.getMessage());
