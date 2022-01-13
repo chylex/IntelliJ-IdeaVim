@@ -83,14 +83,14 @@ interface VimChangeGroup {
 
   fun getDeleteRangeAndType2(editor: VimEditor, caret: VimCaret, context: ExecutionContext, argument: Argument, isChange: Boolean, operatorArguments: OperatorArguments): Pair<TextRange, SelectionType>?
 
-  fun deleteRange(editor: VimEditor, caret: VimCaret, range: TextRange, type: SelectionType?, isChange: Boolean): Boolean
+  fun deleteRange(editor: VimEditor, caret: VimCaret, range: TextRange, type: SelectionType?, isChange: Boolean, noYank: Boolean = false): Boolean
   fun deleteRange2(editor: VimEditor, caret: VimCaret, range: TextRange, type: SelectionType): Boolean
 
   fun changeCharacters(editor: VimEditor, caret: VimCaret, count: Int): Boolean
 
   fun changeEndOfLine(editor: VimEditor, caret: VimCaret, count: Int): Boolean
 
-  fun changeMotion(editor: VimEditor, caret: VimCaret, context: ExecutionContext, argument: Argument, operatorArguments: OperatorArguments): Boolean
+  fun changeMotion(editor: VimEditor, caret: VimCaret, context: ExecutionContext, argument: Argument, operatorArguments: OperatorArguments, noYank: Boolean = false): Boolean
 
   fun changeCaseToggleCharacter(editor: VimEditor, caret: VimCaret, count: Int): Boolean
 
@@ -98,7 +98,7 @@ interface VimChangeGroup {
 
   fun changeCaseRange(editor: VimEditor, caret: VimCaret, range: TextRange, type: Char): Boolean
 
-  fun changeRange(editor: VimEditor, caret: VimCaret, range: TextRange, type: SelectionType, context: ExecutionContext?): Boolean
+  fun changeRange(editor: VimEditor, caret: VimCaret, range: TextRange, type: SelectionType, context: ExecutionContext?, noYank: Boolean = false): Boolean
 
   fun changeCaseMotion(editor: VimEditor, caret: VimCaret, context: ExecutionContext?, type: Char, argument: Argument, operatorArguments: OperatorArguments): Boolean
 

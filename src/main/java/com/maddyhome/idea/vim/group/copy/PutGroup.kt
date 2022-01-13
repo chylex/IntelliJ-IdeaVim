@@ -97,7 +97,22 @@ class PutGroup : VimPutBase() {
       EditorHelper.getOrderedCaretsList(editor.ij).map { IjVimCaret(it) }
     }
     injector.application.runWriteAction {
-      myCarets.forEach { caret -> putForCaret(editor, caret, data, additionalData, context, text) }
+      val singleCaret = myCarets.singleOrNull()
+      if (singleCaret != null) {
+        putForCaret(editor, singleCaret, data, additionalData, context, text)
+      }
+      else {
+        val lines = text.text.split('\n')
+        if (lines.size != myCarets.size) {
+          myCarets.forEach { caret -> putForCaret(editor, caret, data, additionalData, context, text) }
+        }
+        else {
+          myCarets.asReversed().forEachIndexed { index, caret ->
+            val line = ProcessedTextData(lines[index], text.typeInRegister, text.transferableData)
+            putForCaret(editor, caret, data, additionalData, context, line)
+          }
+        }
+      }
     }
   }
 

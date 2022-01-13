@@ -45,6 +45,13 @@ class YankVisualAction : VisualOperatorActionHandler.SingleExecution() {
     caretsAndSelections: Map<VimCaret, VimSelection>,
     operatorArguments: OperatorArguments,
   ): Boolean {
+    return executeYank(editor, caretsAndSelections)
+  }
+
+  private fun executeYank(
+    editor: VimEditor,
+    caretsAndSelections: Map<VimCaret, VimSelection>,
+  ): Boolean {
     val selections = caretsAndSelections.values
     val starts: MutableList<Int> = ArrayList()
     val ends: MutableList<Int> = ArrayList()
@@ -57,5 +64,15 @@ class YankVisualAction : VisualOperatorActionHandler.SingleExecution() {
     val startsArray = starts.toIntArray()
     val endsArray = ends.toIntArray()
     return injector.yank.yankRange(editor, TextRange(startsArray, endsArray), vimSelection.type, true)
+  }
+  
+  fun yankIfMultiCaret(editor: VimEditor, caretsAndSelections: Map<VimCaret, VimSelection>): Boolean {
+    if (caretsAndSelections.size > 1) {
+      executeYank(editor, caretsAndSelections)
+      return true
+    }
+    else {
+      return false
+    }
   }
 }

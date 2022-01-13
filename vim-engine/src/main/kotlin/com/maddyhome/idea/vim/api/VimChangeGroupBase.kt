@@ -4,10 +4,10 @@ import com.maddyhome.idea.vim.KeyHandler
 import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.command.Command
 import com.maddyhome.idea.vim.command.CommandFlags
-import com.maddyhome.idea.vim.command.VimStateMachine
-import com.maddyhome.idea.vim.command.VimStateMachine.Companion.getInstance
 import com.maddyhome.idea.vim.command.OperatorArguments
 import com.maddyhome.idea.vim.command.SelectionType
+import com.maddyhome.idea.vim.command.VimStateMachine
+import com.maddyhome.idea.vim.command.VimStateMachine.Companion.getInstance
 import com.maddyhome.idea.vim.common.ChangesListener
 import com.maddyhome.idea.vim.common.Offset
 import com.maddyhome.idea.vim.common.OperatedRange
@@ -17,10 +17,10 @@ import com.maddyhome.idea.vim.diagnostic.debug
 import com.maddyhome.idea.vim.diagnostic.vimLogger
 import com.maddyhome.idea.vim.group.visual.VimSelection
 import com.maddyhome.idea.vim.handler.EditorActionHandlerBase
-import com.maddyhome.idea.vim.helper.vimStateMachine
 import com.maddyhome.idea.vim.helper.inInsertMode
 import com.maddyhome.idea.vim.helper.inSingleCommandMode
 import com.maddyhome.idea.vim.helper.usesVirtualSpace
+import com.maddyhome.idea.vim.helper.vimStateMachine
 import com.maddyhome.idea.vim.listener.SelectionVimListenerSuppressor
 import com.maddyhome.idea.vim.mark.VimMarkConstants.MARK_CHANGE_END
 import com.maddyhome.idea.vim.mark.VimMarkConstants.MARK_CHANGE_POS
@@ -132,6 +132,7 @@ abstract class VimChangeGroupBase : VimChangeGroup {
     editor: VimEditor,
     range: TextRange,
     type: SelectionType?,
+    noYank: Boolean = false
   ): Boolean {
     var updatedRange = range
     // Fix for https://youtrack.jetbrains.net/issue/VIM-35
@@ -145,6 +146,7 @@ abstract class VimChangeGroupBase : VimChangeGroup {
       }
     }
     if (type == null ||
+      noYank ||
       editor.inInsertMode || injector.registerGroup.storeText(editor, updatedRange, type, true)
     ) {
       val startOffsets = updatedRange.startOffsets
@@ -851,6 +853,7 @@ abstract class VimChangeGroupBase : VimChangeGroup {
     range: TextRange,
     type: SelectionType?,
     isChange: Boolean,
+    noYank: Boolean
   ): Boolean {
 
     // Update the last column before we delete, or we might be retrieving the data for a line that no longer exists

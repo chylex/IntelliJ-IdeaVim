@@ -17,6 +17,7 @@
  */
 package com.maddyhome.idea.vim.action.change.change
 
+import com.maddyhome.idea.vim.action.copy.YankVisualAction
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimCaret
 import com.maddyhome.idea.vim.api.VimEditor
@@ -37,6 +38,18 @@ class ChangeVisualAction : VisualOperatorActionHandler.ForEachCaret() {
 
   override val flags: EnumSet<CommandFlags> = enumSetOf(CommandFlags.FLAG_MULTIKEY_UNDO, CommandFlags.FLAG_EXIT_VISUAL)
 
+  private var isMultiCaret = false
+
+  override fun beforeExecution(
+    editor: VimEditor,
+    context: ExecutionContext,
+    cmd: Command,
+    caretsAndSelections: Map<VimCaret, VimSelection>
+  ): Boolean {
+    isMultiCaret = YankVisualAction().yankIfMultiCaret(editor, caretsAndSelections)
+    return super.beforeExecution(editor, context, cmd, caretsAndSelections)
+  }
+
   override fun executeAction(
     editor: VimEditor,
     caret: VimCaret,
@@ -50,7 +63,8 @@ class ChangeVisualAction : VisualOperatorActionHandler.ForEachCaret() {
       caret,
       range.toVimTextRange(false),
       range.type,
-      context
+      context,
+      noYank = isMultiCaret
     )
   }
 }

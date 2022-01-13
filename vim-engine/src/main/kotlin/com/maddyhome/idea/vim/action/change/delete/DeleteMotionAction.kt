@@ -17,6 +17,7 @@
  */
 package com.maddyhome.idea.vim.action.change.delete
 
+import com.maddyhome.idea.vim.action.copy.YankMotionAction
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimCaret
 import com.maddyhome.idea.vim.api.VimEditor
@@ -36,6 +37,19 @@ class DeleteMotionAction : ChangeEditorActionHandler.ForEachCaret(), DuplicableO
 
   override val duplicateWith: Char = 'd'
 
+  private var isMultiCaret = false
+
+  override fun baseExecute(
+    editor: VimEditor,
+    caret: VimCaret,
+    context: ExecutionContext,
+    cmd: Command,
+    operatorArguments: OperatorArguments
+  ): Boolean {
+    isMultiCaret = YankMotionAction().yankIfMultiCaret(cmd, editor, context, operatorArguments)
+    return super.baseExecute(editor, caret, context, cmd, operatorArguments)
+  }
+  
   override fun execute(
     editor: VimEditor,
     caret: VimCaret,
@@ -53,7 +67,7 @@ class DeleteMotionAction : ChangeEditorActionHandler.ForEachCaret(), DuplicableO
       val (first, second) = injector.changeGroup
         .getDeleteRangeAndType(editor, caret, context, argument, false, operatorArguments)
         ?: return false
-      return injector.changeGroup.deleteRange(editor, caret, first, second, false)
+      return injector.changeGroup.deleteRange(editor, caret, first, second, false, noYank = isMultiCaret)
     }
   }
 }

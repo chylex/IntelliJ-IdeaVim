@@ -39,7 +39,26 @@ class YankMotionAction : VimActionHandler.SingleExecution(), DuplicableOperatorA
     cmd: Command,
     operatorArguments: OperatorArguments,
   ): Boolean {
+    return executeYank(cmd, editor, context, operatorArguments)
+  }
+
+  private fun executeYank(
+    cmd: Command,
+    editor: VimEditor,
+    context: ExecutionContext,
+    operatorArguments: OperatorArguments,
+  ): Boolean {
     val argument = cmd.argument ?: return false
     return injector.yank.yankMotion(editor, context, argument, operatorArguments)
+  }
+
+  fun yankIfMultiCaret(cmd: Command, editor: VimEditor, context: ExecutionContext, operatorArguments: OperatorArguments): Boolean {
+    if (editor.nativeCarets().size > 1) {
+      executeYank(cmd, editor, context, operatorArguments)
+      return true
+    }
+    else {
+      return false
+    }
   }
 }

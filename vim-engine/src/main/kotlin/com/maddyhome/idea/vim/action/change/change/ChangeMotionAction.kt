@@ -17,6 +17,7 @@
  */
 package com.maddyhome.idea.vim.action.change.change
 
+import com.maddyhome.idea.vim.action.copy.YankMotionAction
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimCaret
 import com.maddyhome.idea.vim.api.VimEditor
@@ -34,6 +35,19 @@ class ChangeMotionAction : ChangeEditorActionHandler.ForEachCaret(), DuplicableO
 
   override val duplicateWith: Char = 'c'
 
+  private var isMultiCaret = false
+
+  override fun baseExecute(
+    editor: VimEditor,
+    caret: VimCaret,
+    context: ExecutionContext,
+    cmd: Command,
+    operatorArguments: OperatorArguments
+  ): Boolean {
+    isMultiCaret = YankMotionAction().yankIfMultiCaret(cmd, editor, context, operatorArguments)
+    return super.baseExecute(editor, caret, context, cmd, operatorArguments)
+  }
+
   override fun execute(
     editor: VimEditor,
     caret: VimCaret,
@@ -46,7 +60,8 @@ class ChangeMotionAction : ChangeEditorActionHandler.ForEachCaret(), DuplicableO
       caret,
       context,
       argument,
-      operatorArguments
+      operatorArguments,
+      noYank = isMultiCaret
     )
   }
 }

@@ -50,7 +50,10 @@ import com.maddyhome.idea.vim.group.visual.VisualModeHelperKt;
 import com.maddyhome.idea.vim.helper.*;
 import com.maddyhome.idea.vim.key.KeyHandlerKeeper;
 import com.maddyhome.idea.vim.listener.VimInsertListener;
-import com.maddyhome.idea.vim.newapi.*;
+import com.maddyhome.idea.vim.newapi.IjExecutionContext;
+import com.maddyhome.idea.vim.newapi.IjExecutionContextKt;
+import com.maddyhome.idea.vim.newapi.IjVimCaret;
+import com.maddyhome.idea.vim.newapi.IjVimEditor;
 import com.maddyhome.idea.vim.options.OptionConstants;
 import com.maddyhome.idea.vim.options.OptionScope;
 import com.maddyhome.idea.vim.vimscript.model.datatypes.VimString;
@@ -200,6 +203,61 @@ public class ChangeGroup extends VimChangeGroupBase {
     return new Pair<>(range, type);
   }
 
+  /**
+   * Delete the range of text.
+   *
+   * @param editor   The editor to delete the text from
+   * @param caret    The caret to be moved after deletion
+   * @param range    The range to delete
+   * @param type     The type of deletion
+   * @param isChange Is from a change action
+   * @return true if able to delete the text, false if not
+   */
+  @Override
+  public boolean deleteRange(@NotNull VimEditor editor,
+                             @NotNull VimCaret caret,
+                             @NotNull TextRange range,
+                             @Nullable SelectionType type,
+                             boolean isChange,
+                             boolean noYank) {
+
+    // Update the last column before we delete, or we might be retrieving the data for a line that no longer exists
+    UserDataManager.setVimLastColumn(((IjVimCaret) caret).getCaret(), InlayHelperKt.getInlayAwareVisualColumn(((IjVimCaret) caret).getCaret()));
+
+    boolean removeLastNewLine = removeLastNewLine(editor, range, type);
+    final boolean res = deleteText(editor, range, type, noYank);
+    if (removeLastNewLine) {
+      int textLength = ((IjVimEditor) editor).getEditor().getDocument().getTextLength();
+      ((IjVimEditor) editor).getEditor().getDocument().deleteString(textLength - 1, textLength);
+    }
+
+    if (res) {
+      int pos = EditorHelper.normalizeOffset(((IjVimEditor) editor).getEditor(), range.getStartOffset(), isChange);
+      if (type == SelectionType.LINE_WISE) {
+        pos = VimPlugin.getMotion()
+          .moveCaretToLineWithStartOfLineOption(editor, editor.offsetToLogicalPosition(pos).getLine(),
+                                                caret);
+      }
+      injector.getMotion().moveCaret(editor, caret, pos);
+    }
+    return res;
+  }
+
+  private boolean removeLastNewLine(@NotNull VimEditor editor, @NotNull TextRange range, @Nullable SelectionType type) {
+    int endOffset = range.getEndOffset();
+    int fileSize = EditorHelperRt.getFileSize(((IjVimEditor) editor).getEditor());
+    if (endOffset > fileSize) {
+      if (injector.getOptionService().isSet(OptionScope.GLOBAL.INSTANCE, OptionConstants.ideastrictmodeName, OptionConstants.ideastrictmodeName)) {
+        throw new IllegalStateException("Incorrect offset. File size: " + fileSize + ", offset: " + endOffset);
+      }
+      endOffset = fileSize;
+    }
+    return type == SelectionType.LINE_WISE &&
+           range.getStartOffset() != 0 &&
+           ((IjVimEditor) editor).getEditor().getDocument().getCharsSequence().charAt(endOffset - 1) != '\n' &&
+           endOffset == fileSize;
+  }
+
   @Override
   public void insertLineAround(@NotNull VimEditor editor, @NotNull ExecutionContext context, int shift) {
     com.maddyhome.idea.vim.newapi.ChangeGroupKt.insertLineAround(editor, context, shift);
@@ -228,7 +286,8 @@ public class ChangeGroup extends VimChangeGroupBase {
                               @NotNull VimCaret caret,
                               @NotNull ExecutionContext context,
                               @NotNull Argument argument,
-                              @NotNull OperatorArguments operatorArguments) {
+                              @NotNull OperatorArguments operatorArguments,
+                              boolean noYank) {
     int count0 = operatorArguments.getCount0();
     // Vim treats cw as ce and cW as cE if cursor is on a non-blank character
     final Command motion = argument.getMotion();
@@ -306,7 +365,7 @@ public class ChangeGroup extends VimChangeGroupBase {
       Pair<TextRange, SelectionType> deleteRangeAndType =
         getDeleteRangeAndType(editor, caret, context, argument, true, operatorArguments.withCount0(count0));
       if (deleteRangeAndType == null) return false;
-      return changeRange(editor, caret, deleteRangeAndType.getFirst(), deleteRangeAndType.getSecond(), context);
+      return changeRange(editor, caret, deleteRangeAndType.getFirst(), deleteRangeAndType.getSecond(), context, noYank);
     }
   }
 
@@ -436,7 +495,8 @@ public class ChangeGroup extends VimChangeGroupBase {
                              @NotNull VimCaret caret,
                              @NotNull TextRange range,
                              @NotNull SelectionType type,
-                             ExecutionContext context) {
+                             @Nullable ExecutionContext context,
+                             boolean noYank) {
     int col = 0;
     int lines = 0;
     if (type == SelectionType.BLOCK_WISE) {
@@ -450,7 +510,7 @@ public class ChangeGroup extends VimChangeGroupBase {
 
     final VimLogicalPosition lp = editor.offsetToLogicalPosition(injector.getMotion().moveCaretToLineStartSkipLeading(editor, caret));
 
-    boolean res = deleteRange(editor, caret, range, type, true);
+    boolean res = deleteRange(editor, caret, range, type, true, noYank);
     if (res) {
       if (type == SelectionType.LINE_WISE) {
         // Please don't use `getDocument().getText().isEmpty()` because it converts CharSequence into String
@@ -675,7 +735,7 @@ public class ChangeGroup extends VimChangeGroupBase {
               }
             }
             if (pos > wsoff) {
-              deleteText(editor, new TextRange(wsoff, pos), null);
+              deleteText(editor, new TextRange(wsoff, pos), null, false);
             }
           }
         }

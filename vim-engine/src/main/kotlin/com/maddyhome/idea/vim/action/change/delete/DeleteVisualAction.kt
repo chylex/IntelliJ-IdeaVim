@@ -17,6 +17,7 @@
  */
 package com.maddyhome.idea.vim.action.change.delete
 
+import com.maddyhome.idea.vim.action.copy.YankVisualAction
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimCaret
 import com.maddyhome.idea.vim.api.VimEditor
@@ -37,6 +38,18 @@ class DeleteVisualAction : VisualOperatorActionHandler.ForEachCaret() {
 
   override val flags: EnumSet<CommandFlags> = enumSetOf(CommandFlags.FLAG_EXIT_VISUAL)
 
+  private var isMultiCaret = false
+
+  override fun beforeExecution(
+    editor: VimEditor,
+    context: ExecutionContext,
+    cmd: Command,
+    caretsAndSelections: Map<VimCaret, VimSelection>,
+  ): Boolean {
+    isMultiCaret = YankVisualAction().yankIfMultiCaret(editor, caretsAndSelections)
+    return super.beforeExecution(editor, context, cmd, caretsAndSelections)
+  }
+
   override fun executeAction(
     editor: VimEditor,
     caret: VimCaret,
@@ -45,7 +58,13 @@ class DeleteVisualAction : VisualOperatorActionHandler.ForEachCaret() {
     range: VimSelection,
     operatorArguments: OperatorArguments,
   ): Boolean {
-    val selectionType = range.type
-    return injector.changeGroup.deleteRange(editor, caret, range.toVimTextRange(false), selectionType, false)
+    return injector.changeGroup.deleteRange(
+      editor,
+      caret,
+      range.toVimTextRange(false),
+      range.type,
+      false,
+      noYank = isMultiCaret
+    )
   }
 }

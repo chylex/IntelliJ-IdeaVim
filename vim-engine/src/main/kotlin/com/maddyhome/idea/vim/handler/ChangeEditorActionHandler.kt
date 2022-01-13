@@ -66,7 +66,7 @@ sealed class ChangeEditorActionHandler : EditorActionHandlerBase(false) {
     ): Boolean
   }
 
-  final override fun baseExecute(
+  override fun baseExecute(
     editor: VimEditor,
     caret: VimCaret,
     context: ExecutionContext,
