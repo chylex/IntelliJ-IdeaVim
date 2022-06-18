@@ -286,7 +286,7 @@ private object FileTypePatterns {
     } else if (fileTypeName == "CMakeLists.txt" || fileName == "CMakeLists") {
       this.cMakePatterns
     } else {
-      null
+      this.htmlPatterns
     }
 
     return listOfNotNull(filePatterns, getUserPatterns(editor)).reduceOrNull(LanguagePatterns::plus)
