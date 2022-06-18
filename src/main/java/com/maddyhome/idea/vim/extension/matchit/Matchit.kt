@@ -228,7 +228,7 @@ private object FileTypePatterns {
     } else if (fileTypeName == "CMakeLists.txt" || fileName == "CMakeLists") {
       this.cMakePatterns
     } else {
-      return null
+      this.htmlPatterns
     }
   }
 
