@@ -12,6 +12,7 @@ package com.maddyhome.idea.vim.helper
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.CaretState
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -20,6 +21,8 @@ import com.maddyhome.idea.vim.api.StringListOptionValue
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.group.IjOptionConstants
 import com.maddyhome.idea.vim.newapi.globalIjOptions
+import com.maddyhome.idea.vim.newapi.vim
+import com.maddyhome.idea.vim.state.mode.inBlockSelection
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTable
@@ -96,3 +99,41 @@ internal val Caret.vimLine: Int
  */
 internal val Editor.vimLine: Int
   get() = this.caretModel.currentCaret.vimLine
+
+internal inline fun Editor.runWithEveryCaretAndRestore(action: () -> Unit) {
+  val caretModel = this.caretModel
+  val carets = if (this.vim.inBlockSelection) null else caretModel.allCarets
+  if (carets == null || carets.size == 1) {
+    action()
+  }
+  else {
+    var initialDocumentSize = this.document.textLength
+    var documentSizeDifference = 0
+
+    val caretOffsets = carets.map { it.selectionStart to it.selectionEnd }
+    val restoredCarets = mutableListOf<CaretState>()
+
+    caretModel.removeSecondaryCarets()
+    
+    for ((selectionStart, selectionEnd) in caretOffsets) {
+      if (selectionStart == selectionEnd) {
+        caretModel.primaryCaret.moveToOffset(selectionStart + documentSizeDifference)
+      }
+      else {
+        caretModel.primaryCaret.setSelection(
+          selectionStart + documentSizeDifference,
+          selectionEnd + documentSizeDifference
+        )
+      }
+      
+      action()
+      restoredCarets.add(caretModel.caretsAndSelections.single())
+
+      val documentLength = this.document.textLength
+      documentSizeDifference += documentLength - initialDocumentSize
+      initialDocumentSize = documentLength
+    }
+
+    caretModel.caretsAndSelections = restoredCarets
+  } 
+}
