@@ -232,7 +232,7 @@ public class EditorGroup implements PersistentStateComponent<Element>, VimEditor
       KeyHandler.getInstance().reset(new IjVimEditor(editor));
     }
     updateCaretsVisualAttributes(editor);
-    editor.getSettings().setRefrainFromScrolling(REFRAIN_FROM_SCROLLING_VIM_VALUE);
+    //editor.getSettings().setRefrainFromScrolling(REFRAIN_FROM_SCROLLING_VIM_VALUE);
   }
 
   public void editorDeinit(@NotNull Editor editor, boolean isReleased) {
