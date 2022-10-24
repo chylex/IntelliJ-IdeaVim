@@ -10,11 +10,13 @@ package com.maddyhome.idea.vim.extension.surround
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.CaretState
 import com.intellij.openapi.editor.Editor
 import com.maddyhome.idea.vim.KeyHandler
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimCaret
+import com.maddyhome.idea.vim.api.VimChangeGroup
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.endsWithNewLine
 import com.maddyhome.idea.vim.api.getLeadingCharacterOffset
@@ -37,12 +39,15 @@ import com.maddyhome.idea.vim.extension.exportOperatorFunction
 import com.maddyhome.idea.vim.group.findBlockRange
 import com.maddyhome.idea.vim.helper.exitVisualMode
 import com.maddyhome.idea.vim.key.OperatorFunction
+import com.maddyhome.idea.vim.newapi.IjVimCaret
+import com.maddyhome.idea.vim.newapi.IjVimEditor
 import com.maddyhome.idea.vim.newapi.ij
 import com.maddyhome.idea.vim.newapi.vim
 import com.maddyhome.idea.vim.options.helpers.ClipboardOptionHelper
 import com.maddyhome.idea.vim.put.PutData
 import com.maddyhome.idea.vim.state.mode.Mode
 import com.maddyhome.idea.vim.state.mode.SelectionType
+import com.maddyhome.idea.vim.state.mode.inBlockSelection
 import com.maddyhome.idea.vim.state.mode.selectionType
 import org.jetbrains.annotations.NonNls
 import javax.swing.KeyStroke
@@ -139,7 +144,7 @@ internal class VimSurroundExtension : VimExtension {
       )
     }
 
-    VimExtensionFacade.exportOperatorFunction(OPERATOR_FUNC, Operator())
+    VimExtensionFacade.exportOperatorFunction(OPERATOR_FUNC, Operator(supportsMultipleCursors = false)) // TODO
   }
 
   private class YSurroundHandler : ExtensionHandler {
@@ -189,15 +194,13 @@ internal class VimSurroundExtension : VimExtension {
 
   private class VSurroundHandler : ExtensionHandler {
     override fun execute(editor: VimEditor, context: ExecutionContext, operatorArguments: OperatorArguments) {
-      val selectionStart = editor.ij.caretModel.primaryCaret.selectionStart
       // NB: Operator ignores SelectionType anyway
-      if (!Operator().apply(editor, context, editor.mode.selectionType)) {
+      if (!Operator(supportsMultipleCursors = true).apply(editor, context, editor.mode.selectionType)) {
         return
       }
       runWriteAction {
         // Leave visual mode
         editor.exitVisualMode()
-        editor.ij.caretModel.moveToOffset(selectionStart)
 
         // Reset the key handler so that the command trie is updated for the new mode (Normal)
         // TODO: This should probably be handled by ToHandlerMapping.execute
@@ -220,6 +223,10 @@ internal class VimSurroundExtension : VimExtension {
 
     companion object {
       fun change(editor: VimEditor, context: ExecutionContext, charFrom: Char, newSurround: SurroundPair?) {
+        editor.ij.runWithEveryCaretAndRestore { changeAtCaret(editor, context, charFrom, newSurround) }
+      }
+
+      fun changeAtCaret(editor: VimEditor, context: ExecutionContext, charFrom: Char, newSurround: SurroundPair?) {
         // Save old register values for carets
         val surroundings = editor.sortedCarets()
           .map {
@@ -342,18 +349,42 @@ internal class VimSurroundExtension : VimExtension {
     }
   }
 
-  private class Operator : OperatorFunction {
+  private class Operator(private val supportsMultipleCursors: Boolean) : OperatorFunction {
     override fun apply(editor: VimEditor, context: ExecutionContext, selectionType: SelectionType?): Boolean {
       val ijEditor = editor.ij
       val c = injector.keyGroup.getChar(editor) ?: return true
 
       val pair = getOrInputPair(c, ijEditor, context.ij) ?: return false
-      // XXX: Will it work with line-wise or block-wise selections?
-      val range = getSurroundRange(editor.currentCaret()) ?: return false
-      performSurround(pair, range, editor.currentCaret(), selectionType == SelectionType.LINE_WISE)
-      // Jump back to start
-      executeNormalWithoutMapping(injector.parser.parseKeys("`["), ijEditor)
+
+      runWriteAction {
+        val change = VimPlugin.getChange()
+        if (supportsMultipleCursors) {
+          ijEditor.runWithEveryCaretAndRestore {
+            applyOnce(ijEditor, change, pair)
+          }
+        }
+        else {
+          applyOnce(ijEditor, change, pair)
+          // Jump back to start
+          executeNormalWithoutMapping(injector.parser.parseKeys("`["), ijEditor)
+        }
+      }
       return true
+    }
+
+    private fun applyOnce(editor: Editor, change: VimChangeGroup, pair: SurroundPair) {
+      // XXX: Will it work with line-wise or block-wise selections?
+      val primaryCaret = editor.caretModel.primaryCaret
+      val range = getSurroundRange(primaryCaret.vim)
+      if (range != null) {
+        change.insertText(IjVimEditor(editor), IjVimCaret(primaryCaret), range.startOffset, pair.first)
+        change.insertText(
+          IjVimEditor(editor),
+          IjVimCaret(primaryCaret),
+          range.endOffset + pair.first.length,
+          pair.second
+        )
+      }
     }
 
     private fun getSurroundRange(caret: VimCaret): TextRange? {
@@ -467,4 +498,42 @@ private fun performSurround(pair: SurroundPair, range: TextRange, caret: VimCare
     caret,
     TextRange(range.startOffset, range.endOffset + leftSurround.length + rightSurround.length)
   )
+}
+
+internal inline fun Editor.runWithEveryCaretAndRestore(action: () -> Unit) {
+  val caretModel = this.caretModel
+  val carets = if (this.vim.inBlockSelection) null else caretModel.allCarets
+  if (carets == null || carets.size == 1) {
+    action()
+  }
+  else {
+    var initialDocumentSize = this.document.textLength
+    var documentSizeDifference = 0
+
+    val caretOffsets = carets.map { it.selectionStart to it.selectionEnd }
+    val restoredCarets = mutableListOf<CaretState>()
+
+    caretModel.removeSecondaryCarets()
+
+    for ((selectionStart, selectionEnd) in caretOffsets) {
+      if (selectionStart == selectionEnd) {
+        caretModel.primaryCaret.moveToOffset(selectionStart + documentSizeDifference)
+      }
+      else {
+        caretModel.primaryCaret.setSelection(
+          selectionStart + documentSizeDifference,
+          selectionEnd + documentSizeDifference
+        )
+      }
+
+      action()
+      restoredCarets.add(caretModel.caretsAndSelections.single())
+
+      val documentLength = this.document.textLength
+      documentSizeDifference += documentLength - initialDocumentSize
+      initialDocumentSize = documentLength
+    }
+
+    caretModel.caretsAndSelections = restoredCarets
+  }
 }
