@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimCaret
+import com.maddyhome.idea.vim.api.VimChangeGroup
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.endsWithNewLine
 import com.maddyhome.idea.vim.api.getLeadingCharacterOffset
@@ -36,7 +37,10 @@ import com.maddyhome.idea.vim.extension.VimExtensionFacade.setRegisterForCaret
 import com.maddyhome.idea.vim.extension.exportOperatorFunction
 import com.maddyhome.idea.vim.group.findBlockRange
 import com.maddyhome.idea.vim.helper.exitVisualMode
+import com.maddyhome.idea.vim.helper.runWithEveryCaretAndRestore
 import com.maddyhome.idea.vim.key.OperatorFunction
+import com.maddyhome.idea.vim.newapi.IjVimCaret
+import com.maddyhome.idea.vim.newapi.IjVimEditor
 import com.maddyhome.idea.vim.newapi.ij
 import com.maddyhome.idea.vim.newapi.vim
 import com.maddyhome.idea.vim.options.helpers.ClipboardOptionHelper
@@ -80,7 +84,7 @@ internal class VimSurroundExtension : VimExtension {
       putKeyMappingIfMissing(MappingMode.XO, injector.parser.parseKeys("S"), owner, injector.parser.parseKeys("<Plug>VSurround"), true)
     }
 
-    VimExtensionFacade.exportOperatorFunction(OPERATOR_FUNC, Operator())
+    VimExtensionFacade.exportOperatorFunction(OPERATOR_FUNC, Operator(supportsMultipleCursors = false)) // TODO
   }
 
   private class YSurroundHandler : ExtensionHandler {
@@ -131,15 +135,13 @@ internal class VimSurroundExtension : VimExtension {
 
   private class VSurroundHandler : ExtensionHandler {
     override fun execute(editor: VimEditor, context: ExecutionContext, operatorArguments: OperatorArguments) {
-      val selectionStart = editor.ij.caretModel.primaryCaret.selectionStart
       // NB: Operator ignores SelectionType anyway
-      if (!Operator().apply(editor, context, editor.mode.selectionType)) {
+      if (!Operator(supportsMultipleCursors = true).apply(editor, context, editor.mode.selectionType)) {
         return
       }
       runWriteAction {
         // Leave visual mode
         editor.exitVisualMode()
-        editor.ij.caretModel.moveToOffset(selectionStart)
       }
     }
   }
@@ -160,6 +162,10 @@ internal class VimSurroundExtension : VimExtension {
 
     companion object {
       fun change(editor: VimEditor, context: ExecutionContext, charFrom: Char, newSurround: Pair<String, String>?) {
+        editor.ij.runWithEveryCaretAndRestore { changeAtCaret(editor, context, charFrom, newSurround) }
+      }
+      
+      fun changeAtCaret(editor: VimEditor, context: ExecutionContext, charFrom: Char, newSurround: Pair<String, String>?) {
         // Save old register values for carets
         val surroundings = editor.sortedCarets()
           .map {
@@ -267,19 +273,43 @@ internal class VimSurroundExtension : VimExtension {
     }
   }
 
-  private class Operator : OperatorFunction {
-    override fun apply(editor: VimEditor, context: ExecutionContext, selectionType: SelectionType?): Boolean {
-      val ijEditor = editor.ij
+  private class Operator(private val supportsMultipleCursors: Boolean) : OperatorFunction {
+    override fun apply(vimEditor: VimEditor, context: ExecutionContext, selectionType: SelectionType?): Boolean {
+      val ijEditor = vimEditor.ij
       val c = getChar(ijEditor)
       if (c.code == 0) return true
 
       val pair = getOrInputPair(c, ijEditor, context.ij) ?: return false
-      // XXX: Will it work with line-wise or block-wise selections?
-      val range = getSurroundRange(editor.currentCaret()) ?: return false
-      performSurround(pair, range, editor.currentCaret(), selectionType == SelectionType.LINE_WISE)
-      // Jump back to start
-      executeNormalWithoutMapping(injector.parser.parseKeys("`["), ijEditor)
+
+      runWriteAction {
+        val change = VimPlugin.getChange()
+        if (supportsMultipleCursors) {
+          ijEditor.runWithEveryCaretAndRestore {
+            applyOnce(ijEditor, change, pair)
+          }
+        }
+        else {
+          applyOnce(ijEditor, change, pair)
+          // Jump back to start
+          executeNormalWithoutMapping(injector.parser.parseKeys("`["), ijEditor)
+        }
+      }
       return true
+    }
+    
+    private fun applyOnce(editor: Editor, change: VimChangeGroup, pair: Pair<String, String>) {
+      // XXX: Will it work with line-wise or block-wise selections?
+      val primaryCaret = editor.caretModel.primaryCaret
+      val range = getSurroundRange(primaryCaret.vim)
+      if (range != null) {
+        change.insertText(IjVimEditor(editor), IjVimCaret(primaryCaret), range.startOffset, pair.first)
+        change.insertText(
+          IjVimEditor(editor),
+          IjVimCaret(primaryCaret),
+          range.endOffset + pair.first.length,
+          pair.second
+        )
+      }
     }
 
     private fun getSurroundRange(caret: VimCaret): TextRange? {
