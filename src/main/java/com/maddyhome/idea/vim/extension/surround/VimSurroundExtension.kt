@@ -165,7 +165,7 @@ internal class VimSurroundExtension : VimExtension {
           val lastNonWhiteSpaceOffset = getLastNonWhitespaceCharacterOffset(editor.text(), lineStartOffset, lineEndOffset)
           if (lastNonWhiteSpaceOffset != null) {
             val range = TextRange(lineStartOffset, lastNonWhiteSpaceOffset + 1)
-            performSurround(pair, range, it)
+            performSurround(pair, range, it, count = operatorArguments.count1)
           }
         }
         // Jump back to start
@@ -188,24 +188,18 @@ internal class VimSurroundExtension : VimExtension {
 
   private class VSurroundHandler : ExtensionHandler {
     override fun execute(editor: VimEditor, context: ExecutionContext, operatorArguments: OperatorArguments) {
-      val caret = editor.currentCaret()
       val selectionType = editor.mode.selectionType
       val isLineWise = selectionType == SelectionType.LINE_WISE
-      // A block selection is made of a native caret on each line, and each line is surrounded on its own. The lines are
-      // surrounded from the bottom up, so that the text inserted on a line doesn't move the ranges of the lines above
-      val ranges = if (selectionType == SelectionType.BLOCK_WISE) {
-        editor.nativeCarets().map { TextRange(it.selectionStart, it.selectionEnd) }.sortedByDescending { it.startOffset }
-      } else {
-        listOf(TextRange(caret.selectionStart, caret.selectionEnd))
-      }
 
       // Visual mode, and so the selection, stays while the surround character and the tag are read. <Esc> in the tag
       // prompt returns to it, like <Esc> on the command line
       val c = injector.keyGroup.getChar(editor) ?: return leaveVisualMode(editor)
       withSurroundPair(c, editor, context, onInvalid = { leaveVisualMode(editor) }) { pair ->
-        ranges.forEach { performSurround(pair, it, caret, isLineWise) }
+        for (caret in editor.sortedNativeCarets()) {
+          val range = TextRange(caret.selectionStart, caret.selectionEnd)
+          performSurround(pair, range, caret, isLineWise, operatorArguments.count1)
+        }
         leaveVisualMode(editor)
-        caret.moveToOffset(ranges.last().startOffset)
       }
     }
 
@@ -474,14 +468,14 @@ private fun readInput(
 }
 
 
-private fun performSurround(pair: SurroundPair, range: TextRange, caret: VimCaret, tagsOnNewLines: Boolean = false) {
+private fun performSurround(pair: SurroundPair, range: TextRange, caret: VimCaret, tagsOnNewLines: Boolean = false, count: Int = 1) {
   val editor = caret.editor
   val change = VimPlugin.getChange()
-  val leftSurround = pair.first + if (tagsOnNewLines) "\n" else ""
+  val leftSurround = (pair.first + if (tagsOnNewLines) "\n" else "").repeat(count)
 
   val isEOF = range.endOffset == editor.text().length
   val hasNewLine = editor.endsWithNewLine()
-  val rightSurround = if (tagsOnNewLines) {
+  val rightSurround = (if (tagsOnNewLines) {
     if (isEOF && !hasNewLine) {
       "\n" + pair.second
     } else {
@@ -489,7 +483,7 @@ private fun performSurround(pair: SurroundPair, range: TextRange, caret: VimCare
     }
   } else {
     pair.second
-  }
+  }).repeat(count)
 
   change.insertText(editor, caret, range.startOffset, leftSurround)
   change.insertText(editor, caret, range.endOffset + leftSurround.length, rightSurround)
