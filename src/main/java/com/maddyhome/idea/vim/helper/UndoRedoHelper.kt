@@ -17,6 +17,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.registry.Registry
+import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.injector
@@ -24,6 +25,8 @@ import com.maddyhome.idea.vim.common.ChangesListener
 import com.maddyhome.idea.vim.listener.SelectionVimListenerSuppressor
 import com.maddyhome.idea.vim.newapi.globalIjOptions
 import com.maddyhome.idea.vim.newapi.ij
+import com.maddyhome.idea.vim.state.mode.SelectionType
+import com.maddyhome.idea.vim.state.mode.inVisualMode
 import com.maddyhome.idea.vim.undo.UndoRedoBase
 
 /**
@@ -61,15 +64,12 @@ internal class UndoRedoHelper : UndoRedoBase() {
   ) {
     if (injector.globalIjOptions().oldundo) {
       SelectionVimListenerSuppressor.lock().use { undoManager.undo(fileEditor) }
+      restoreVisualMode(editor)
     } else {
       // TODO refactor me after VIM-308 when restoring selection and caret movement will be ignored by undo
       editor.runWithChangeTracking {
         undoManager.undo(fileEditor)
-
-        // We execute undo one more time if the previous one just restored selection
-        if (!hasChanges && hasSelection(editor) && undoManager.isUndoAvailable(fileEditor)) {
-          undoManager.undo(fileEditor)
-        }
+        restoreVisualMode(editor)
       }
 
       CommandProcessor.getInstance().runUndoTransparentAction {
@@ -88,15 +88,7 @@ internal class UndoRedoHelper : UndoRedoBase() {
       // TODO refactor me after VIM-308 when restoring selection and caret movement will be ignored by undo
       editor.runWithChangeTracking {
         undoManager.undo(fileEditor)
-
-        // We execute undo one more time if the previous one just restored selection
-        if (!hasChanges && hasSelection(editor) && undoManager.isUndoAvailable(fileEditor)) {
-          undoManager.undo(fileEditor)
-        }
-      }
-
-      CommandProcessor.getInstance().runUndoTransparentAction {
-        removeSelections(editor)
+        restoreVisualMode(editor)
       }
     } else {
       runWithBooleanRegistryOption("ide.undo.transparent.caret.movement", true) {
@@ -112,7 +104,7 @@ internal class UndoRedoHelper : UndoRedoBase() {
   private fun hasSelection(editor: VimEditor): Boolean {
     return editor.primaryCaret().ij.hasSelection()
   }
-  
+
   override fun redo(editor: VimEditor, context: ExecutionContext): Boolean {
     val ijContext = context.context as DataContext
     val project = PlatformDataKeys.PROJECT.getData(ijContext) ?: return false
@@ -236,5 +228,22 @@ internal class UndoRedoHelper : UndoRedoBase() {
 
     val hasChanges: Boolean
       get() = changeListener.hasChanged || initialPath != editor.getPath()
+  }
+
+  private fun restoreVisualMode(editor: VimEditor) {
+    if (!editor.inVisualMode && editor.getSelectionModel().hasSelection()) {
+      val detectedMode = VimPlugin.getVisualMotion().autodetectVisualSubmode(editor)
+
+      // Visual block selection is restored into multiple carets, so multi-carets that form a block are always
+      // identified as visual block mode, leading to false positives.
+      // Since I use visual block mode much less often than multi-carets, this is a judgment call to never restore
+      // visual block mode.
+      val wantedMode = if (detectedMode == SelectionType.BLOCK_WISE)
+        SelectionType.CHARACTER_WISE
+      else
+        detectedMode
+
+      VimPlugin.getVisualMotion().enterVisualMode(editor, wantedMode)
+    }
   }
 }
