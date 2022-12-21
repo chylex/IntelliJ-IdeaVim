@@ -141,7 +141,7 @@ object IjOptions {
   // Temporary feature flags during development, not really intended for external use
   val closenotebooks: ToggleOption =
     addOption(ToggleOption("closenotebooks", GLOBAL, "closenotebooks", true, isHidden = true))
-  val oldundo: ToggleOption = addOption(ToggleOption("oldundo", GLOBAL, "oldundo", false, isHidden = true))
+  val oldundo: ToggleOption = addOption(ToggleOption("oldundo", GLOBAL, "oldundo", true, isHidden = true))
   val unifyjumps: ToggleOption = addOption(ToggleOption("unifyjumps", GLOBAL, "unifyjumps", true, isHidden = true))
   val vimHints: ToggleOption = addOption(ToggleOption("vimhints", GLOBAL, "vimhints", false, isHidden = true))
 
