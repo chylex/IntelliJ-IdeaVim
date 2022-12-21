@@ -427,7 +427,7 @@
   {
     "keys": "<C-R>",
     "class": "com.maddyhome.idea.vim.action.change.RedoAction",
-    "modes": "N"
+    "modes": "NX"
   },
   {
     "keys": "<C-R>",
@@ -1042,7 +1042,7 @@
   {
     "keys": "<Undo>",
     "class": "com.maddyhome.idea.vim.action.change.UndoAction",
-    "modes": "N"
+    "modes": "NX"
   },
   {
     "keys": "<Up>",
@@ -1261,8 +1261,8 @@
   },
   {
     "keys": "U",
-    "class": "com.maddyhome.idea.vim.action.change.change.ChangeCaseUpperVisualAction",
-    "modes": "X"
+    "class": "com.maddyhome.idea.vim.action.change.RedoAction",
+    "modes": "NX"
   },
   {
     "keys": "V",
@@ -1745,11 +1745,6 @@
     "modes": "N"
   },
   {
-    "keys": "gU",
-    "class": "com.maddyhome.idea.vim.action.change.change.ChangeCaseUpperVisualAction",
-    "modes": "X"
-  },
-  {
     "keys": "g^",
     "class": "com.maddyhome.idea.vim.action.motion.leftright.MotionFirstScreenNonSpaceAction",
     "modes": "NXO"
@@ -1858,11 +1853,6 @@
     "keys": "gu",
     "class": "com.maddyhome.idea.vim.action.change.change.ChangeCaseLowerMotionAction",
     "modes": "N"
-  },
-  {
-    "keys": "gu",
-    "class": "com.maddyhome.idea.vim.action.change.change.ChangeCaseLowerVisualAction",
-    "modes": "X"
   },
   {
     "keys": "gv",
@@ -2067,12 +2057,7 @@
   {
     "keys": "u",
     "class": "com.maddyhome.idea.vim.action.change.UndoAction",
-    "modes": "N"
-  },
-  {
-    "keys": "u",
-    "class": "com.maddyhome.idea.vim.action.change.change.ChangeCaseLowerVisualAction",
-    "modes": "X"
+    "modes": "NX"
   },
   {
     "keys": "v",
