@@ -445,8 +445,7 @@ object VimListenerManager {
           KeyHandler.getInstance().reset(editor.vim)
         }
       }
-
-      // Vim order: BufLeave → WinLeave → WinEnter → BufEnter
+// Vim order: BufLeave → WinLeave → WinEnter → BufEnter
       // Buf events only fire when the buffer (file) actually changes
       val bufferChanged = event.oldFile?.path != event.newFile?.path
       if (bufferChanged) {
@@ -457,7 +456,6 @@ object VimListenerManager {
       if (bufferChanged) {
         injector.autoCmd.handleEvent(AutoCmdEvent.BufEnter, event.newFile?.path)
       }
-
       MotionGroup.fileEditorManagerSelectionChangedCallback(event)
       FileGroupHelper.fileEditorManagerSelectionChangedCallback(event)
       (VimPlugin.getSearch() as IjVimSearchGroup).fileEditorManagerSelectionChangedCallback(event)
