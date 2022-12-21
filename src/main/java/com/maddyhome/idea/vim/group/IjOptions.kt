@@ -158,7 +158,7 @@ object IjOptions {
     "closenotebooks"
   )
   val ideaoldundo: ToggleOption =
-    addOption(ToggleOption("ideaoldundo", GLOBAL, "ideaoldundo", false, isHidden = true), "oldundo")
+    addOption(ToggleOption("ideaoldundo", GLOBAL, "ideaoldundo", true, isHidden = true), "oldundo")
   val ideaunifyjumps: ToggleOption =
     addOption(ToggleOption("ideaunifyjumps", GLOBAL, "ideaunifyjumps", true, isHidden = true), "unifyjumps")
 
