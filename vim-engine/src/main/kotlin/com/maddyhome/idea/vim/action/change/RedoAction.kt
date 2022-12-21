@@ -16,7 +16,7 @@ import com.maddyhome.idea.vim.command.Command
 import com.maddyhome.idea.vim.command.OperatorArguments
 import com.maddyhome.idea.vim.handler.VimActionHandler
 
-@CommandOrMotion(keys = ["<C-R>"], modes = [Mode.NORMAL])
+@CommandOrMotion(keys = ["U", "<C-R>"], modes = [Mode.NORMAL, Mode.VISUAL])
 class RedoAction : VimActionHandler.SingleExecution() {
   override val type: Command.Type = Command.Type.OTHER_SELF_SYNCHRONIZED
 
