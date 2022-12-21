@@ -421,7 +421,7 @@ object VimListenerManager {
           KeyHandler.getInstance().reset(editor.vim)
         }
       }
-      
+
       injector.outputPanel.getCurrentOutputPanel()?.close()
       MotionGroup.fileEditorManagerSelectionChangedCallback(event)
       FileGroupHelper.fileEditorManagerSelectionChangedCallback(event)
