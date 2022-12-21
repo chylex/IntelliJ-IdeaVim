@@ -226,12 +226,12 @@
 
     <!-- Change -->
     <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCaseLowerMotionAction" mappingModes="N" keys="gu"/>
-    <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCaseLowerVisualAction" mappingModes="X" keys="u"/>
+<!--    <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCaseLowerVisualAction" mappingModes="X" keys="u"/>-->
     <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCaseToggleCharacterAction" mappingModes="N" keys="~"/>
     <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCaseToggleMotionAction" mappingModes="N" keys="g~"/>
     <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCaseToggleVisualAction" mappingModes="X" keys="~"/>
     <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCaseUpperMotionAction" mappingModes="N" keys="gU"/>
-    <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCaseUpperVisualAction" mappingModes="X" keys="U"/>
+<!--    <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCaseUpperVisualAction" mappingModes="X" keys="U"/>-->
     <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCharacterAction" mappingModes="N" keys="r"/>
     <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeCharactersAction" mappingModes="N" keys="s"/>
     <vimAction implementation="com.maddyhome.idea.vim.action.change.change.ChangeEndOfLineAction" mappingModes="N" keys="C"/>
@@ -329,8 +329,8 @@
     <vimAction implementation="com.maddyhome.idea.vim.action.change.RepeatChangeAction" mappingModes="N" keys="."/>
     <vimAction implementation="com.maddyhome.idea.vim.action.ExEntryAction" mappingModes="NXO" keys=":"/>
     <vimAction implementation="com.maddyhome.idea.vim.action.ResetModeAction" mappingModes="ALL" keys="«C-\»«C-N»"/>
-    <vimAction implementation="com.maddyhome.idea.vim.action.change.RedoAction" mappingModes="N" keys="«C-R»"/>
-    <vimAction implementation="com.maddyhome.idea.vim.action.change.UndoAction" mappingModes="N"/>
+    <vimAction implementation="com.maddyhome.idea.vim.action.change.RedoAction" mappingModes="NX" keys="U,«C-R»"/>
+    <vimAction implementation="com.maddyhome.idea.vim.action.change.UndoAction" mappingModes="NX"/>
 
     <!-- Keys -->
     <vimAction implementation="com.maddyhome.idea.vim.action.change.OperatorAction" mappingModes="N" keys="g@"/>
