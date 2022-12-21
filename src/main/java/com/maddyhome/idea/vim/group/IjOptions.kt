@@ -143,7 +143,7 @@ object IjOptions {
     addOption(ToggleOption("closenotebooks", GLOBAL, "closenotebooks", true, isHidden = true))
   val commandOrMotionAnnotation: ToggleOption =
     addOption(ToggleOption("commandormotionannotation", GLOBAL, "commandormotionannotation", true, isHidden = true))
-  val oldundo: ToggleOption = addOption(ToggleOption("oldundo", GLOBAL, "oldundo", false, isHidden = true))
+  val oldundo: ToggleOption = addOption(ToggleOption("oldundo", GLOBAL, "oldundo", true, isHidden = true))
   val unifyjumps: ToggleOption = addOption(ToggleOption("unifyjumps", GLOBAL, "unifyjumps", true, isHidden = true))
   val vimscriptFunctionAnnotation: ToggleOption =
     addOption(ToggleOption("vimscriptfunctionannotation", GLOBAL, "vimscriptfunctionannotation", true, isHidden = true))
