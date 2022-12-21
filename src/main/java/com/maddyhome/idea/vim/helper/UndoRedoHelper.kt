@@ -14,6 +14,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.injector
@@ -21,6 +22,8 @@ import com.maddyhome.idea.vim.common.ChangesListener
 import com.maddyhome.idea.vim.listener.SelectionVimListenerSuppressor
 import com.maddyhome.idea.vim.newapi.globalIjOptions
 import com.maddyhome.idea.vim.newapi.ij
+import com.maddyhome.idea.vim.state.mode.SelectionType
+import com.maddyhome.idea.vim.state.mode.inVisualMode
 import com.maddyhome.idea.vim.undo.UndoRedoBase
 
 /**
@@ -39,6 +42,7 @@ internal class UndoRedoHelper : UndoRedoBase() {
 
       if (injector.globalIjOptions().oldundo) {
         SelectionVimListenerSuppressor.lock().use { undoManager.undo(fileEditor) }
+        restoreVisualMode(editor)
       } else {
         // TODO refactor me after VIM-308 when restoring selection and caret movement will be ignored by undo
         editor.runWithChangeTracking {
@@ -74,6 +78,7 @@ internal class UndoRedoHelper : UndoRedoBase() {
     if (undoManager.isRedoAvailable(fileEditor)) {
       if (injector.globalIjOptions().oldundo) {
         SelectionVimListenerSuppressor.lock().use { undoManager.redo(fileEditor) }
+        restoreVisualMode(editor)
       } else {
         undoManager.redo(fileEditor)
         CommandProcessor.getInstance().runUndoTransparentAction {
@@ -130,5 +135,22 @@ internal class UndoRedoHelper : UndoRedoBase() {
 
     val hasChanges: Boolean
       get() = changeListener.hasChanged || initialPath != editor.getPath()
+  }
+
+  private fun restoreVisualMode(editor: VimEditor) {
+    if (!editor.inVisualMode && editor.getSelectionModel().hasSelection()) {
+      val detectedMode = VimPlugin.getVisualMotion().autodetectVisualSubmode(editor)
+      
+      // Visual block selection is restored into multiple carets, so multi-carets that form a block are always
+      // identified as visual block mode, leading to false positives.
+      // Since I use visual block mode much less often than multi-carets, this is a judgment call to never restore
+      // visual block mode.
+      val wantedMode = if (detectedMode == SelectionType.BLOCK_WISE)
+        SelectionType.CHARACTER_WISE
+      else
+        detectedMode
+      
+      VimPlugin.getVisualMotion().enterVisualMode(editor, wantedMode)
+    }
   }
 }
