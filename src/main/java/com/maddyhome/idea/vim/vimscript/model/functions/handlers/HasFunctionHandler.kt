@@ -8,6 +8,8 @@
 
 package com.maddyhome.idea.vim.vimscript.model.functions.handlers
 
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.system.CpuArch
 import com.intellij.vim.annotations.VimscriptFunction
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimEditor
@@ -23,7 +25,7 @@ internal class HasFunctionHandler : FunctionHandler() {
   override val minimumNumberOfArguments = 1
   override val maximumNumberOfArguments = 2
 
-  private val supportedFeatures = setOf("ide")
+  private val supportedFeatures = Features.discover()
 
   override fun doFunction(
     argumentValues: List<Expression>,
@@ -39,6 +41,42 @@ internal class HasFunctionHandler : FunctionHandler() {
       VimInt.ONE
     } else {
       VimInt.ZERO
+    }
+  }
+  
+  private object Features {
+    fun discover(): Set<String> {
+      val features = mutableSetOf("ide")
+      collectOperatingSystemType(features)
+      return features
+    }
+    
+    private fun collectOperatingSystemType(target: MutableSet<String>) {
+      if (SystemInfoRt.isWindows) {
+        target.add("win32")
+        if (CpuArch.CURRENT.width == 64) {
+          target.add("win64")
+        }
+      }
+      else if (SystemInfoRt.isLinux) {
+        target.add("linux")
+      }
+      else if (SystemInfoRt.isMac) {
+        target.add("mac")
+        target.add("macunix")
+        target.add("osx")
+        target.add("osxdarwin")
+      }
+      else if (SystemInfoRt.isFreeBSD) {
+        target.add("bsd")
+      }
+      else if (SystemInfoRt.isSolaris) {
+        target.add("sun")
+      }
+      
+      if (SystemInfoRt.isUnix) {
+        target.add("unix")
+      }
     }
   }
 }
