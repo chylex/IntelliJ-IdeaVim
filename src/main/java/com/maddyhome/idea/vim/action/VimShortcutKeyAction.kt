@@ -14,10 +14,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionWrapper
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
@@ -159,6 +163,14 @@ internal class VimShortcutKeyAction : AnAction(), DumbAware/*, LightEditCompatib
         return ActionEnableStatus.no("App code template is active", LogLevel.INFO)
       }
 
+      val nextTemplateVariableShortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE)
+      if (nextTemplateVariableShortcuts.any { it is KeyboardShortcut && it.firstKeyStroke == keyStroke }) {
+        val handler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE)
+        if (handler.isEnabled(editor, null, e.dataContext)) {
+          return ActionEnableStatus.no("Next template variable or finish in-place refactoring", LogLevel.INFO)
+        }
+      }
+      
       if (editor.inInsertMode) {
         if (keyCode == KeyEvent.VK_TAB) {
           // TODO: This stops VimEditorTab seeing <Tab> in insert mode and correctly scrolling the view
