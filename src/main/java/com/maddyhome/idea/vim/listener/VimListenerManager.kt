@@ -124,7 +124,6 @@ import com.maddyhome.idea.vim.helper.vimInitialised
 import com.maddyhome.idea.vim.helper.vimSearchHighlights
 import com.maddyhome.idea.vim.key.noteCaretMoveInInsertSession
 import com.maddyhome.idea.vim.key.resetAbbreviationSession
-import com.maddyhome.idea.vim.listener.VimListenerManager.VimEditorFactoryListener.editorCreated
 import com.maddyhome.idea.vim.newapi.IjVimEditor
 import com.maddyhome.idea.vim.newapi.IjVimSearchGroup
 import com.maddyhome.idea.vim.newapi.InsertTimeRecorder
@@ -514,6 +513,15 @@ object VimListenerManager {
     override fun selectionChanged(event: FileEditorManagerEvent) {
       // We can't rely on being passed a non-null editor, so check for Code With Me scenarios explicitly
       if (VimPlugin.isNotEnabled() || !ClientId.isCurrentlyUnderLocalId) return
+
+      val newEditor = event.newEditor
+      if (newEditor is TextEditor) {
+        val editor = newEditor.editor
+        if (editor.isInsertMode) {
+          editor.vim.mode = Mode.NORMAL()
+          KeyHandler.getInstance().reset(editor.vim)
+        }
+      }
 
       if (!isVirtualBuffer(event.oldFile) && !isVirtualBuffer(event.newFile)) {
         // Vim order: BufLeave → WinLeave → WinEnter → BufEnter
