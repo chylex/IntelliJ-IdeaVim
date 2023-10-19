@@ -13,6 +13,7 @@ package com.maddyhome.idea.vim.helper
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.util.ui.table.JBTableRowEditor
@@ -111,8 +112,7 @@ internal fun Editor.isPrimaryEditor(): Boolean {
 internal fun Editor.isTerminalEditor(): Boolean {
   return !isViewer
     && document.isWritable
-    && !EditorHelper.isFileEditor(this)
-    && !EditorHelper.isDiffEditor(this)
+    && this.editorKind == EditorKind.CONSOLE
 }
 
 // Optimized clone of com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor

@@ -98,6 +98,7 @@ import com.maddyhome.idea.vim.newapi.IjVimSearchGroup
 import com.maddyhome.idea.vim.newapi.InsertTimeRecorder
 import com.maddyhome.idea.vim.newapi.ij
 import com.maddyhome.idea.vim.newapi.vim
+import com.maddyhome.idea.vim.state.mode.Mode
 import com.maddyhome.idea.vim.state.mode.inSelectMode
 import com.maddyhome.idea.vim.state.mode.selectionType
 import com.maddyhome.idea.vim.ui.ShowCmdOptionChangeListener
@@ -412,6 +413,15 @@ object VimListenerManager {
       // We can't rely on being passed a non-null editor, so check for Code With Me scenarios explicitly
       if (VimPlugin.isNotEnabled() || !ClientId.isCurrentlyUnderLocalId) return
 
+      val newEditor = event.newEditor
+      if (newEditor is TextEditor) {
+        val editor = newEditor.editor
+        if (editor.isInsertMode) {
+          editor.vim.mode = Mode.NORMAL()
+          KeyHandler.getInstance().reset(editor.vim)
+        }
+      }
+      
       injector.outputPanel.getCurrentOutputPanel()?.close()
       MotionGroup.fileEditorManagerSelectionChangedCallback(event)
       FileGroupHelper.fileEditorManagerSelectionChangedCallback(event)
