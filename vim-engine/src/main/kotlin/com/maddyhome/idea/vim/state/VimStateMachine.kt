@@ -33,7 +33,7 @@ public interface VimStateMachine {
   @Deprecated("Please use KeyHandlerState instead")
   public val digraphSequence: DigraphSequence
 
-  public val mode: Mode
+  public var mode: Mode
   public var isDotRepeatInProgress: Boolean
   public var isRegisterPending: Boolean
   public val isReplaceCharacter: Boolean
