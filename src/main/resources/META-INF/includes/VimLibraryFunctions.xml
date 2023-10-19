@@ -24,6 +24,5 @@
     <vimLibraryFunction implementation="com.maddyhome.idea.vim.vimscript.model.functions.handlers.JoinFunctionHandler" name="join"/>
     <vimLibraryFunction implementation="com.maddyhome.idea.vim.vimscript.model.functions.handlers.SplitFunctionHandler" name="split"/>
     <vimLibraryFunction implementation="com.maddyhome.idea.vim.vimscript.model.functions.handlers.GetFunctionHandler" name="get"/>
-    <vimLibraryFunction implementation="com.maddyhome.idea.vim.vimscript.model.functions.handlers.RenamingFunctionHandler" name="renaming"/>
   </extensions>
 </idea-plugin>
