@@ -45,7 +45,6 @@ import com.maddyhome.idea.vim.handler.Motion.AbsoluteOffset
 import com.maddyhome.idea.vim.handler.MotionActionHandler
 import com.maddyhome.idea.vim.handler.TextObjectActionHandler
 import com.maddyhome.idea.vim.helper.EditorHelper
-import com.maddyhome.idea.vim.helper.exitVisualMode
 import com.maddyhome.idea.vim.helper.getNormalizedScrollOffset
 import com.maddyhome.idea.vim.helper.getNormalizedSideScrollOffset
 import com.maddyhome.idea.vim.helper.isEndAllowed
@@ -369,11 +368,6 @@ class MotionGroup : VimMotionGroupBase() {
         if (!editor.isDisposed) {
           editor.vim.let { vimEditor ->
             when (vimEditor.mode) {
-              is Mode.VISUAL -> {
-                vimEditor.exitVisualMode()
-                KeyHandler.getInstance().reset(vimEditor)
-              }
-
               is Mode.CMD_LINE -> {
                 // in case of substitute preview we don't wont to close current command line
                 if (isOpeningSubstitutePreview(event)) return

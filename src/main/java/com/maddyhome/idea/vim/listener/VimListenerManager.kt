@@ -531,9 +531,29 @@ object VimListenerManager {
    * guest editors.
    */
   class VimFileEditorManagerListener : FileEditorManagerListener {
+    private val oldModeKey = Key.create<Mode>("VIM_OLD_MODE")
+    
     override fun selectionChanged(event: FileEditorManagerEvent) {
       // We can't rely on being passed a non-null editor, so check for Code With Me scenarios explicitly
       if (VimPlugin.isNotEnabled() || !ClientId.isCurrentlyUnderLocalId) return
+
+      val newEditor = (event.newEditor as? TextEditor)?.editor
+      if (newEditor != null) {
+        val oldEditor = (event.oldEditor as? TextEditor)?.editor
+        if (oldEditor != null) {
+          oldEditor.putUserData(oldModeKey, oldEditor.vim.mode)
+        }
+
+        var restoredMode = newEditor.getUserData(oldModeKey)
+        if (restoredMode != null && restoredMode.isInsertish) {
+          restoredMode = Mode.NORMAL()
+        }
+        
+        if (restoredMode != null) {
+          newEditor.vim.mode = restoredMode
+          KeyHandler.getInstance().reset(newEditor.vim)
+        }
+      }
 
       if (!isVirtualBuffer(event.oldFile) && !isVirtualBuffer(event.newFile)) {
         // Vim order: BufLeave → WinLeave → WinEnter → BufEnter
