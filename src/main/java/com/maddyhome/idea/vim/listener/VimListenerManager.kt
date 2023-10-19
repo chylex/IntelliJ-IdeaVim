@@ -88,6 +88,8 @@ import com.maddyhome.idea.vim.listener.MouseEventsDataHolder.skipNDragEvents
 import com.maddyhome.idea.vim.listener.VimListenerManager.EditorListeners.add
 import com.maddyhome.idea.vim.newapi.IjVimEditor
 import com.maddyhome.idea.vim.newapi.vim
+import com.maddyhome.idea.vim.state.VimStateMachine
+import com.maddyhome.idea.vim.state.mode.Mode
 import com.maddyhome.idea.vim.state.mode.inSelectMode
 import com.maddyhome.idea.vim.state.mode.mode
 import com.maddyhome.idea.vim.state.mode.selectionType
@@ -265,6 +267,16 @@ internal object VimListenerManager {
   class VimFileEditorManagerListener : FileEditorManagerListener {
     override fun selectionChanged(event: FileEditorManagerEvent) {
       if (!VimPlugin.isEnabled()) return
+      
+      val newEditor = event.newEditor
+      if (newEditor is TextEditor) {
+        val editor = newEditor.editor
+        if (editor.isInsertMode) {
+          VimStateMachine.getInstance(editor).mode = Mode.NORMAL()
+          KeyHandler.getInstance().reset(editor.vim)
+        }
+      }
+      
       MotionGroup.fileEditorManagerSelectionChangedCallback(event)
       FileGroup.fileEditorManagerSelectionChangedCallback(event)
       SearchGroup.fileEditorManagerSelectionChangedCallback(event)
