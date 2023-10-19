@@ -530,6 +530,15 @@ object VimListenerManager {
       // We can't rely on being passed a non-null editor, so check for Code With Me scenarios explicitly
       if (VimPlugin.isNotEnabled() || !ClientId.isCurrentlyUnderLocalId) return
 
+      val newEditor = event.newEditor
+      if (newEditor is TextEditor) {
+        val editor = newEditor.editor
+        if (editor.isInsertMode) {
+          editor.vim.mode = Mode.NORMAL()
+          KeyHandler.getInstance().reset(editor.vim)
+        }
+      }
+
       if (!isVirtualBuffer(event.oldFile) && !isVirtualBuffer(event.newFile)) {
         // Vim order: BufLeave → WinLeave → WinEnter → BufEnter
         // Buf events only fire when the buffer (file) actually changes
