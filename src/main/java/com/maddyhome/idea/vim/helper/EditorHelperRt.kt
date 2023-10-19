@@ -149,10 +149,7 @@ internal fun Editor.isPrimaryEditor(): Boolean {
 internal fun Editor.isTerminalEditor(): Boolean {
   return !isViewer
     && document.isWritable
-    && !EditorHelper.isFileEditor(this)
-    && !EditorHelper.isDiffEditor(this)
-    && !EditorHelper.isCommandHistoryWindow(this)
-    && !EditorHelper.isPythonConsole(this)
+    && this.editorKind == EditorKind.CONSOLE
 }
 
 // Optimized clone of com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor

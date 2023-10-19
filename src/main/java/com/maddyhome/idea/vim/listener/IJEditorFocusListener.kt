@@ -68,8 +68,10 @@ class IJEditorFocusListener : EditorListener {
       VimPlugin.getChange().insertBeforeCaret(editor, context)
       KeyHandler.getInstance().lastUsedEditorInfo = LastUsedEditorInfo(currentEditorHashCode, true)
     }
-    if (isCurrentEditorTerminal && !ijEditor.inInsertMode && !(ijEditor.editorKind == EditorKind.MAIN_EDITOR && ijEditor.isPrimaryEditor())) {
-      switchToInsertMode.run()
+    if (isCurrentEditorTerminal) {
+      if (!ijEditor.inInsertMode && !(ijEditor.editorKind == EditorKind.MAIN_EDITOR && ijEditor.isPrimaryEditor())) {
+        switchToInsertMode.run()
+      }
     } else if (ijEditor.isInsertMode && (oldEditorInfo.isInsertModeForced || !ijEditor.document.isWritable)) {
       val context: ExecutionContext = injector.executionContextManager.getEditorExecutionContext(editor)
       val mode = injector.vimState.mode
