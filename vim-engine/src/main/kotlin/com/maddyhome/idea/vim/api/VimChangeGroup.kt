@@ -144,7 +144,7 @@ public interface VimChangeGroup {
     operatorArguments: OperatorArguments,
   )
 
-  public fun insertText(editor: VimEditor, caret: VimCaret, offset: Int, str: String): VimCaret
+  public fun insertText(editor: VimEditor, caret: VimCaret, offset: Int, str: CharSequence): VimCaret
 
   public fun insertText(editor: VimEditor, caret: VimCaret, str: String): VimCaret
 
