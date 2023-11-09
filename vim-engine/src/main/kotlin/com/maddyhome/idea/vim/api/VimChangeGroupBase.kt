@@ -201,7 +201,7 @@ abstract class VimChangeGroupBase : VimChangeGroup {
    * @param caret  The caret to start insertion in
    * @param str    The text to insert
    */
-  override fun insertText(editor: VimEditor, caret: VimCaret, offset: Int, str: String): VimCaret {
+  override fun insertText(editor: VimEditor, caret: VimCaret, offset: Int, str: CharSequence): VimCaret {
     (editor as MutableVimEditor).insertText(caret, offset, str)
     val newCaret = caret.moveToInlayAwareOffset(offset + str.length)
 
