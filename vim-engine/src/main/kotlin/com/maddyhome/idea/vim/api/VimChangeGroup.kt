@@ -175,7 +175,7 @@ interface VimChangeGroup {
     operatorArguments: OperatorArguments,
   )
 
-  fun insertText(editor: VimEditor, caret: VimCaret, offset: Int, str: String): VimCaret
+  fun insertText(editor: VimEditor, caret: VimCaret, offset: Int, str: CharSequence): VimCaret
 
   fun insertText(editor: VimEditor, caret: VimCaret, str: String): VimCaret
 

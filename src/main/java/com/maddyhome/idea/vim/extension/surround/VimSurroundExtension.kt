@@ -84,7 +84,7 @@ internal class VimSurroundExtension : VimExtension {
       putKeyMappingIfMissing(MappingMode.XO, injector.parser.parseKeys("S"), owner, injector.parser.parseKeys("<Plug>VSurround"), true)
     }
 
-    VimExtensionFacade.exportOperatorFunction(OPERATOR_FUNC, Operator(supportsMultipleCursors = false)) // TODO
+    VimExtensionFacade.exportOperatorFunction(OPERATOR_FUNC, Operator(supportsMultipleCursors = false, count = 1)) // TODO
   }
 
   private class YSurroundHandler : ExtensionHandler {
@@ -112,7 +112,7 @@ internal class VimSurroundExtension : VimExtension {
         val lastNonWhiteSpaceOffset = getLastNonWhitespaceCharacterOffset(editor.text(), lineStartOffset, lineEndOffset)
         if (lastNonWhiteSpaceOffset != null) {
           val range = TextRange(lineStartOffset, lastNonWhiteSpaceOffset + 1)
-          performSurround(pair, range, it)
+          performSurround(pair, range, it, count = operatorArguments.count1)
         }
 //        it.moveToOffset(lineStartOffset)
       }
@@ -136,7 +136,7 @@ internal class VimSurroundExtension : VimExtension {
   private class VSurroundHandler : ExtensionHandler {
     override fun execute(editor: VimEditor, context: ExecutionContext, operatorArguments: OperatorArguments) {
       // NB: Operator ignores SelectionType anyway
-      if (!Operator(supportsMultipleCursors = true).apply(editor, context, editor.mode.selectionType)) {
+      if (!Operator(supportsMultipleCursors = true, count = operatorArguments.count1).apply(editor, context, editor.mode.selectionType)) {
         return
       }
       runWriteAction {
@@ -277,7 +277,7 @@ internal class VimSurroundExtension : VimExtension {
     }
   }
 
-  private class Operator(private val supportsMultipleCursors: Boolean) : OperatorFunction {
+  private class Operator(private val supportsMultipleCursors: Boolean, private val count: Int) : OperatorFunction {
     override fun apply(vimEditor: VimEditor, context: ExecutionContext, selectionType: SelectionType?): Boolean {
       val ijEditor = vimEditor.ij
       val c = getChar(ijEditor)
@@ -289,11 +289,11 @@ internal class VimSurroundExtension : VimExtension {
         val change = VimPlugin.getChange()
         if (supportsMultipleCursors) {
           ijEditor.runWithEveryCaretAndRestore {
-            applyOnce(ijEditor, change, pair)
+            applyOnce(ijEditor, change, pair, count)
           }
         }
         else {
-          applyOnce(ijEditor, change, pair)
+          applyOnce(ijEditor, change, pair, count)
           // Jump back to start
           executeNormalWithoutMapping(injector.parser.parseKeys("`["), ijEditor)
         }
@@ -301,18 +301,15 @@ internal class VimSurroundExtension : VimExtension {
       return true
     }
     
-    private fun applyOnce(editor: Editor, change: VimChangeGroup, pair: SurroundPair) {
+    private fun applyOnce(editor: Editor, change: VimChangeGroup, pair: SurroundPair, count: Int) {
       // XXX: Will it work with line-wise or block-wise selections?
       val primaryCaret = editor.caretModel.primaryCaret
       val range = getSurroundRange(primaryCaret.vim)
       if (range != null) {
-        change.insertText(IjVimEditor(editor), IjVimCaret(primaryCaret), range.startOffset, pair.first)
-        change.insertText(
-          IjVimEditor(editor),
-          IjVimCaret(primaryCaret),
-          range.endOffset + pair.first.length,
-          pair.second
-        )
+        val start = RepeatedCharSequence.of(pair.first, count)
+        val end = RepeatedCharSequence.of(pair.second, count)
+        change.insertText(IjVimEditor(editor), IjVimCaret(primaryCaret), range.startOffset, start)
+        change.insertText(IjVimEditor(editor), IjVimCaret(primaryCaret), range.endOffset + start.length, end)
       }
     }
 
@@ -415,15 +412,15 @@ private fun getChar(editor: Editor): Char {
   return res
 }
 
-private fun performSurround(pair: SurroundPair, range: TextRange, caret: VimCaret, tagsOnNewLines: Boolean = false) {
+private fun performSurround(pair: SurroundPair, range: TextRange, caret: VimCaret, count: Int, tagsOnNewLines: Boolean = false) {
   runWriteAction {
     val editor = caret.editor
     val change = VimPlugin.getChange()
-    val leftSurround = pair.first + if (tagsOnNewLines) "\n" else ""
+    val leftSurround = RepeatedCharSequence.of(pair.first + if (tagsOnNewLines) "\n" else "", count)
 
     val isEOF = range.endOffset == editor.text().length
     val hasNewLine = editor.endsWithNewLine()
-    val rightSurround = if (tagsOnNewLines) {
+    val rightSurround = (if (tagsOnNewLines) {
       if (isEOF && !hasNewLine) {
         "\n" + pair.second
       } else {
@@ -431,7 +428,7 @@ private fun performSurround(pair: SurroundPair, range: TextRange, caret: VimCare
       }
     } else {
       pair.second
-    }
+    }).let { RepeatedCharSequence.of(it, count) }
 
     change.insertText(editor, caret, range.startOffset, leftSurround)
     change.insertText(editor, caret, range.endOffset + leftSurround.length, rightSurround)
