@@ -30,6 +30,7 @@ public class FilterVisualLinesAction : VimActionHandler.SingleExecution() {
   override val flags: EnumSet<CommandFlags> = enumSetOf(CommandFlags.FLAG_MOT_LINEWISE)
 
   override fun execute(editor: VimEditor, context: ExecutionContext, cmd: Command, operatorArguments: OperatorArguments): Boolean {
+    injector.markService.setVisualSelectionMarks(editor)
     injector.processGroup.startFilterCommand(editor, context, cmd)
     editor.exitVisualMode()
     return true
