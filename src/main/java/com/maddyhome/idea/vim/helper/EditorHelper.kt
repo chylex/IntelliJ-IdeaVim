@@ -555,7 +555,7 @@ object EditorHelper {
     get() = (this as? EditorImpl)?.stickyLinesPanelHeight ?: 0
 
   private val Editor.lastVisualLine: Int
-    get() = IjVimEditor(this).getVisualLineCount() - 1
+    get() = IjVimEditor(this).getVisualLineCount() + settings.additionalLinesCount
 
   private fun getExEntryHeight(): Int =
     injector.commandLine.getActiveCommandLineHeight() ?: injector.outputPanel.getActiveOutputPanelHeight() ?: 0
