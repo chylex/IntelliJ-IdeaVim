@@ -46,7 +46,7 @@ internal class EditorWindowLayout(private val editor: Editor) : WindowLayout {
   val textAreaBottom: Int = viewport.y + viewport.height - bottomPanelsHeight()
   val textAreaHeight: Int = max(0, textAreaBottom - textAreaTop)
 
-  override val lineCount: Int = editor.vim.getVisualLineCount()
+  override val lineCount: Int = editor.vim.getVisualLineCount() + editor.settings.additionalLinesCount
 
   /** What the editor shows now */
   val view: WindowView = currentView()

@@ -492,7 +492,7 @@ object EditorHelper {
     get() = scrollingModel.visibleAreaOnScrollingFinished
 
   private val Editor.lastVisualLine: Int
-    get() = IjVimEditor(this).getVisualLineCount() - 1
+    get() = IjVimEditor(this).getVisualLineCount() + settings.additionalLinesCount
 
   private fun getFullVisualLine(editor: Editor, y: Int, topBound: Int, bottomBound: Int): Int {
     // Note that we ignore inlays here. We're interested in the bounds of the text line. Scrolling will handle inlays as
