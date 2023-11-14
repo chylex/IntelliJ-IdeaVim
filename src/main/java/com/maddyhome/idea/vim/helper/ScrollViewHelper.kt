@@ -56,7 +56,7 @@ internal object ScrollViewHelper {
     // that this needs to be replaced as a more or less dumb line for line rewrite.
     val topLine = getVisualLineAtTopOfScreen(editor)
     val bottomLine = getVisualLineAtBottomOfScreen(editor)
-    val lastLine = vimEditor.getVisualLineCount() - 1
+    val lastLine = vimEditor.getVisualLineCount() + editor.settings.additionalLinesCount
 
     // We need the non-normalised value here, so we can handle cases such as so=999 to keep the current line centred
     val scrollOffset = injector.options(vimEditor).scrolloff
