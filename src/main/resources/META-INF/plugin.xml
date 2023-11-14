@@ -238,6 +238,7 @@
     </group>
 
     <action id="VimFindActionIdAction" class="com.maddyhome.idea.vim.listener.FindActionIdAction"/>
+    <action id="VimJumpToSource" class="com.intellij.diff.actions.impl.OpenInEditorAction" />
   </actions>
 
   <extensions defaultExtensionNs="IdeaVIM">
