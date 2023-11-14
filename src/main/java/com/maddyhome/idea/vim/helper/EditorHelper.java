@@ -326,7 +326,7 @@ public class EditorHelper {
 
     final int offset = y - ((screenHeight - lineHeight) / lineHeight / 2 * lineHeight);
     @NotNull final VimEditor editor1 = new IjVimEditor(editor);
-    final int lastVisualLine = EngineEditorHelperKt.getVisualLineCount(editor1) - 1;
+    final int lastVisualLine = EngineEditorHelperKt.getVisualLineCount(editor1) + editor.getSettings().getAdditionalLinesCount();
     final int offsetForLastLineAtBottom = getOffsetToScrollVisualLineToBottomOfScreen(editor, lastVisualLine);
 
     // For `zz`, we want to use virtual space and move any line, including the last one, to the middle of the screen.
