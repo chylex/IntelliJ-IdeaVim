@@ -14,7 +14,6 @@ import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.api.normalizeVisualColumn
 import com.maddyhome.idea.vim.api.options
 import com.maddyhome.idea.vim.command.CommandFlags
-import com.maddyhome.idea.vim.state.VimStateMachine
 import com.maddyhome.idea.vim.helper.EditorHelper.getApproximateScreenHeight
 import com.maddyhome.idea.vim.helper.EditorHelper.getApproximateScreenWidth
 import com.maddyhome.idea.vim.helper.EditorHelper.getNonNormalizedVisualLineAtBottomOfScreen
@@ -29,6 +28,7 @@ import com.maddyhome.idea.vim.helper.EditorHelper.scrollVisualLineToBottomOfScre
 import com.maddyhome.idea.vim.helper.EditorHelper.scrollVisualLineToMiddleOfScreen
 import com.maddyhome.idea.vim.helper.EditorHelper.scrollVisualLineToTopOfScreen
 import com.maddyhome.idea.vim.newapi.vim
+import com.maddyhome.idea.vim.state.VimStateMachine
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -56,7 +56,7 @@ internal object ScrollViewHelper {
     // that this needs to be replaced as a more or less dumb line for line rewrite.
     val topLine = getVisualLineAtTopOfScreen(editor)
     val bottomLine = getVisualLineAtBottomOfScreen(editor)
-    val lastLine = vimEditor.getVisualLineCount() - 1
+    val lastLine = vimEditor.getVisualLineCount() + editor.settings.additionalLinesCount
 
     // We need the non-normalised value here, so we can handle cases such as so=999 to keep the current line centred
     val scrollOffset = injector.options(vimEditor).scrolloff
