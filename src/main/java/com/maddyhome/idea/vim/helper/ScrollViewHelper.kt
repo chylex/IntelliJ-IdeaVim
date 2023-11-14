@@ -200,7 +200,7 @@ internal object ScrollViewHelper {
 private class WindowLines(private val editor: Editor) {
   val topLine = getVisualLineAtTopOfScreen(editor)
   val bottomLine = getVisualLineAtBottomOfScreen(editor)
-  private val lastLine = editor.vim.getVisualLineCount() - 1
+  private val lastLine = editor.vim.getVisualLineCount() + editor.settings.additionalLinesCount
 
   /** The number of text lines in the window */
   val height = getNonNormalizedVisualLineAtBottomOfScreen(editor) - topLine + 1
