@@ -26,6 +26,7 @@ import com.maddyhome.idea.vim.extension.ExtensionHandler
 import com.maddyhome.idea.vim.group.visual.VimSelection
 import com.maddyhome.idea.vim.group.visual.VimSelection.Companion.create
 import com.maddyhome.idea.vim.helper.VimNlsSafe
+import com.maddyhome.idea.vim.helper.vimStateMachine
 import com.maddyhome.idea.vim.state.KeyHandlerState
 import com.maddyhome.idea.vim.state.VimStateMachine
 import com.maddyhome.idea.vim.state.mode.Mode
@@ -258,7 +259,12 @@ public class ToActionMappingInfo(
     LOG.debug("Executing 'ToAction' mapping...")
     val editorDataContext = injector.executionContextManager.onEditor(editor, context)
     val dataContext = injector.executionContextManager.onCaret(editor.currentCaret(), editorDataContext)
-    injector.actionExecutor.executeAction(action, dataContext)
+
+    val commandBuilder = editor.vimStateMachine.commandBuilder
+    for (i in 0 until commandBuilder.count.coerceAtLeast(1)) {
+      injector.actionExecutor.executeAction(action, dataContext)
+    }
+    commandBuilder.resetCount()
   }
 
   public companion object {
