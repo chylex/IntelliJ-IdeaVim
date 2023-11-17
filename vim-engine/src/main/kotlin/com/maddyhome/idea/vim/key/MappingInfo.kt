@@ -255,7 +255,12 @@ public class ToActionMappingInfo(
     LOG.debug("Executing 'ToAction' mapping...")
     val editorDataContext = injector.executionContextManager.onEditor(editor, context)
     val dataContext = injector.executionContextManager.onCaret(editor.currentCaret(), editorDataContext)
-    injector.actionExecutor.executeAction(action, dataContext)
+
+    val commandBuilder = editor.vimStateMachine.commandBuilder
+    for (i in 0 until commandBuilder.count.coerceAtLeast(1)) {
+      injector.actionExecutor.executeAction(action, dataContext)
+    }
+    commandBuilder.resetCount()
   }
 
   public companion object {
