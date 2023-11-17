@@ -174,6 +174,11 @@ internal class VimEnterHandler(nextHandler: EditorActionHandler?) : VimKeyHandle
     // See VIM-2974 for example where it was broken
     return !editor.isOneLineMode
   }
+
+  override fun executeHandler(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+    if (caret == null || caret === editor.caretModel.primaryCaret)
+    super.executeHandler(editor, caret, dataContext)
+  }
 }
 
 /**
