@@ -92,6 +92,9 @@ class MacroGroup : VimMacroBase() {
         } finally {
           keyStack.removeFirst()
         }
+        if (!isInternalMacro) {
+          MacroAutoImport.run(editor.ij, context.ij)
+        }
       }
 
       if (isInternalMacro) {
