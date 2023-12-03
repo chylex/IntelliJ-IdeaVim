@@ -21,6 +21,7 @@ import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.helper.MessageHelper
 import com.maddyhome.idea.vim.macro.VimMacroBase
 import com.maddyhome.idea.vim.newapi.IjVimEditor
+import com.maddyhome.idea.vim.newapi.ij
 
 /**
  * Used to handle playback of macros
@@ -88,6 +89,9 @@ internal class MacroGroup : VimMacroBase() {
           }
         } finally {
           keyStack.removeFirst()
+        }
+        if (!isInternalMacro) {
+          MacroAutoImport.run(editor.ij, context.ij)
         }
       }
 
