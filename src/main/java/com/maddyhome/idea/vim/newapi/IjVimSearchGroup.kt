@@ -31,7 +31,7 @@ import com.maddyhome.idea.vim.vimscript.model.functions.handlers.SubmatchFunctio
 import org.jetbrains.annotations.TestOnly
 import javax.swing.KeyStroke
 
-public open class IjVimSearchGroup : VimSearchGroupBase() {
+public abstract class IjVimSearchGroup : VimSearchGroupBase() {
 
   init {
     // TODO: Investigate migrating these listeners to use the effective value change listener
