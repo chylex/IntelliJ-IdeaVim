@@ -33,7 +33,7 @@ import com.maddyhome.idea.vim.vimscript.model.functions.handlers.SubmatchFunctio
 import org.jetbrains.annotations.TestOnly
 import javax.swing.KeyStroke
 
-public open class IjVimSearchGroup : VimSearchGroupBase() {
+public abstract class IjVimSearchGroup : VimSearchGroupBase() {
 
   init {
     // We use the global option listener instead of the effective listener that gets called for each affected editor

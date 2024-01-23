@@ -10,6 +10,7 @@ package org.jetbrains.plugins.ideavim.action.motion.search
 
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.common.Direction
+import com.maddyhome.idea.vim.newapi.vim
 import org.jetbrains.plugins.ideavim.SkipNeovimReason
 import org.jetbrains.plugins.ideavim.TestWithoutNeovim
 import org.jetbrains.plugins.ideavim.VimTestCase
@@ -203,7 +204,7 @@ class SearchAgainPreviousActionTest : VimTestCase() {
 
   private fun doTestWithSearch(keys: String, before: String, after: String) {
     doTest(keys, before, after) {
-      VimPlugin.getSearch().setLastSearchState(it, "all", "", Direction.FORWARDS)
+      VimPlugin.getSearch().setLastSearchState(it.vim, "all", "", Direction.FORWARDS)
     }
   }
 }

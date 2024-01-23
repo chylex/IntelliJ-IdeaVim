@@ -207,8 +207,8 @@ public class SearchGroup extends IjVimSearchGroup implements PersistentStateComp
    * @param patternOffset   The pattern offset, e.g. `/{pattern}/{offset}`
    * @param direction       The direction to search
    */
-  @TestOnly
-  public void setLastSearchState(@SuppressWarnings("unused") @NotNull Editor editor, @NotNull String pattern,
+  @Override
+  public void setLastSearchState(@SuppressWarnings("unused") @NotNull VimEditor editor, @NotNull String pattern,
                                  @NotNull String patternOffset, Direction direction) {
     if (globalIjOptions(injector).getUseNewRegex()) {
       super.setLastSearchState(pattern, patternOffset, direction);

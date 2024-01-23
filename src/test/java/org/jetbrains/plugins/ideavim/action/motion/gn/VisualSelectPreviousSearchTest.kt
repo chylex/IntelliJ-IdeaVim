@@ -12,6 +12,7 @@ import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.action.motion.search.SearchWholeWordForwardAction
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.common.Direction
+import com.maddyhome.idea.vim.newapi.vim
 import com.maddyhome.idea.vim.state.mode.Mode
 import com.maddyhome.idea.vim.state.mode.SelectionType
 import org.jetbrains.plugins.ideavim.SkipNeovimReason
@@ -54,7 +55,7 @@ class VisualSelectPreviousSearchTest : VimTestCase() {
   @Test
   fun testWithoutSpaces() {
     configureByText("tes<caret>ttest")
-    VimPlugin.getSearch().setLastSearchState(fixture.editor, "test", "", Direction.FORWARDS)
+    VimPlugin.getSearch().setLastSearchState(fixture.editor.vim, "test", "", Direction.FORWARDS)
     typeText(injector.parser.parseKeys("gN"))
     assertOffset(0)
     assertSelection("test")
