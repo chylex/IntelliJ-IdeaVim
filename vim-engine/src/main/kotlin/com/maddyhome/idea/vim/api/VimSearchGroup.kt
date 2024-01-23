@@ -17,6 +17,7 @@ import com.maddyhome.idea.vim.vimscript.model.VimLContext
 public interface VimSearchGroup {
   public var lastSearchPattern: String?
   public var lastSubstitutePattern: String?
+  public fun setLastSearchState(editor: VimEditor, pattern: String, patternOffset: String, direction: Direction?)
   public fun findUnderCaret(editor: VimEditor): TextRange?
   public fun searchBackward(editor: VimEditor, offset: Int, count: Int): TextRange?
   public fun getNextSearchRange(editor: VimEditor, count: Int, forwards: Boolean): TextRange?
