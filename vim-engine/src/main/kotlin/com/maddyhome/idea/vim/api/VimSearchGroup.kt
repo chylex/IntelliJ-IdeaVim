@@ -200,4 +200,17 @@ interface VimSearchGroup {
    * Returns true if any text is selected in the visible editors, false otherwise.
    */
   fun isSomeTextHighlighted(): Boolean
+
+  /**
+   * Sets the last search state purely for tests
+   *
+   * @param pattern         The pattern to save. This is the last search pattern, not the last substitute pattern
+   * @param patternOffset   The pattern offset, e.g. `/{pattern}/{offset}`
+   * @param direction       The direction to search
+   */
+  fun setLastSearchState(
+    pattern: String,
+    patternOffset: String,
+    direction: Direction,
+  )
 }

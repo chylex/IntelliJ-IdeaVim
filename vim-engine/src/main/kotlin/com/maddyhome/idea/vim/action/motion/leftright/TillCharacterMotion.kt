@@ -76,6 +76,13 @@ sealed class TillCharacterMotion(
       )
     }
     injector.motion.setLastFTCmd(tillCharacterMotionType, argument.character)
+    
+    val offset = if (!finishBeforeCharacter) ""
+    else if (direction == Direction.FORWARDS) "s-1"
+    else "s+1"
+    
+    injector.searchGroup.setLastSearchState(argument.character.let { if (it == '.') "\\." else it.toString() }, offset, direction)
+    
     return res.toMotionOrError()
   }
 }
