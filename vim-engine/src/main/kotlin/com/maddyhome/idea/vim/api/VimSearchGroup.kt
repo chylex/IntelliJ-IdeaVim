@@ -25,7 +25,6 @@ interface VimSearchGroup {
    * Last used pattern to perform a substitution.
    */
   var lastSubstitutePattern: String?
-
   fun searchBackward(editor: VimEditor, offset: Int, count: Int): TextRange?
 
   /**
@@ -195,4 +194,17 @@ interface VimSearchGroup {
    * Gets the direction lastly used in a search.
    */
   fun getLastSearchDirection(): Direction
+
+  /**
+   * Sets the last search state purely for tests
+   *
+   * @param pattern         The pattern to save. This is the last search pattern, not the last substitute pattern
+   * @param patternOffset   The pattern offset, e.g. `/{pattern}/{offset}`
+   * @param direction       The direction to search
+   */
+  fun setLastSearchState(
+    pattern: String,
+    patternOffset: String,
+    direction: Direction,
+  )
 }
