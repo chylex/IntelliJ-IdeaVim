@@ -19,7 +19,6 @@ import com.maddyhome.idea.vim.api.VimMarkService
 import com.maddyhome.idea.vim.api.getText
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.command.OperatorArguments
-import com.maddyhome.idea.vim.state.mode.SelectionType
 import com.maddyhome.idea.vim.common.TextRange
 import com.maddyhome.idea.vim.ex.ExException
 import com.maddyhome.idea.vim.ex.InvalidRangeException
@@ -29,6 +28,7 @@ import com.maddyhome.idea.vim.helper.Msg
 import com.maddyhome.idea.vim.mark.Mark
 import com.maddyhome.idea.vim.mark.VimMark
 import com.maddyhome.idea.vim.put.PutData
+import com.maddyhome.idea.vim.state.mode.SelectionType
 import com.maddyhome.idea.vim.vimscript.model.ExecutionResult
 import kotlin.math.min
 
@@ -49,22 +49,13 @@ public data class MoveTextCommand(val ranges: Ranges, val argument: String) : Co
     val caretPosition = caret.getBufferPosition()
 
     val goToLineCommand = injector.vimscriptParser.parseCommand(argument) ?: throw ExException("E16: Invalid range")
-
-    val range = getTextRange(editor, caret, false)
-
-    /*
-    FIXME: see VIM-2884. It's absolutely not the best way to resolve this bug
-     */
-    caret.moveToOffset(range.startOffset)
-
     val lineRange = getLineRange(editor, caret)
+
     val line = min(editor.fileSize().toInt(), normalizeLine(editor, caret, goToLineCommand, lineRange))
-    val linesMoved = lineRange.endLine - lineRange.startLine + 1
-    if (line < -1 || line + linesMoved >= editor.lineCount()) {
-      caret.moveToBufferPosition(caretPosition)
-      throw ExException("E16: Invalid range")
-    }
+    val range = getTextRange(editor, caret, false)
     val shift = line + 1 - editor.offsetToBufferPosition(range.startOffset).line
+
+    val text = editor.getText(range)
 
     val localMarks = injector.markService.getAllLocalMarks(caret)
       .filter { range.contains(it.offset(editor)) }
@@ -78,32 +69,23 @@ public data class MoveTextCommand(val ranges: Ranges, val argument: String) : Co
     val selectionStartOffset = lastSelectionInfo.start?.let { editor.bufferPositionToOffset(it) }
     val selectionEndOffset = lastSelectionInfo.end?.let { editor.bufferPositionToOffset(it) }
 
-    val text = editor.getText(range)
-    val textData = PutData.TextData(text, SelectionType.LINE_WISE, emptyList(), null)
-
-    val dropNewLineInEnd = (line + linesMoved == editor.lineCount() - 1 && text.last() == '\n') ||
-      (lineRange.endLine == editor.lineCount() - 1)
-
     editor.deleteString(range)
-    val putData = if (line == -1) {
-      caret.moveToOffset(0)
-      PutData(textData, null, 1, insertTextBeforeCaret = true, rawIndent = true, caretAfterInsertedText = false)
-    } else {
-      PutData(textData, null, 1, insertTextBeforeCaret = false, rawIndent = true, caretAfterInsertedText = false, putToLine = line)
-    }
-    injector.put.putTextForCaret(editor, caret, context, putData)
 
-    if (dropNewLineInEnd) {
-      assert(editor.text().last() == '\n')
-      editor.deleteString(TextRange(editor.text().length - 1, editor.text().length))
-    }
+    val textData = PutData.TextData(text, SelectionType.LINE_WISE, emptyList(), null)
+    val putData = PutData(
+      textData,
+      null,
+      1,
+      insertTextBeforeCaret = false,
+      rawIndent = true,
+      caretAfterInsertedText = false,
+      putToLine = line
+    )
+    injector.put.putTextForCaret(editor, caret, context, putData)
 
     globalMarks.forEach { shiftGlobalMark(editor, it, shift) }
     localMarks.forEach { shiftLocalMark(caret, it, shift) }
     shiftSelectionInfo(caret, selectionStartOffset, selectionEndOffset, lastSelectionInfo, shift, range)
-
-    val newCaretPosition = shiftBufferPosition(caretPosition, shift)
-    caret.moveToBufferPosition(newCaretPosition)
 
     return ExecutionResult.Success
   }
