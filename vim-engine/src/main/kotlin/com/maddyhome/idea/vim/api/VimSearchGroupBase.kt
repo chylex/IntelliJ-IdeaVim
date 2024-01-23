@@ -1599,8 +1599,7 @@ abstract class VimSearchGroupBase : VimSearchGroup {
    * @param patternOffset   The pattern offset, e.g. `/{pattern}/{offset}`
    * @param direction       The direction to search
    */
-  @TestOnly
-  fun setLastSearchState(
+  override fun setLastSearchState(
     pattern: String,
     patternOffset: String,
     direction: Direction,
