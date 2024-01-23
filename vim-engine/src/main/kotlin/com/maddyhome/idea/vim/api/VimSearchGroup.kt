@@ -208,4 +208,17 @@ interface VimSearchGroup {
   fun isSomeTextHighlighted(): Boolean
 
   fun getCurrentIncsearchResultRange(editor: VimEditor): TextRange?
+
+  /**
+   * Sets the last search state purely for tests
+   *
+   * @param pattern         The pattern to save. This is the last search pattern, not the last substitute pattern
+   * @param patternOffset   The pattern offset, e.g. `/{pattern}/{offset}`
+   * @param direction       The direction to search
+   */
+  fun setLastSearchState(
+    pattern: String,
+    patternOffset: String,
+    direction: Direction,
+  )
 }
