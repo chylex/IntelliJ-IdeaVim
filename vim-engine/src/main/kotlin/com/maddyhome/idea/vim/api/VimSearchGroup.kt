@@ -24,7 +24,7 @@ public interface VimSearchGroup {
    * Last used pattern to perform a substitution.
    */
   public var lastSubstitutePattern: String?
-
+  public fun setLastSearchState(editor: VimEditor, pattern: String, patternOffset: String, direction: Direction?)
   public fun searchBackward(editor: VimEditor, offset: Int, count: Int): TextRange?
 
   /**
