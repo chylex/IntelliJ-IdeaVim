@@ -95,41 +95,43 @@ internal object IdeaSpecifics {
       if (VimPlugin.isNotEnabled()) return
 
       val editor = editor
-      if (editor != null && action is ChooseItemAction && editor.vimStateMachine?.isRecording == true) {
-        val prevDocumentLength = completionPrevDocumentLength
-        val prevDocumentOffset = completionPrevDocumentOffset
+      if (editor != null) {
+        if (action is ChooseItemAction && editor.vimStateMachine?.isRecording == true) {
+          val prevDocumentLength = completionPrevDocumentLength
+          val prevDocumentOffset = completionPrevDocumentOffset
 
-        if (prevDocumentLength != null && prevDocumentOffset != null) {
-          val register = VimPlugin.getRegister()
-          val addedTextLength = editor.document.textLength - prevDocumentLength
-          val caretShift = addedTextLength - (editor.caretModel.primaryCaret.offset - prevDocumentOffset)
-          val leftArrow = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)
+          if (prevDocumentLength != null && prevDocumentOffset != null) {
+            val register = VimPlugin.getRegister()
+            val addedTextLength = editor.document.textLength - prevDocumentLength
+            val caretShift = addedTextLength - (editor.caretModel.primaryCaret.offset - prevDocumentOffset)
+            val leftArrow = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)
 
-          register.recordText(editor.document.getText(TextRange(prevDocumentOffset, prevDocumentOffset + addedTextLength)))
-          repeat(caretShift.coerceAtLeast(0)) {
-            register.recordKeyStroke(leftArrow)
+            register.recordText(editor.document.getText(TextRange(prevDocumentOffset, prevDocumentOffset + addedTextLength)))
+            repeat(caretShift.coerceAtLeast(0)) {
+              register.recordKeyStroke(leftArrow)
+            }
           }
-        }
 
-        this.completionPrevDocumentLength = null
-        this.completionPrevDocumentOffset = null
-      }
-
-      //region Enter insert mode after surround with if
-      if (surrounderAction == action.javaClass.name && surrounderItems.any {
-          action.templatePresentation.text.endsWith(
-            it,
-          )
+          this.completionPrevDocumentLength = null
+          this.completionPrevDocumentOffset = null
         }
-      ) {
-        editor?.let {
-          val commandState = it.vim.vimStateMachine
+        
+        //region Enter insert mode after surround with if
+        if (surrounderAction == action.javaClass.name && surrounderItems.any {
+            action.templatePresentation.text.endsWith(
+              it,
+            )
+          }
+        ) {
+          val commandState = editor.vim.vimStateMachine
           commandState.mode = Mode.NORMAL()
-          VimPlugin.getChange().insertBeforeCursor(it.vim, event.dataContext.vim)
-          KeyHandler.getInstance().reset(it.vim)
+          VimPlugin.getChange().insertBeforeCursor(editor.vim, event.dataContext.vim)
+          KeyHandler.getInstance().reset(editor.vim)
         }
+        //endregion
+
+        injector.scroll.scrollCaretIntoView(editor.vim)
       }
-      //endregion
 
       this.editor = null
     }
