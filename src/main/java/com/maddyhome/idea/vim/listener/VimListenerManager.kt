@@ -444,6 +444,8 @@ object VimListenerManager {
           editor.vim.mode = Mode.NORMAL()
           KeyHandler.getInstance().reset(editor.vim)
         }
+        // Breaks relativenumber for some reason
+//        injector.scroll.scrollCaretIntoView(editor.vim)
       }
 // Vim order: BufLeave → WinLeave → WinEnter → BufEnter
       // Buf events only fire when the buffer (file) actually changes
