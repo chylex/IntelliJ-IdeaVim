@@ -102,8 +102,9 @@ public class KeyHandler {
     // If this is a "regular" character keystroke, get the character
     val chKey: Char = if (key.keyChar == KeyEvent.CHAR_UNDEFINED) 0.toChar() else key.keyChar
 
-    // We only record unmapped keystrokes. If we've recursed to handle mapping, don't record anything.
-    var shouldRecord = handleKeyRecursionCount == 0 && editorState.isRecording
+    // We only record unmapped keystrokes.
+    // If we've recursed to handle mapping, or executing a macro, don't record anything.
+    var shouldRecord = handleKeyRecursionCount == 0 && editorState.isRecording && !injector.macro.isExecutingMacro
     handleKeyRecursionCount++
     try {
       LOG.trace("Start key processing...")
