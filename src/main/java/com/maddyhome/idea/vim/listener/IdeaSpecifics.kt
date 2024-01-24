@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.impl.ProxyShortcutSet
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.actions.EnterAction
+import com.intellij.openapi.editor.impl.ScrollingModelImpl
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.TextRange
@@ -71,6 +72,7 @@ internal object IdeaSpecifics {
     private val surrounderAction =
       "com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler\$InvokeSurrounderAction"
     private var editor: Editor? = null
+    private var caretOffset = -1
     private var completionData: CompletionData? = null
 
     override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
@@ -79,6 +81,7 @@ internal object IdeaSpecifics {
       val hostEditor = event.dataContext.getData(CommonDataKeys.HOST_EDITOR)
       if (hostEditor != null) {
         editor = hostEditor
+        caretOffset = hostEditor.caretModel.offset
       }
 
       val isVimAction = (action as? AnActionWrapper)?.delegate is VimShortcutKeyAction
@@ -155,26 +158,42 @@ internal object IdeaSpecifics {
       if (VimPlugin.isNotEnabled()) return
 
       val editor = editor
-      if (editor != null && action is ChooseItemAction && injector.registerGroup.isRecording) {
-        completionData?.recordCompletion(editor, VimPlugin.getRegister())
-      }
+      if (editor != null) {
+        if (action is ChooseItemAction && injector.registerGroup.isRecording) {
+          completionData?.recordCompletion(editor, VimPlugin.getRegister()
+            )
+        }
 
-      //region Enter insert mode after surround with if
-      if (surrounderAction == action.javaClass.name && surrounderItems.any {
-          action.templatePresentation.text.endsWith(
-            it,
-          )
+        //region Enter insert mode after surround with if
+        if (surrounderAction == action.javaClass.name && surrounderItems.any {
+            action.templatePresentation.text.endsWith(
+              it,
+            )
+          }
+        ) {
+          editor?.let {
+            it.vim.mode = Mode.NORMAL()
+            VimPlugin.getChange().insertBeforeCaret(it.vim, event.dataContext.vim)
+            KeyHandler.getInstance().reset(it.vim)
+          }
         }
-      ) {
-        editor?.let {
-          it.vim.mode = Mode.NORMAL()
-          VimPlugin.getChange().insertBeforeCaret(it.vim, event.dataContext.vim)
-          KeyHandler.getInstance().reset(it.vim)
+        //endregion
+
+        if (caretOffset != -1 && caretOffset != editor.caretModel.offset) {
+          val scrollModel = editor.scrollingModel as ScrollingModelImpl
+          if (scrollModel.isScrollingNow) {
+            val v = scrollModel.verticalScrollOffset
+            val h = scrollModel.horizontalScrollOffset
+            scrollModel.finishAnimation()
+            scrollModel.scroll(h, v)
+            scrollModel.finishAnimation()
+          }
+          injector.scroll.scrollCaretIntoView(editor.vim)
         }
       }
-      //endregion
 
       this.editor = null
+      this.caretOffset = -1
 
       this.completionData?.dispose()
       this.completionData = null
