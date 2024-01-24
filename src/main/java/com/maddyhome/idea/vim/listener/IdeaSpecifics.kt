@@ -39,6 +39,7 @@ import com.intellij.openapi.editor.actions.EnterAction
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.ScrollingModelImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -94,6 +95,7 @@ internal object IdeaSpecifics {
     private val surrounderAction =
       "com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler\$InvokeSurrounderAction"
     private var editor: Editor? = null
+    private var caretOffset = -1
     private var completionData: CompletionData? = null
     private var editorStateBeforeAction: EditorState? = null
     private val caretNormalizer = CaretNormalizer()
@@ -104,6 +106,7 @@ internal object IdeaSpecifics {
       val hostEditor = event.dataContext.getData(CommonDataKeys.HOST_EDITOR)
       if (hostEditor != null) {
         editor = hostEditor
+        caretOffset = hostEditor.caretModel.offset
       }
       editorStateBeforeAction = editor?.let { EditorState(it) }
 
@@ -212,6 +215,18 @@ internal object IdeaSpecifics {
       }
       //endregion
 
+      if (caretOffset != -1 && editor != null && caretOffset != editor.caretModel.offset) {
+        val scrollModel = editor.scrollingModel as ScrollingModelImpl
+        if (scrollModel.isScrollingNow) {
+          val v = scrollModel.verticalScrollOffset
+          val h = scrollModel.horizontalScrollOffset
+          scrollModel.finishAnimation()
+          scrollModel.scroll(h, v)
+          scrollModel.finishAnimation()
+        }
+        injector.scroll.scrollCaretIntoView(editor.vim)
+      }
+
       // Do not normalize carets after native undo/redo. The platform undo (UndoRedo.execute) treats caret movement as a
       // separate undo step by default ('ide.undo.transparent.caret.movement' = false): before reverting the document it
       // checks whether the caret matches the state recorded with the edit, and if not, it only restores that caret and
@@ -227,6 +242,7 @@ internal object IdeaSpecifics {
       }
 
       this.editor = null
+      this.caretOffset = -1
 
       this.completionData?.dispose()
       this.completionData = null
