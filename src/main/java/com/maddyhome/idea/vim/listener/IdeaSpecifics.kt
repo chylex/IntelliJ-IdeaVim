@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ProxyShortcutSet
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.impl.ScrollingModelImpl
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.TextRange
 import com.maddyhome.idea.vim.KeyHandler
@@ -56,6 +57,7 @@ internal object IdeaSpecifics {
     private val surrounderAction =
       "com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler\$InvokeSurrounderAction"
     private var editor: Editor? = null
+    private var caretOffset = -1
     private var completionPrevDocumentLength: Int? = null
     private var completionPrevDocumentOffset: Int? = null
     override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
@@ -64,6 +66,7 @@ internal object IdeaSpecifics {
       val hostEditor = event.dataContext.getData(CommonDataKeys.HOST_EDITOR)
       if (hostEditor != null) {
         editor = hostEditor
+        caretOffset = hostEditor.caretModel.offset
       }
 
       val isVimAction = (action as? AnActionWrapper)?.delegate is VimShortcutKeyAction
@@ -95,42 +98,57 @@ internal object IdeaSpecifics {
       if (VimPlugin.isNotEnabled()) return
 
       val editor = editor
-      if (editor != null && action is ChooseItemAction && injector.registerGroup.isRecording) {
-        val prevDocumentLength = completionPrevDocumentLength
-        val prevDocumentOffset = completionPrevDocumentOffset
+      if (editor != null) {
+        if (action is ChooseItemAction && injector.registerGroup.isRecording) {
+          val prevDocumentLength = completionPrevDocumentLength
+          val prevDocumentOffset = completionPrevDocumentOffset
 
-        if (prevDocumentLength != null && prevDocumentOffset != null) {
-          val register = VimPlugin.getRegister()
-          val addedTextLength = editor.document.textLength - prevDocumentLength
-          val caretShift = addedTextLength - (editor.caretModel.primaryCaret.offset - prevDocumentOffset)
-          val leftArrow = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)
+          if (prevDocumentLength != null && prevDocumentOffset != null) {
+            val register = VimPlugin.getRegister()
+            val addedTextLength = editor.document.textLength - prevDocumentLength
+            val caretShift = addedTextLength - (editor.caretModel.primaryCaret.offset - prevDocumentOffset)
+            val leftArrow = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)
 
-          register.recordText(editor.document.getText(TextRange(prevDocumentOffset, prevDocumentOffset + addedTextLength)))
-          repeat(caretShift.coerceAtLeast(0)) {
-            register.recordKeyStroke(leftArrow)
+            register.recordText(editor.document.getText(TextRange(prevDocumentOffset, prevDocumentOffset + addedTextLength)))
+            repeat(caretShift.coerceAtLeast(0)) {
+              register.recordKeyStroke(leftArrow)
+            }
+          }
+
+          this.completionPrevDocumentLength = null
+          this.completionPrevDocumentOffset = null
+        }
+        
+        //region Enter insert mode after surround with if
+        if (surrounderAction == action.javaClass.name && surrounderItems.any {
+            action.templatePresentation.text.endsWith(
+              it,
+            )
+          }
+        ) {
+          editor?.let {
+            it.vim.mode = Mode.NORMAL()
+            VimPlugin.getChange().insertBeforeCursor(it.vim, event.dataContext.vim)
+            KeyHandler.getInstance().reset(it.vim)
           }
         }
+        //endregion
 
-        this.completionPrevDocumentLength = null
-        this.completionPrevDocumentOffset = null
-      }
-
-      //region Enter insert mode after surround with if
-      if (surrounderAction == action.javaClass.name && surrounderItems.any {
-          action.templatePresentation.text.endsWith(
-            it,
-          )
-        }
-      ) {
-        editor?.let {
-          it.vim.mode = Mode.NORMAL()
-          VimPlugin.getChange().insertBeforeCursor(it.vim, event.dataContext.vim)
-          KeyHandler.getInstance().reset(it.vim)
+        if (caretOffset != -1 && caretOffset != editor.caretModel.offset) {
+          val scrollModel = editor.scrollingModel as ScrollingModelImpl
+          if (scrollModel.isScrollingNow) {
+            val v = scrollModel.verticalScrollOffset
+            val h = scrollModel.horizontalScrollOffset
+            scrollModel.finishAnimation()
+            scrollModel.scroll(h, v)
+            scrollModel.finishAnimation()
+          }
+          injector.scroll.scrollCaretIntoView(editor.vim)
         }
       }
-      //endregion
 
       this.editor = null
+      this.caretOffset = -1
     }
   }
 
