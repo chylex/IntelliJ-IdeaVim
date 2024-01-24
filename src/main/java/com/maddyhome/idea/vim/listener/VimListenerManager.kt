@@ -420,6 +420,8 @@ object VimListenerManager {
           editor.vim.mode = Mode.NORMAL()
           KeyHandler.getInstance().reset(editor.vim)
         }
+        // Breaks relativenumber for some reason
+//        injector.scroll.scrollCaretIntoView(editor.vim)
       }
 
       injector.outputPanel.getCurrentOutputPanel()?.close()
