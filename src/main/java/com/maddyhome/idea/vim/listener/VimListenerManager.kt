@@ -394,6 +394,7 @@ internal object VimListenerManager {
           editor.vim.mode = Mode.NORMAL()
           KeyHandler.getInstance().reset(editor.vim)
         }
+        injector.scroll.scrollCaretIntoView(editor.vim)
       }
       
       MotionGroup.fileEditorManagerSelectionChangedCallback(event)
