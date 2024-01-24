@@ -15,6 +15,8 @@ import com.maddyhome.idea.vim.api.VimSearchHelperBase
 import com.maddyhome.idea.vim.common.TextRange
 import com.maddyhome.idea.vim.helper.SearchHelper
 import com.maddyhome.idea.vim.helper.SearchOptions
+import it.unimi.dsi.fastutil.ints.IntComparator
+import it.unimi.dsi.fastutil.ints.IntComparators
 import java.util.*
 
 @Service
@@ -92,5 +94,27 @@ internal class IjVimSearchHelper : VimSearchHelperBase() {
     isOuter: Boolean,
   ): TextRange? {
     return SearchHelper.findBlockRange(editor.ij, caret.ij, type, count, isOuter)
+  }
+
+  override fun findMisspelledWord(editor: VimEditor, caret: ImmutableVimCaret, count: Int): Int {
+    val startOffset: Int
+    val endOffset: Int
+    val skipCount: Int
+    val offsetOrdering: IntComparator
+    
+    if (count < 0) {
+      startOffset = 0
+      endOffset = caret.offset.point - 1
+      skipCount = -count - 1
+      offsetOrdering = IntComparators.OPPOSITE_COMPARATOR
+    }
+    else {
+      startOffset = caret.offset.point + 1
+      endOffset = editor.ij.document.textLength
+      skipCount = count - 1
+      offsetOrdering = IntComparators.NATURAL_COMPARATOR
+    }
+
+    return SearchHelper.findMisspelledWords(editor.ij, startOffset, endOffset, skipCount, offsetOrdering)
   }
 }
