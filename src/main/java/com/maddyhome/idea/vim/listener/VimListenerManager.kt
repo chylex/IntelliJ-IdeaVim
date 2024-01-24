@@ -62,7 +62,6 @@ import com.maddyhome.idea.vim.api.coerceOffset
 import com.maddyhome.idea.vim.api.getLineEndForOffset
 import com.maddyhome.idea.vim.api.getLineStartForOffset
 import com.maddyhome.idea.vim.api.injector
-import com.maddyhome.idea.vim.ex.ExOutputModel
 import com.maddyhome.idea.vim.group.EditorGroup
 import com.maddyhome.idea.vim.group.FileGroup
 import com.maddyhome.idea.vim.group.IjOptions
@@ -394,6 +393,8 @@ internal object VimListenerManager {
           editor.vim.mode = Mode.NORMAL()
           KeyHandler.getInstance().reset(editor.vim)
         }
+        // Breaks relativenumber for some reason
+//        injector.scroll.scrollCaretIntoView(editor.vim)
       }
       
       MotionGroup.fileEditorManagerSelectionChangedCallback(event)
