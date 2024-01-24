@@ -94,6 +94,8 @@
     <vimAction implementation="com.maddyhome.idea.vim.action.motion.text.MotionMethodPreviousStartAction" mappingModes="NXO" keys="[m"/>
     <vimAction implementation="com.maddyhome.idea.vim.action.motion.text.MotionMethodNextEndAction" mappingModes="NXO" keys="]M"/>
     <vimAction implementation="com.maddyhome.idea.vim.action.motion.text.MotionMethodNextStartAction" mappingModes="NXO" keys="]m"/>
+    <vimAction implementation="com.maddyhome.idea.vim.action.motion.text.MotionMisspelledWordPreviousAction" mappingModes="NXO" keys="[s"/>
+    <vimAction implementation="com.maddyhome.idea.vim.action.motion.text.MotionMisspelledWordNextAction" mappingModes="NXO" keys="]s"/>
     <!-- Text Objects -->
     <vimAction implementation="com.maddyhome.idea.vim.action.motion.object.MotionOuterWordAction" mappingModes="XO" keys="aw"/>
     <vimAction implementation="com.maddyhome.idea.vim.action.motion.object.MotionOuterBigWordAction" mappingModes="XO" keys="aW"/>
