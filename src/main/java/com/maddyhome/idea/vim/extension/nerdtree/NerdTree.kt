@@ -502,6 +502,13 @@ internal class NerdTree : VimExtension {
         }
       },
     )
+    
+    for (c in ('a'..'z') + ('A'..'Z')) {
+      val ks = KeyStroke.getKeyStroke(c)
+      if (ks !in actionsRoot) {
+        registerCommand(c.toString(), NerdAction.Code { _, _, _ -> })
+      }
+    }
   }
 
   object Util {
