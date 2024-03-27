@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ProxyShortcutSet
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.components.Service
@@ -86,6 +87,7 @@ internal class IjActionExecutor : VimActionExecutor {
       ActionManager.getInstance(),
       0,
     )
+    Utils.initUpdateSession(event)
     // beforeActionPerformedUpdate should be called to update the action. It fixes some rider-specific problems.
     //   because rider use async update method. See VIM-1819.
     // This method executes inside of lastUpdateAndCheckDumb
