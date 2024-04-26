@@ -8,25 +8,21 @@
 
 package com.maddyhome.idea.vim.extension.nerdtree
 
-import com.intellij.ide.projectView.ProjectView
-import com.intellij.ide.projectView.impl.AbstractProjectViewPane
-import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.ui.getUserData
+import com.intellij.openapi.ui.putUserData
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.TreeExpandCollapse
 import com.intellij.ui.speedSearch.SpeedSearchSupply
@@ -53,6 +49,8 @@ import com.maddyhome.idea.vim.newapi.ij
 import com.maddyhome.idea.vim.newapi.vim
 import com.maddyhome.idea.vim.vimscript.model.datatypes.VimString
 import java.awt.event.KeyEvent
+import javax.swing.JComponent
+import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 
@@ -132,7 +130,6 @@ internal class NerdTree : VimExtension {
 
     synchronized(Util.monitor) {
       Util.commandsRegistered = true
-      ProjectManager.getInstance().openProjects.forEach { project -> installDispatcher(project) }
     }
   }
 
@@ -164,39 +161,8 @@ internal class NerdTree : VimExtension {
     }
   }
 
-  class ProjectViewListener(private val project: Project) : ToolWindowManagerListener {
-    override fun toolWindowShown(toolWindow: ToolWindow) {
-      if (ToolWindowId.PROJECT_VIEW != toolWindow.id) return
-
-      val dispatcher = NerdDispatcher.getInstance(project)
-      if (dispatcher.speedSearchListenerInstalled) return
-
-      // I specify nullability explicitly as we've got a lot of exceptions saying this property is null
-      val currentProjectViewPane: AbstractProjectViewPane? = ProjectView.getInstance(project).currentProjectViewPane
-      val tree = currentProjectViewPane?.tree ?: return
-      val supply = SpeedSearchSupply.getSupply(tree, true) ?: return
-
-      // NB: Here might be some issues with concurrency, but it's not really bad, I think
-      dispatcher.speedSearchListenerInstalled = true
-      supply.addChangeListener {
-        dispatcher.waitForSearch = false
-      }
-    }
-  }
-
-  // TODO I'm not sure is this activity runs at all? Should we use [RunOnceUtil] instead?
-  class NerdStartupActivity : ProjectActivity {
-    override suspend fun execute(project: Project) {
-      synchronized(Util.monitor) {
-        if (!Util.commandsRegistered) return
-        installDispatcher(project)
-      }
-    }
-  }
-
   class NerdDispatcher : DumbAwareAction() {
     internal var waitForSearch = false
-    internal var speedSearchListenerInstalled = false
 
     override fun actionPerformed(e: AnActionEvent) {
       var keyStroke = getKeyStroke(e) ?: return
@@ -244,10 +210,6 @@ internal class NerdTree : VimExtension {
     }
 
     companion object {
-      fun getInstance(project: Project): NerdDispatcher {
-        return project.getService(NerdDispatcher::class.java)
-      }
-
       private const val ESCAPE_KEY_CODE = 27
     }
 
@@ -283,19 +245,14 @@ internal class NerdTree : VimExtension {
     registerCommand(
       "NERDTreeMapActivateNode",
       "o",
-      NerdAction.Code { project, dataContext, _ ->
-        val tree = ProjectView.getInstance(project).currentProjectViewPane.tree
+      NerdAction.Code { _, dataContext, e ->
+        val tree = getTree(e) ?: return@Code
 
-        val array = CommonDataKeys.NAVIGATABLE_ARRAY.getData(dataContext)?.filter { it.canNavigateToSource() }
-        if (array.isNullOrEmpty()) {
-          val row = tree.selectionRows?.getOrNull(0) ?: return@Code
-          if (tree.isExpanded(row)) {
-            tree.collapseRow(row)
-          } else {
-            tree.expandRow(row)
-          }
+        val row = tree.selectionRows?.getOrNull(0) ?: return@Code
+        if (tree.isExpanded(row)) {
+          tree.collapseRow(row)
         } else {
-          array.forEach { it.navigate(true) }
+          tree.expandRow(row)
         }
       },
     )
@@ -374,8 +331,8 @@ internal class NerdTree : VimExtension {
     registerCommand(
       "NERDTreeMapOpenRecursively",
       "O",
-      NerdAction.Code { project, _, _ ->
-        val tree = ProjectView.getInstance(project).currentProjectViewPane.tree
+      NerdAction.Code { _, _, e ->
+        val tree = getTree(e) ?: return@Code
         TreeExpandCollapse.expandAll(tree)
         tree.selectionPath?.let {
           TreeUtil.scrollToVisible(tree, it, false)
@@ -385,8 +342,8 @@ internal class NerdTree : VimExtension {
     registerCommand(
       "NERDTreeMapCloseChildren",
       "X",
-      NerdAction.Code { project, _, _ ->
-        val tree = ProjectView.getInstance(project).currentProjectViewPane.tree
+      NerdAction.Code { _, _, e ->
+        val tree = getTree(e) ?: return@Code
         TreeExpandCollapse.collapse(tree)
         tree.selectionPath?.let {
           TreeUtil.scrollToVisible(tree, it, false)
@@ -396,8 +353,8 @@ internal class NerdTree : VimExtension {
     registerCommand(
       "NERDTreeMapCloseDir",
       "x",
-      NerdAction.Code { project, _, _ ->
-        val tree = ProjectView.getInstance(project).currentProjectViewPane.tree
+      NerdAction.Code { _, _, e ->
+        val tree = getTree(e) ?: return@Code
         val currentPath = tree.selectionPath ?: return@Code
         if (tree.isExpanded(currentPath)) {
           tree.collapsePath(currentPath)
@@ -415,8 +372,8 @@ internal class NerdTree : VimExtension {
     registerCommand(
       "NERDTreeMapJumpParent",
       "p",
-      NerdAction.Code { project, _, _ ->
-        val tree = ProjectView.getInstance(project).currentProjectViewPane.tree
+      NerdAction.Code { _, _, e ->
+        val tree = getTree(e) ?: return@Code
         val currentPath = tree.selectionPath ?: return@Code
         val parentPath = currentPath.parentPath ?: return@Code
         if (parentPath.parentPath != null) {
@@ -429,8 +386,8 @@ internal class NerdTree : VimExtension {
     registerCommand(
       "NERDTreeMapJumpFirstChild",
       "K",
-      NerdAction.Code { project, _, _ ->
-        val tree = ProjectView.getInstance(project).currentProjectViewPane.tree
+      NerdAction.Code { _, _, e ->
+        val tree = getTree(e) ?: return@Code
         val currentPath = tree.selectionPath ?: return@Code
         val parent = currentPath.parentPath ?: return@Code
         val row = tree.getRowForPath(parent)
@@ -442,8 +399,8 @@ internal class NerdTree : VimExtension {
     registerCommand(
       "NERDTreeMapJumpLastChild",
       "J",
-      NerdAction.Code { project, _, _ ->
-        val tree = ProjectView.getInstance(project).currentProjectViewPane.tree
+      NerdAction.Code { _, _, e ->
+        val tree = getTree(e) ?: return@Code
         val currentPath = tree.selectionPath ?: return@Code
 
         val currentPathCount = currentPath.pathCount
@@ -488,18 +445,17 @@ internal class NerdTree : VimExtension {
 
     registerCommand(
       "/",
-      NerdAction.Code { project, _, _ ->
-        NerdDispatcher.getInstance(project).waitForSearch = true
+      NerdAction.Code { _, _, e ->
+        val tree = getTree(e) ?: return@Code
+        tree.getUserData(KEY)?.waitForSearch = true
       },
     )
 
     registerCommand(
       "<ESC>",
-      NerdAction.Code { project, _, _ ->
-        val instance = NerdDispatcher.getInstance(project)
-        if (instance.waitForSearch) {
-          instance.waitForSearch = false
-        }
+      NerdAction.Code { _, _, e ->
+        val tree = getTree(e) ?: return@Code
+        tree.getUserData(KEY)?.waitForSearch = false
       },
     )
     
@@ -533,6 +489,21 @@ internal class NerdTree : VimExtension {
   companion object {
     const val pluginName = "NERDTree"
     private val LOG = logger<NerdTree>()
+    private val KEY = Key.create<NerdDispatcher>("IdeaVim-NerdTree-Dispatcher")
+
+    fun installDispatcher(component: JComponent) {
+      if (component.getUserData(KEY) != null) return
+
+      val dispatcher = NerdDispatcher()
+      component.putUserData(KEY, dispatcher)
+
+      val shortcuts = collectShortcuts(actionsRoot).map { RequiredShortcut(it, MappingOwner.Plugin.get(pluginName)) }
+      dispatcher.registerCustomShortcutSet(KeyGroup.toShortcutSet(shortcuts), component)
+
+      SpeedSearchSupply.getSupply(component, true)?.addChangeListener {
+        dispatcher.waitForSearch = false
+      }
+    }
   }
 }
 
@@ -567,12 +538,6 @@ private fun collectShortcuts(node: Node<NerdAction>): Set<KeyStroke> {
   }
 }
 
-private fun installDispatcher(project: Project) {
-  val dispatcher = NerdTree.NerdDispatcher.getInstance(project)
-  val shortcuts =
-    collectShortcuts(actionsRoot).map { RequiredShortcut(it, MappingOwner.Plugin.get(NerdTree.pluginName)) }
-  dispatcher.registerCustomShortcutSet(
-    KeyGroup.toShortcutSet(shortcuts),
-    (ProjectView.getInstance(project) as ProjectViewImpl).component,
-  )
+private fun getTree(e: AnActionEvent): JTree? {
+  return e.dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JTree
 }

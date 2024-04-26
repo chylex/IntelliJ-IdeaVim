@@ -136,11 +136,7 @@
 
   <!--  IdeaVim extensions-->
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceImplementation="com.maddyhome.idea.vim.extension.nerdtree.NerdTree$NerdDispatcher"/>
-    <postStartupActivity implementation="com.maddyhome.idea.vim.extension.nerdtree.NerdTree$NerdStartupActivity"/>
+    <applicationService serviceImplementation="com.maddyhome.idea.vim.extension.nerdtree.NerdTree$NerdDispatcher"/>
+    <applicationInitializedListener implementation="com.maddyhome.idea.vim.extension.nerdtree.NerdTreeApplicationListener"/>
   </extensions>
-  <projectListeners>
-    <listener class="com.maddyhome.idea.vim.extension.nerdtree.NerdTree$ProjectViewListener"
-              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
-  </projectListeners>
 </idea-plugin>
