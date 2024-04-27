@@ -421,12 +421,12 @@ internal class NerdTree : VimExtension {
     )
     registerCommand(
       "NERDTreeMapJumpNextSibling",
-      "<C-J>",
+      "<A-J>",
       NerdAction.ToIj("Tree-selectNextSibling"),
     )
     registerCommand(
       "NERDTreeMapJumpPrevSibling",
-      "<C-K>",
+      "<A-K>",
       NerdAction.ToIj("Tree-selectPreviousSibling"),
     )
     registerCommand(
