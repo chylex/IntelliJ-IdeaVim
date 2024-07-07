@@ -12,7 +12,7 @@
       <option name="taskNames">
         <list>
           <option value="check" />
-          <option value="verifyPlugin" />
+          <option value="runPluginVerifier" />
         </list>
       </option>
       <option name="vmOptions" value="" />
@@ -20,7 +20,6 @@
     <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
     <DebugAllEnabled>false</DebugAllEnabled>
-    <RunAsTest>false</RunAsTest>
     <method v="2" />
   </configuration>
 </component>

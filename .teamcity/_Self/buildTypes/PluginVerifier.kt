@@ -22,7 +22,7 @@ object PluginVerifier : IdeaVimBuildType({
 
   steps {
     gradle {
-      tasks = "clean verifyPlugin"
+      tasks = "clean runPluginVerifier"
       buildFile = ""
       enableStacktrace = true
     }
