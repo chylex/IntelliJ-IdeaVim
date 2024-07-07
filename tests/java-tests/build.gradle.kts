@@ -1,5 +1,3 @@
-import org.jetbrains.intellij.platform.gradle.TestFrameworkType
-
 /*
  * Copyright 2003-2024 The IdeaVim authors
  *
@@ -11,20 +9,16 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 plugins {
   id("java")
   kotlin("jvm")
-  id("org.jetbrains.intellij.platform.module")
+  id("org.jetbrains.intellij")
 }
 
 val kotlinVersion: String by project
-val ideaType: String by project
 val ideaVersion: String by project
 val javaVersion: String by project
 
 repositories {
   mavenCentral()
-
-  intellijPlatform {
-    defaultRepositories()
-  }
+  maven { url = uri("https://cache-redirector.jetbrains.com/intellij-dependencies") }
 }
 
 dependencies {
@@ -32,24 +26,35 @@ dependencies {
   compileOnly("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
   testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
   testImplementation(testFixtures(project(":"))) // The root project
-
-  intellijPlatform {
-    create(ideaType, ideaVersion)
-    testFramework(TestFrameworkType.Platform)
-    testFramework(TestFrameworkType.JUnit5)
-    bundledPlugins("com.intellij.java", "org.jetbrains.plugins.yaml")
-    instrumentationTools()
-  }
-}
-
-intellijPlatform {
-  buildSearchableOptions = false
 }
 
 tasks {
   test {
     useJUnitPlatform()
   }
+
+  verifyPlugin {
+    enabled = false
+  }
+
+  publishPlugin {
+    enabled = false
+  }
+
+  runIde {
+    enabled = false
+  }
+
+  runPluginVerifier {
+    enabled = false
+  }
+}
+
+intellij {
+  version.set(ideaVersion)
+  type.set("IC")
+  // Yaml is only used for testing. It's part of the IdeaIC distribution, but needs to be included as a reference
+  plugins.set(listOf("java", "yaml"))
 }
 
 java {

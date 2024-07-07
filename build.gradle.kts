@@ -32,8 +32,6 @@ import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.RepositoryBuilder
 import org.intellij.markdown.ast.getTextInNode
 import org.jetbrains.changelog.Changelog
-import org.jetbrains.intellij.platform.gradle.TestFrameworkType
-import org.jetbrains.intellij.platform.gradle.tasks.aware.SplitModeAware
 import org.kohsuke.github.GHUser
 import java.net.HttpURLConnection
 import java.net.URL
@@ -69,20 +67,22 @@ plugins {
   kotlin("jvm") version "1.9.22"
   application
   id("java-test-fixtures")
-  id("org.jetbrains.intellij.platform") version "2.0.0-beta8"
+
+  id("org.jetbrains.intellij") version "1.17.3"
   id("org.jetbrains.changelog") version "2.2.0"
+
   id("org.jetbrains.kotlinx.kover") version "0.6.1"
   id("com.dorongold.task-tree") version "4.0.0"
+
   id("com.google.devtools.ksp") version "1.9.22-1.0.17"
 }
-
-val moduleSources by configurations.registering
 
 // Import variables from gradle.properties file
 val javaVersion: String by project
 val kotlinVersion: String by project
 val ideaVersion: String by project
 val ideaType: String by project
+val downloadIdeaSources: String by project
 val instrumentPluginCode: String by project
 val remoteRobotVersion: String by project
 val splitModeVersion: String by project
@@ -97,9 +97,7 @@ val releaseType: String? by project
 
 repositories {
   mavenCentral()
-  intellijPlatform {
-    defaultRepositories()
-  }
+  maven { url = uri("https://cache-redirector.jetbrains.com/intellij-dependencies") }
 }
 
 dependencies {
@@ -110,26 +108,9 @@ dependencies {
   compileOnly("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
   compileOnly("org.jetbrains:annotations:24.1.0")
 
-  intellijPlatform {
-    // Note that it is also possible to use local("...") to compile against a locally installed IDE
-    // E.g. local("/Users/{user}/Applications/IntelliJ IDEA Ultimate.app")
-    // Or something like: intellijIdeaUltimate(ideaVersion)
-    create(ideaType, ideaVersion)
-
-    pluginVerifier()
-    zipSigner()
-    instrumentationTools()
-
-    testFramework(TestFrameworkType.Platform)
-    testFramework(TestFrameworkType.JUnit5)
-
-    // AceJump is an optional dependency. We use their SessionManager class to check if it's active
-    plugin("AceJump", "3.8.11")
-  }
-
-  moduleSources(project(":vim-engine", "sourcesJarArtifacts"))
-
   // --------- Test dependencies ----------
+
+  testImplementation(testFixtures(project(":")))
 
   testApi("com.squareup.okhttp3:okhttp:4.12.0")
 
@@ -204,37 +185,15 @@ tasks {
     }
   }
 
-  // Note that this will run the plugin installed in the IDE specified in dependencies. To run in a different IDE, use
-  // a custom task (see below)
   runIde {
     systemProperty("octopus.handler", System.getProperty("octopus.handler") ?: true)
   }
 
-  // Uncomment to run the plugin in a custom IDE, rather than the IDE specified as a compile target in dependencies
-  // Note that the version must be greater than the plugin's target version, for obvious reasons
-//  val runIdeCustom by intellijPlatformTesting.runIde.registering {
-//    type = IntelliJPlatformType.Rider
-//    version = "2024.1.2"
-//  }
-
-  // Uncomment to run the plugin in a locally installed IDE
-//  val runIdeLocal by intellijPlatformTesting.runIde.registering {
-//    localPath = file("/Users/{user}/Applications/WebStorm.app")
-//  }
-
-  val runIdeSplitMode by intellijPlatformTesting.runIde.registering {
-    splitMode = true
-    splitModeTarget = SplitModeAware.SplitModeTarget.FRONTEND
-
-    // Frontend split mode support requires 242+
-    // TODO: Remove this once IdeaVim targets 242, as the task will naturally use the target version to run
-    version.set(splitModeVersion)
+  downloadRobotServerPlugin {
+    version.set(remoteRobotVersion)
   }
 
-  // Start the default IDE with both IdeaVim and the robot server plugin installed, ready to run a UI test task. The
-  // robot server plugin is automatically added as a dependency to this task, and Gradle will take care of downloading.
-  // Note that the CustomTestIdeUiTask can be used to run tests against a different IDE
-  testIdeUi {
+  runIdeForUiTests {
     systemProperty("robot-server.port", "8082")
     systemProperty("ide.mac.message.dialogs.as.sheets", "false")
     systemProperty("jb.privacy.policy.text", "<!--999.999-->")
@@ -245,21 +204,28 @@ tasks {
   }
 
   // Add plugin open API sources to the plugin ZIP
-  val sourcesJar by registering(Jar::class) {
-    dependsOn(moduleSources)
+  val createOpenApiSourceJar by registering(Jar::class) {
+    // Java sources
+    from(sourceSets.main.get().java) {
+      include("**/com/maddyhome/idea/vim/**/*.java")
+    }
+    from(project(":vim-engine").sourceSets.main.get().java) {
+      include("**/com/maddyhome/idea/vim/**/*.java")
+    }
+    // Kotlin sources
+    from(kotlin.sourceSets.main.get().kotlin) {
+      include("**/com/maddyhome/idea/vim/**/*.kt")
+    }
+    from(project(":vim-engine").kotlin.sourceSets.main.get().kotlin) {
+      include("**/com/maddyhome/idea/vim/**/*.kt")
+    }
     destinationDirectory.set(layout.buildDirectory.dir("libs"))
-    archiveClassifier.set(DocsType.SOURCES)
-    from(sourceSets.main.map { it.kotlin })
-    from(provider {
-      moduleSources.map {
-        it.map { jarFile -> zipTree(jarFile) }
-      }
-    })
+    archiveClassifier.set("src")
   }
 
   buildPlugin {
-    dependsOn(sourcesJar)
-    from(sourcesJar) { into("lib/src") }
+    dependsOn(createOpenApiSourceJar)
+    from(createOpenApiSourceJar) { into("lib/src") }
   }
 }
 
@@ -284,44 +250,44 @@ gradle.projectsEvaluated {
 
 // --- Intellij plugin
 
-intellijPlatform {
-  pluginConfiguration {
-    name = "IdeaVim"
-    changeNotes.set(
-      """<a href="https://youtrack.jetbrains.com/issues/VIM?q=State:%20Fixed%20Fix%20versions:%20${version.get()}">Changelog</a>"""
-    )
+intellij {
+  version.set(ideaVersion)
+  type.set(ideaType)
+  pluginName.set("IdeaVim")
 
-    ideaVersion {
-      // Let the Gradle plugin set the since-build version. It defaults to the version of the IDE we're building against
-      // specified as two components, `{branch}.{build}` (e.g., "241.15989"). There is no third component specified.
-      // The until-build version defaults to `{branch}.*`, but we want to support _all_ future versions, so we set it
-      // with a null provider (the provider is important).
-      // By letting the Gradle plugin handle this, the Plugin DevKit IntelliJ plugin cannot help us with the "Usage of
-      // IntelliJ API not available in older IDEs" inspection. However, since our since-build is the version we compile
-      // against, we can never get an API that's newer - it would be an unresolved symbol.
-      untilBuild.set(provider { null })
-    }
-  }
+  updateSinceUntilBuild.set(false)
 
-  publishing {
+  downloadSources.set(downloadIdeaSources.toBoolean())
+  instrumentCode.set(instrumentPluginCode.toBoolean())
+  intellijRepository.set("https://www.jetbrains.com/intellij-repository")
+  plugins.set(listOf("AceJump:3.8.11"))
+}
+
+tasks {
+  publishPlugin {
     channels.set(publishChannels.split(","))
     token.set(publishToken)
   }
 
-  signing {
+  signPlugin {
     certificateChain.set(providers.environmentVariable("CERTIFICATE_CHAIN"))
     privateKey.set(providers.environmentVariable("PRIVATE_KEY"))
     password.set(providers.environmentVariable("PRIVATE_KEY_PASSWORD"))
   }
 
-  verifyPlugin {
-    teamCityOutputFormat = true
-    ides {
-      recommended()
-    }
+  runPluginVerifier {
+    downloadDir.set("${project.buildDir}/pluginVerifier/ides")
+    teamCityOutputFormat.set(true)
   }
 
-  instrumentCode.set(instrumentPluginCode.toBoolean())
+  patchPluginXml {
+    // Don't forget to update plugin.xml
+    sinceBuild.set("241.15989.150")
+
+    changeNotes.set(
+      """<a href="https://youtrack.jetbrains.com/issues/VIM?q=State:%20Fixed%20Fix%20versions:%20${version.get()}">Changelog</a>"""
+    )
+  }
 }
 
 ksp {
@@ -925,12 +891,12 @@ fun changes(): List<Change> {
   println("Start changes processing")
   for (message in messages) {
     println("Processing '$message'...")
-    val lowercaseMessage = message.lowercase()
+    val lowercaseMessage = message.toLowerCase()
     val regex = "^fix\\((vim-\\d+)\\):".toRegex()
     val findResult = regex.find(lowercaseMessage)
     if (findResult != null) {
       println("Message matches")
-      val value = findResult.groups[1]!!.value.uppercase()
+      val value = findResult.groups[1]!!.value.toUpperCase()
       val shortMessage = message.drop(findResult.range.last + 1).trim()
       newFixes += Change(value, shortMessage)
     } else {
