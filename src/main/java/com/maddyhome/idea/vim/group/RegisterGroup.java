@@ -14,7 +14,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.maddyhome.idea.vim.VimPlugin;
-import com.maddyhome.idea.vim.api.VimInjectorKt;
 import com.maddyhome.idea.vim.newapi.IjVimInjectorKt;
 import com.maddyhome.idea.vim.register.Register;
 import com.maddyhome.idea.vim.register.VimRegisterGroupBase;
@@ -28,8 +27,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.maddyhome.idea.vim.api.VimInjectorKt.injector;
 
 /**
  * This group works with command associated with copying and pasting text
@@ -131,7 +128,7 @@ public class RegisterGroup extends VimRegisterGroupBase implements PersistentSta
           final String text = VimPlugin.getXML().getSafeXmlText(textElement);
           if (text != null) {
             logger.trace("Register data parsed");
-            register = new Register(key, injector.getClipboardManager().dumbCopiedText(text), type);
+            register = new Register(key, type, text, Collections.emptyList());
           }
           else {
             logger.trace("Cannot parse register data");

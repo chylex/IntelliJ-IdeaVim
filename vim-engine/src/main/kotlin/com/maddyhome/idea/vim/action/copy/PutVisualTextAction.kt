@@ -41,7 +41,21 @@ sealed class PutVisualTextBaseAction(
   ): Boolean {
     if (caretsAndSelections.isEmpty()) return false
     val count = cmd.count
-    val caretToPutData = editor.sortedCarets().associateWith { getPutDataForCaret(editor, context, it, caretsAndSelections[it], count) }
+    val sortedCarets = editor.sortedCarets()
+
+    val textData = getRegisterTextData()
+    val splitText = textData?.rawText?.split('\n')?.dropLastWhile(String::isEmpty)
+
+    val caretToTextData = if (splitText != null && splitText.size == sortedCarets.size) {
+      sortedCarets.mapIndexed { index, caret -> caret to textData.copy(rawText = splitText[splitText.lastIndex - index]) }.toMap()
+    } else {
+      sortedCarets.associateWith { textData }
+    }
+    
+    val caretToPutData = caretToTextData.mapValues { (caret, textData) ->
+      getPutDataForCaret(textData, caret, caretsAndSelections[caret], count)
+    }
+    
     injector.registerGroup.resetRegister()
     var result = true
     injector.application.runWriteAction {
@@ -51,11 +65,8 @@ sealed class PutVisualTextBaseAction(
     }
     return result
   }
-
-  private fun getPutDataForCaret(editor: VimEditor, context: ExecutionContext, caret: VimCaret, selection: VimSelection?, count: Int): PutData {
-    val lastRegisterChar = injector.registerGroup.lastRegisterChar
-    val register = caret.registerStorage.getRegister(editor, context, lastRegisterChar)
-    val textData = register?.let { PutData.TextData(register) }
+  
+  private fun getPutDataForCaret(textData: PutData.TextData?, caret: VimCaret, selection: VimSelection?, count: Int): PutData {
     val visualSelection = selection?.let { PutData.VisualSelection(mapOf(caret to it), it.type) }
     return PutData(textData, visualSelection, count, insertTextBeforeCaret, indent, caretAfterInsertedText)
   }

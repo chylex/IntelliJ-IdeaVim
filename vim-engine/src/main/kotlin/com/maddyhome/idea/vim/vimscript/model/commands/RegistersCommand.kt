@@ -13,8 +13,9 @@ import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.command.OperatorArguments
-import com.maddyhome.idea.vim.state.mode.SelectionType
 import com.maddyhome.idea.vim.ex.ranges.Range
+import com.maddyhome.idea.vim.helper.EngineStringHelper
+import com.maddyhome.idea.vim.state.mode.SelectionType
 import com.maddyhome.idea.vim.vimscript.model.ExecutionResult
 
 /**
@@ -36,7 +37,8 @@ data class RegistersCommand(val range: Range, val modifier: CommandModifier, val
           SelectionType.CHARACTER_WISE -> "c"
           SelectionType.BLOCK_WISE -> "b"
         }
-        "  $type  \"${reg.name}   ${reg.printableString.take(200)}"
+        val text = reg.rawText?.let { injector.parser.parseKeys(it) } ?: reg.keys
+        "  $type  \"${reg.name}   ${EngineStringHelper.toPrintableCharacters(text).take(200)}"
       }
 
     injector.outputPanel.output(editor, context, regs)

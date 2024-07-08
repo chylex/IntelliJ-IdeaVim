@@ -13,9 +13,9 @@ import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.command.OperatorArguments
-import com.maddyhome.idea.vim.state.mode.SelectionType
 import com.maddyhome.idea.vim.ex.ranges.Range
 import com.maddyhome.idea.vim.put.PutData
+import com.maddyhome.idea.vim.state.mode.SelectionType
 import com.maddyhome.idea.vim.vimscript.model.ExecutionResult
 
 /**
@@ -42,7 +42,12 @@ data class PutLinesCommand(val range: Range, val modifier: CommandModifier, val 
 
     val line = if (range.size() == 0) -1 else getLine(editor)
     val textData = registerGroup.getRegister(editor, context, registerGroup.lastRegisterChar)?.let {
-      PutData.TextData(null, it.copiedText, SelectionType.LINE_WISE)
+      PutData.TextData(
+        it.text ?: injector.parser.toKeyNotation(it.keys),
+        SelectionType.LINE_WISE,
+        it.transferableData,
+        null,
+      )
     }
     val putData = PutData(
       textData,

@@ -12,8 +12,8 @@ import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.command.OperatorArguments
-import com.maddyhome.idea.vim.state.mode.SelectionType
 import com.maddyhome.idea.vim.common.TextRange
+import com.maddyhome.idea.vim.state.mode.SelectionType
 
 interface VimYankGroup {
   /**
@@ -38,8 +38,6 @@ interface VimYankGroup {
    * @param count  The number of lines to yank
    * @return true if able to yank the lines, false if not
    */
-  @Deprecated("Please use the same method, but with ExecutionContext")
-  fun yankLine(editor: VimEditor, count: Int): Boolean
   fun yankLine(editor: VimEditor, context: ExecutionContext, count: Int): Boolean
 
   /**
@@ -50,7 +48,5 @@ interface VimYankGroup {
    * @param type   The type of yank
    * @return true if able to yank the range, false if not
    */
-  @Deprecated("Please use the same method, but with ExecutionContext")
-  fun yankRange(editor: VimEditor, range: TextRange?, type: SelectionType, moveCursor: Boolean): Boolean
   fun yankRange(editor: VimEditor, context: ExecutionContext, range: TextRange?, type: SelectionType, moveCursor: Boolean): Boolean
 }
