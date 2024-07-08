@@ -182,31 +182,41 @@ abstract class VimChangeGroupBase : VimChangeGroup {
         return false
       }
     }
-
-    val isInsertMode = editor.mode == Mode.INSERT || editor.mode == Mode.REPLACE
-    val shouldYank = type != null && !isInsertMode && saveToRegister
-    if (shouldYank && !caret.registerStorage.storeText(editor, context, updatedRange, type, isDelete = true)) {
-      return false
-    }
-
-    val startOffsets = updatedRange.startOffsets
-    val endOffsets = updatedRange.endOffsets
-    for (i in updatedRange.size() - 1 downTo 0) {
-      val (newRange, _) = editor.search(
-        startOffsets[i] to endOffsets[i],
+    val mode = editor.mode
+    if (type == null ||
+      (mode == Mode.INSERT || mode == Mode.REPLACE) ||
+      !saveToRegister ||
+      injector.registerGroup.storeText(
         editor,
-        LineDeleteShift.NL_ON_END
-      ) ?: continue
-      injector.application.runWriteAction {
+        context,
+        caret,
+        updatedRange,
+        type,
+        true,
+        !editor.isFirstCaret,
+        editor.isReversingCarets
+      )
+    ) {
+      val startOffsets = updatedRange.startOffsets
+      val endOffsets = updatedRange.endOffsets
+      for (i in updatedRange.size() - 1 downTo 0) {
+        val (newRange, _) = editor.search(
+          startOffsets[i] to endOffsets[i],
+          editor,
+          LineDeleteShift.NL_ON_END
+        ) ?: continue
+        injector.application.runWriteAction {
         editor.deleteString(TextRange(newRange.first, newRange.second))
       }
+      }
+      if (type != null) {
+        val start = updatedRange.startOffset
+        injector.markService.setMark(caret, MARK_CHANGE_POS, start)
+        injector.markService.setChangeMarks(caret, TextRange(start, start + 1))
+      }
+      return true
     }
-    if (type != null) {
-      val start = updatedRange.startOffset
-      injector.markService.setMark(caret, MARK_CHANGE_POS, start)
-      injector.markService.setChangeMarks(caret, TextRange(start, start + 1))
-    }
-    return true
+    return false
   }
 
   /**
