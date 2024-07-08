@@ -241,12 +241,7 @@ class RegistersCommandTest : VimTestCase() {
 
     val vimEditor = fixture.editor.vim
     val context = injector.executionContextManager.getEditorExecutionContext(vimEditor)
-    injector.registerGroup.saveRegister(
-      vimEditor,
-      context,
-      '+',
-      Register('+', injector.clipboardManager.dumbCopiedText("Lorem ipsum dolor"), SelectionType.LINE_WISE)
-    )
+    injector.registerGroup.saveRegister(vimEditor, context, '+', Register('+', SelectionType.LINE_WISE, "Lorem ipsum dolor", mutableListOf()))
     val clipboardContent = injector.clipboardManager.dumbCopiedText("clipboard content")
     injector.clipboardManager.setClipboardContent(vimEditor, context, clipboardContent)
     typeText("V<Esc>")
@@ -453,12 +448,7 @@ class RegistersCommandTest : VimTestCase() {
     val vimEditor = fixture.editor.vim
     val context = injector.executionContextManager.getEditorExecutionContext(vimEditor)
     val clipboardContent = injector.clipboardManager.dumbCopiedText("clipboard content")
-    injector.registerGroup.saveRegister(
-      vimEditor,
-      context,
-      '+',
-      Register('+', injector.clipboardManager.dumbCopiedText("Lorem ipsum dolor"), SelectionType.LINE_WISE)
-    )
+    injector.registerGroup.saveRegister(vimEditor, context, '+', Register('+', SelectionType.LINE_WISE, "Lorem ipsum dolor", mutableListOf()))
     injector.clipboardManager.setClipboardContent(vimEditor, context, clipboardContent)
     typeText("V<Esc>")
 

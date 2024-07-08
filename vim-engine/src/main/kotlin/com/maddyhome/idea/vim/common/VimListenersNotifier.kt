@@ -8,7 +8,6 @@
 
 package com.maddyhome.idea.vim.common
 
-import com.maddyhome.idea.vim.api.ImmutableVimCaret
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.state.mode.Mode
@@ -72,9 +71,9 @@ class VimListenersNotifier {
     isReplaceCharListeners.forEach { it.isReplaceCharChanged(editor) }
   }
 
-  fun notifyYankPerformed(caretToRange: Map<ImmutableVimCaret, TextRange>) {
+  fun notifyYankPerformed(editor: VimEditor, range: TextRange) {
     if (!injector.enabler.isEnabled()) return // we remove all the listeners when turning the plugin off, but let's do it just in case
-    yankListeners.forEach { it.yankPerformed(caretToRange) }
+    yankListeners.forEach { it.yankPerformed(editor, range) }
   }
 
   /**

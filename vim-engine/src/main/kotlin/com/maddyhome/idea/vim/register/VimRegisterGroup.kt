@@ -17,6 +17,13 @@ import javax.swing.KeyStroke
 
 interface VimRegisterGroup {
 
+  /**
+   * Get the last register selected by the user
+   *
+   * @return The register, null if no such register
+   */
+  @Deprecated("Please use com.maddyhome.idea.vim.register.VimRegisterGroup#getLastRegister(com.maddyhome.idea.vim.api.VimEditor, com.maddyhome.idea.vim.api.ExecutionContext)")
+  val lastRegister: Register?
   var lastRegisterChar: Char
   val currentRegister: Char
 
@@ -32,7 +39,6 @@ interface VimRegisterGroup {
   val isRegisterSpecifiedExplicitly: Boolean
   val defaultRegister: Char
 
-  fun getLastRegister(editor: VimEditor, context: ExecutionContext): Register?
   fun isValid(reg: Char): Boolean
   fun selectRegister(reg: Char): Boolean
   fun resetRegister()
@@ -41,6 +47,7 @@ interface VimRegisterGroup {
   fun isRegisterWritable(): Boolean
   fun isRegisterWritable(reg: Char): Boolean
 
+  /** Store text into the last register. */
   fun storeText(
     editor: VimEditor,
     context: ExecutionContext,
@@ -48,18 +55,20 @@ interface VimRegisterGroup {
     range: TextRange,
     type: SelectionType,
     isDelete: Boolean,
+    forceAppend: Boolean = false,
+    prependInsteadOfAppend: Boolean = false
   ): Boolean
 
+  /**
+   * Stores text to any writable register (used for the let command)
+   */
   fun storeText(editor: VimEditor, context: ExecutionContext, register: Char, text: String): Boolean
 
+  /**
+   * Stores text to any writable register (used for multicaret tests)
+   */
   @TestOnly
-  fun storeText(
-    editor: VimEditor,
-    context: ExecutionContext,
-    register: Char,
-    text: String,
-    selectionType: SelectionType,
-  ): Boolean
+  fun storeText(editor: VimEditor, context: ExecutionContext, register: Char, text: String, selectionType: SelectionType): Boolean
 
   /**
    * Stores text, character wise, in the given special register
@@ -75,7 +84,6 @@ interface VimRegisterGroup {
    * preferable to yank from the fixture editor.
    */
   fun storeTextSpecial(register: Char, text: String): Boolean
-
   @Deprecated("Please use com.maddyhome.idea.vim.register.VimRegisterGroup#getRegister(com.maddyhome.idea.vim.api.VimEditor, com.maddyhome.idea.vim.api.ExecutionContext, char)")
   fun getRegister(r: Char): Register?
   fun getRegister(editor: VimEditor, context: ExecutionContext, r: Char): Register?

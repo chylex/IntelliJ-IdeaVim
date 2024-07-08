@@ -96,7 +96,7 @@ data class ReadCommand(val range: Range, val modifier: CommandModifier, val argu
     val copiedText = injector.clipboardManager.dumbCopiedText(content)
     val caret = editor.currentCaret()
     val address = if (range.addresses.isEmpty()) -1 else range.addresses.last().getLine1(editor, caret)
-    val textData = PutData.TextData(null, copiedText, SelectionType.LINE_WISE)
+    val textData = PutData.TextData(null, SelectionType.LINE_WISE, copiedText.transferableData, null)
     return PutData(
       textData,
       null,
