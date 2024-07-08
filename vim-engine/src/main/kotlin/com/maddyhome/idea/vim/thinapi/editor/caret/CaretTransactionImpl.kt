@@ -76,7 +76,7 @@ class CaretTransactionImpl(
     beforeCaret: Boolean,
   ): Boolean {
     val copiedText = injector.clipboardManager.dumbCopiedText(text)
-    val textData = PutData.TextData(null, copiedText, SelectionType.CHARACTER_WISE)
+    val textData = PutData.TextData(null, SelectionType.CHARACTER_WISE, copiedText.transferableData, null)
 
     val putData = PutData(
       textData = textData,

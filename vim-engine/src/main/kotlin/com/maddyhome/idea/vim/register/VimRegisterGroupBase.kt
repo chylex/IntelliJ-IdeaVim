@@ -17,7 +17,6 @@ import com.maddyhome.idea.vim.api.globalOptions
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.common.TextRange
-import com.maddyhome.idea.vim.common.VimCopiedText
 import com.maddyhome.idea.vim.diagnostic.VimLogger
 import com.maddyhome.idea.vim.diagnostic.debug
 import com.maddyhome.idea.vim.diagnostic.vimLogger
@@ -75,9 +74,13 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
   override val defaultRegister: Char
     get() = defaultRegisterChar
 
-  override fun getLastRegister(editor: VimEditor, context: ExecutionContext): Register? {
-    return getRegister(editor, context, lastRegisterChar)
-  }
+  /**
+   * Get the last register selected by the user
+   *
+   * @return The register, null if no such register
+   */
+  override val lastRegister: Register?
+    get() = getRegister(lastRegisterChar)
 
   private val onClipboardChanged: () -> Unit = {
     val clipboardOptionValue = injector.globalOptions().clipboard
@@ -113,11 +116,18 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
     return if (isValid(reg)) {
       isRegisterSpecifiedExplicitly = true
       lastRegisterChar = reg
-      logger.debug { "register selected: $lastRegisterChar" }
+      logger.debug { "register selected: $lastRegister" }
+
       true
     } else {
       false
     }
+  }
+
+  override fun getRegister(r: Char): Register? {
+    val dummyEditor = injector.fallbackWindow
+    val dummyContext = injector.executionContextManager.getEditorExecutionContext(dummyEditor)
+    return getRegister(dummyEditor, dummyContext, r)
   }
 
   /**
@@ -175,6 +185,8 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
     type: SelectionType,
     register: Char,
     isDelete: Boolean,
+    forceAppend: Boolean,
+    prependInsteadOfAppend: Boolean,
   ): Boolean {
     // Null register doesn't get saved, but acts like it was
     if (lastRegisterChar == BLACK_HOLE_REGISTER) return true
@@ -193,50 +205,62 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
       end = t
     }
 
-    val copiedText =
-      if (start != -1) { // FIXME: so, we had invalid ranges all the time?.. I've never handled such cases
-        injector.clipboardManager.collectCopiedText(editor, context, range, text)
-      } else {
-        injector.clipboardManager.dumbCopiedText(text)
-      }
-    logger.debug { "Copy to '$lastRegisterChar' with copied text: $copiedText" }
     // If this is an uppercase register, we need to append the text to the corresponding lowercase register
-    if (Character.isUpperCase(register)) {
+    val transferableData: List<Any> =
+      if (start != -1) injector.clipboardManager.getTransferableData(editor, range) else ArrayList()
+    var processedText =
+      if (start != -1) injector.clipboardManager.preprocessText(editor, range, text, transferableData) else text
+    logger.debug {
+      val transferableClasses = transferableData.joinToString(",") { it.javaClass.name }
+      "Copy to '$lastRegister' with transferable data: $transferableClasses"
+    }
+    if (Character.isUpperCase(register) || forceAppend) {
+      if (forceAppend && type == SelectionType.CHARACTER_WISE) {
+        processedText = if (prependInsteadOfAppend)
+          processedText + '\n'
+        else
+          '\n' + processedText
+      }
       val lreg = Character.toLowerCase(register)
       val r = myRegisters[lreg]
       // Append the text if the lowercase register existed
       if (r != null) {
-        myRegisters[lreg] = r.addText(copiedText.text)
+        if (prependInsteadOfAppend) {
+          r.prependTextAndResetTransferableData(processedText)
+        }
+        else {
+          r.addTextAndResetTransferableData(processedText)
+        }
       } else {
-        myRegisters[lreg] = Register(lreg, copiedText, type)
-        logger.debug { "register '$register' contains: \"$copiedText\"" }
+        myRegisters[lreg] = Register(lreg, type, processedText, ArrayList(transferableData))
+        logger.debug { "register '$register' contains: \"$processedText\"" }
       } // Set the text if the lowercase register didn't exist yet
     } else {
-      myRegisters[register] = Register(register, copiedText, type)
-      logger.debug { "register '$register' contains: \"$copiedText\"" }
+      myRegisters[register] = Register(register, type, processedText, ArrayList(transferableData))
+      logger.debug { "register '$register' contains: \"$processedText\"" }
     } // Put the text in the specified register
 
     if (register == CLIPBOARD_REGISTER) {
-      injector.clipboardManager.setClipboardContent(editor, context, copiedText)
+      injector.clipboardManager.setClipboardText(processedText, text, ArrayList(transferableData))
       if (!isRegisterSpecifiedExplicitly && !isDelete && isPrimaryRegisterSupported() && OptionConstants.clipboard_unnamedplus in injector.globalOptions().clipboard) {
-        injector.clipboardManager.setPrimaryContent(editor, context, copiedText)
+        injector.clipboardManager.setClipboardText(processedText, text, ArrayList(transferableData))
       }
     }
     if (register == PRIMARY_REGISTER) {
       if (isPrimaryRegisterSupported()) {
-        injector.clipboardManager.setPrimaryContent(editor, context, copiedText)
+        injector.clipboardManager.setClipboardText(processedText, text, ArrayList(transferableData))
         if (!isRegisterSpecifiedExplicitly && !isDelete && OptionConstants.clipboard_unnamed in injector.globalOptions().clipboard) {
-          injector.clipboardManager.setClipboardContent(editor, context, copiedText)
+          injector.clipboardManager.setClipboardText(processedText, text, ArrayList(transferableData))
         }
       } else {
-        injector.clipboardManager.setClipboardContent(editor, context, copiedText)
+        injector.clipboardManager.setClipboardText(processedText, text, ArrayList(transferableData))
       }
     }
 
     // Also add it to the unnamed register if the default wasn't specified
     if (register != UNNAMED_REGISTER && ".:/".indexOf(register) == -1) {
-      myRegisters[UNNAMED_REGISTER] = Register(UNNAMED_REGISTER, copiedText, type)
-      logger.debug { "register '$UNNAMED_REGISTER' contains: \"$copiedText\"" }
+      myRegisters[UNNAMED_REGISTER] = Register(UNNAMED_REGISTER, type, processedText, ArrayList(transferableData))
+      logger.debug { "register '$UNNAMED_REGISTER' contains: \"$processedText\"" }
     }
 
     if (isDelete) {
@@ -256,26 +280,26 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
         while (d >= '1') {
           val t = myRegisters[d]
           if (t != null) {
-            val incName = (d.code + 1).toChar()
-            myRegisters[incName] = Register(incName, t.copiedText, t.type)
+            t.name = (d.code + 1).toChar()
+            myRegisters[(d.code + 1).toChar()] = t
           }
           d--
         }
-        myRegisters['1'] = Register('1', copiedText, type)
+        myRegisters['1'] = Register('1', type, processedText, ArrayList(transferableData))
       }
 
       // Deletes smaller than one line and without specified register go the the "-" register
       if (smallInlineDeletion && register == defaultRegister) {
         myRegisters[SMALL_DELETION_REGISTER] =
-          Register(SMALL_DELETION_REGISTER, copiedText, type)
+          Register(SMALL_DELETION_REGISTER, type, processedText, ArrayList(transferableData))
       }
     } else if (register == defaultRegister) {
-      myRegisters['0'] = Register('0', copiedText, type)
-      logger.debug { "register '0' contains: \"$copiedText\"" }
+      myRegisters['0'] = Register('0', type, processedText, ArrayList(transferableData))
+      logger.debug { "register '0' contains: \"$processedText\"" }
     } // Yanks also go to register 0 if the default register was used
     return true
   }
-
+  
   /**
    * Store text into the last register.
    *
@@ -292,10 +316,12 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
     range: TextRange,
     type: SelectionType,
     isDelete: Boolean,
+    forceAppend: Boolean,
+    prependInsteadOfAppend: Boolean
   ): Boolean {
     if (isRegisterWritable()) {
       val text = preprocessTextBeforeStoring(editor.getText(range), type)
-      return storeTextInternal(editor, context, range, text, type, lastRegisterChar, isDelete)
+      return storeTextInternal(editor, context, range, text, type, lastRegisterChar, isDelete, forceAppend, prependInsteadOfAppend)
     }
 
     return false
@@ -330,52 +356,34 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
     if (READONLY_REGISTERS.indexOf(register) == -1 && register != LAST_SEARCH_REGISTER && register != UNNAMED_REGISTER) {
       return false
     }
-    myRegisters[register] = Register(
-      register,
-      injector.clipboardManager.dumbCopiedText(text),
+    myRegisters[register] = Register(register,
       SelectionType.CHARACTER_WISE
-    ) // TODO why transferable data is not collected?
+    , text, ArrayList())
     logger.debug { "register '$register' contains: \"$text\"" }
-    return true
-  }
-
-  @Deprecated("Please use com.maddyhome.idea.vim.register.VimRegisterGroup#getRegister(com.maddyhome.idea.vim.api.VimEditor, com.maddyhome.idea.vim.api.ExecutionContext, char)")
-  override fun getRegister(r: Char): Register? {
-    val dummyEditor = injector.fallbackWindow
-    val dummyContext = injector.executionContextManager.getEditorExecutionContext(dummyEditor)
-    return getRegister(dummyEditor, dummyContext, r)
-  }
-
-  override fun storeText(
-    editor: VimEditor,
-    context: ExecutionContext,
-    register: Char,
-    text: String,
-    selectionType: SelectionType,
-  ): Boolean {
-    if (!WRITABLE_REGISTERS.contains(register)) {
-      return false
-    }
-    logger.debug { "register '$register' contains: \"$text\"" }
-    val oldRegister = getRegister(editor, context, register.lowercaseChar())
-    val newRegister = if (register.isUpperCase() && oldRegister != null) {
-      oldRegister.addText(text)
-    } else {
-      Register(
-        register,
-        injector.clipboardManager.dumbCopiedText(text),
-        selectionType
-      ) // FIXME why don't we collect transferable data?
-    }
-    saveRegister(editor, context, register, newRegister)
-    if (register == '/') {
-      injector.searchGroup.lastSearchPattern = text // todo we should not have this field if we have the "/" register
-    }
     return true
   }
 
   override fun storeText(editor: VimEditor, context: ExecutionContext, register: Char, text: String): Boolean {
     return storeText(editor, context, register, text, SelectionType.CHARACTER_WISE)
+  }
+  
+  override fun storeText(editor: VimEditor, context: ExecutionContext, register: Char, text: String, selectionType: SelectionType,
+  ): Boolean {
+    if (!WRITABLE_REGISTERS.contains(register)) {
+      return false
+    }
+    logger.debug { "register '$register' contains: \"$text\"" }
+    val textToStore = if (register.isUpperCase()) {
+      (getRegister(register.lowercaseChar())?.rawText ?: "") + text
+    } else {
+      text
+    }
+    val reg = Register(register, selectionType, textToStore, ArrayList())
+    saveRegister(editor, context, register, reg)
+    if (register == '/') {
+      injector.searchGroup.lastSearchPattern = text // todo we should not have this field if we have the "/" register
+    }
+    return true
   }
 
   private fun guessSelectionType(text: String): SelectionType {
@@ -389,10 +397,10 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
    * @param r - the register character corresponding to either the primary selection (*) or clipboard selection (+)
    * @return the content of the selection, if available, otherwise null
    */
-  private fun refreshClipboardRegister(editor: VimEditor, context: ExecutionContext, r: Char): Register? {
+  private fun refreshClipboardRegister(r: Char): Register? {
     return when (r) {
-      PRIMARY_REGISTER -> refreshPrimaryRegister(editor, context)
-      CLIPBOARD_REGISTER -> refreshClipboardRegister(editor, context)
+      PRIMARY_REGISTER -> refreshPrimaryRegister()
+      CLIPBOARD_REGISTER -> refreshClipboardRegister()
       else -> throw RuntimeException("Clipboard register expected, got $r")
     }
   }
@@ -401,56 +409,60 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
     return System.getenv("DISPLAY") != null && injector.systemInfoService.isXWindow
   }
 
-  private fun setSystemPrimaryRegisterText(editor: VimEditor, context: ExecutionContext, copiedText: VimCopiedText) {
-    logger.trace("Setting text: $copiedText to primary selection...")
+  private fun setSystemPrimaryRegisterText(text: String, rawText: String, transferableData: List<Any>) {
+    logger.trace("Setting text: $text to primary selection...")
     if (isPrimaryRegisterSupported()) {
       try {
-        injector.clipboardManager.setPrimaryContent(editor, context, copiedText)
+        injector.clipboardManager.setClipboardText(text, rawText, transferableData)
       } catch (e: Exception) {
         logger.warn("False positive X11 primary selection support")
         logger.trace("Setting text to primary selection failed. Setting it to clipboard selection instead")
-        setSystemClipboardRegisterText(editor, context, copiedText)
+        setSystemClipboardRegisterText(text, rawText, transferableData)
       }
     } else {
       logger.trace("X11 primary selection is not supporting. Setting clipboard selection instead")
-      setSystemClipboardRegisterText(editor, context, copiedText)
+      setSystemClipboardRegisterText(text, rawText, transferableData)
     }
   }
 
-  private fun setSystemClipboardRegisterText(editor: VimEditor, context: ExecutionContext, copiedText: VimCopiedText) {
-    injector.clipboardManager.setClipboardContent(editor, context, copiedText)
+  private fun setSystemClipboardRegisterText(text: String, rawText: String, transferableData: List<Any>) {
+    injector.clipboardManager.setClipboardText(text, rawText, transferableData)
   }
 
-  private fun refreshPrimaryRegister(editor: VimEditor, context: ExecutionContext): Register? {
+  private fun refreshPrimaryRegister(): Register? {
     logger.trace("Syncing cached primary selection value..")
     if (!isPrimaryRegisterSupported()) {
       logger.trace("X11 primary selection is not supported. Syncing clipboard selection..")
-      return refreshClipboardRegister(editor, context)
+      return refreshClipboardRegister()
     }
     try {
-      val clipboardData = injector.clipboardManager.getPrimaryContent(editor, context) ?: return null
+      val clipboardData = injector.clipboardManager.getPrimaryContent() ?: return null
       val currentRegister = myRegisters[PRIMARY_REGISTER]
-      if (currentRegister != null && clipboardData.text == currentRegister.text) {
+      val text = clipboardData.text
+      val transferableData = clipboardData.transferableData.toMutableList()
+      if (currentRegister != null && text == currentRegister.text) {
         return currentRegister
       }
-      return Register(PRIMARY_REGISTER, clipboardData, guessSelectionType(clipboardData.text))
+      return transferableData?.let { Register(PRIMARY_REGISTER, guessSelectionType(text), text, it) }
     } catch (e: Exception) {
       logger.warn("False positive X11 primary selection support")
       logger.trace("Syncing primary selection failed. Syncing clipboard selection instead")
-      return refreshClipboardRegister(editor, context)
+      return refreshClipboardRegister()
     }
   }
 
-  private fun refreshClipboardRegister(editor: VimEditor, context: ExecutionContext): Register? {
+  private fun refreshClipboardRegister(): Register? {
     // for some reason non-X systems use PRIMARY_REGISTER as a clipboard storage
     val systemAwareClipboardRegister = if (isPrimaryRegisterSupported()) CLIPBOARD_REGISTER else PRIMARY_REGISTER
 
-    val clipboardData = injector.clipboardManager.getClipboardContent(editor, context) ?: return null
+    val clipboardData = injector.clipboardManager.getPrimaryContent() ?: return null
     val currentRegister = myRegisters[systemAwareClipboardRegister]
-    if (currentRegister != null && clipboardData.text == currentRegister.text) {
+    val text = clipboardData.text
+    val transferableData = clipboardData.transferableData.toMutableList()
+    if (currentRegister != null && text == currentRegister.text) {
       return currentRegister
     }
-    return Register(systemAwareClipboardRegister, clipboardData, guessSelectionType(clipboardData.text))
+    return transferableData?.let { Register(systemAwareClipboardRegister, guessSelectionType(text), text, it) }
   }
 
   override fun getRegister(editor: VimEditor, context: ExecutionContext, r: Char): Register? {
@@ -460,36 +472,34 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
       myR = Character.toLowerCase(myR)
     }
     return if (CLIPBOARD_REGISTERS.indexOf(myR) >= 0) refreshClipboardRegister(
-      editor,
-      context,
-      myR
-    ) else myRegisters[myR]
+      myR) else myRegisters[myR]
   }
-
   override fun getRegisters(editor: VimEditor, context: ExecutionContext): List<Register> {
     val filteredRegisters = myRegisters.values.filterNot { CLIPBOARD_REGISTERS.contains(it.name) }.toMutableList()
     val clipboardRegisters = CLIPBOARD_REGISTERS
       .filterNot { it == CLIPBOARD_REGISTER && !isPrimaryRegisterSupported() } // for some reason non-X systems use PRIMARY_REGISTER as a clipboard storage
-      .mapNotNull { refreshClipboardRegister(editor, context, it) }
+      .mapNotNull { refreshClipboardRegister(it) }
 
     return (filteredRegisters + clipboardRegisters).sortedWith(Register.KeySorter)
   }
 
   override fun saveRegister(editor: VimEditor, context: ExecutionContext, r: Char, register: Register) {
     var myR = if (Character.isUpperCase(r)) Character.toLowerCase(r) else r
+    val text = register.text
+    val rawText = register.rawText
 
-    if (CLIPBOARD_REGISTERS.indexOf(myR) >= 0) {
+    if (CLIPBOARD_REGISTERS.indexOf(myR) >= 0 && text != null && rawText != null) {
       when (myR) {
         CLIPBOARD_REGISTER -> {
           if (!isPrimaryRegisterSupported()) {
             // it looks wrong, but for some reason non-X systems use the * register to store the clipboard content
             myR = PRIMARY_REGISTER
           }
-          setSystemClipboardRegisterText(editor, context, register.copiedText)
+          setSystemClipboardRegisterText(text, rawText, ArrayList(register.transferableData))
         }
 
         PRIMARY_REGISTER -> {
-          setSystemPrimaryRegisterText(editor, context, register.copiedText)
+          setSystemPrimaryRegisterText(text, rawText, ArrayList(register.transferableData))
         }
       }
     }
@@ -507,7 +517,7 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
   }
 
   override fun getPlaybackRegister(editor: VimEditor, context: ExecutionContext, r: Char): Register? {
-    return if (PLAYBACK_REGISTERS.indexOf(r) != 0) getRegister(editor, context, r) else null
+    return if (PLAYBACK_REGISTERS.indexOf(r) != 0) getRegister(r) else null
   }
 
   override fun recordText(text: String) {
@@ -530,7 +540,7 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
     if (register != null) {
       var reg: Register? = null
       if (Character.isUpperCase(register)) {
-        reg = getRegister(editor, context, register)
+        reg = getRegister(register)
       }
 
       val myRecordList = recordList
@@ -539,7 +549,7 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
           reg = Register(Character.toLowerCase(register), SelectionType.CHARACTER_WISE, myRecordList)
           myRegisters[Character.toLowerCase(register)] = reg
         } else {
-          myRegisters[reg.name.lowercaseChar()] = reg.addText(injector.parser.toPrintableString(myRecordList))
+          reg.addKeys(myRecordList)
         }
       }
     }

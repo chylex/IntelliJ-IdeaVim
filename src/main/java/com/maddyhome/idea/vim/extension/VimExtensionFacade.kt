@@ -221,7 +221,7 @@ object VimExtensionFacade {
     caret: ImmutableVimCaret,
     keys: List<KeyStroke?>?,
   ) {
-    caret.registerStorage.setKeys(editor, context, register, keys?.filterNotNull() ?: emptyList())
+    caret.registerStorage.setKeys(register, keys?.filterNotNull() ?: emptyList())
   }
 
   /** Set the current contents of the given register */

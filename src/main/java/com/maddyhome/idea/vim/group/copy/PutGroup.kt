@@ -37,7 +37,6 @@ import com.maddyhome.idea.vim.ide.isClionNova
 import com.maddyhome.idea.vim.ide.isRider
 import com.maddyhome.idea.vim.mark.VimMarkConstants.MARK_CHANGE_POS
 import com.maddyhome.idea.vim.newapi.IjVimCaret
-import com.maddyhome.idea.vim.newapi.IjVimCopiedText
 import com.maddyhome.idea.vim.newapi.IjVimEditor
 import com.maddyhome.idea.vim.newapi.ij
 import com.maddyhome.idea.vim.newapi.vim
@@ -128,7 +127,7 @@ internal class PutGroup : VimPutBase() {
       point.dispose()
       if (!caret.isValid) return@forEach
 
-      val caretPossibleEndOffset = lastPastedRegion?.endOffset ?: (startOffset + text.copiedText.text.length)
+      val caretPossibleEndOffset = lastPastedRegion?.endOffset ?: (startOffset + text.text.length)
       val endOffset = if (data.indent) {
         doIndent(
           vimEditor,
@@ -180,10 +179,12 @@ internal class PutGroup : VimPutBase() {
     val allContentsBefore = CopyPasteManager.getInstance().allContents
     val sizeBeforeInsert = allContentsBefore.size
     val firstItemBefore = allContentsBefore.firstOrNull()
-    logger.debug { "Copied text: ${text.copiedText}" }
-    val (textContent, transferableData) = text.copiedText as IjVimCopiedText
+    logger.debug { "Transferable classes: ${text.transferableData.joinToString { it.javaClass.name }}" }
     val origContent: TextBlockTransferable =
-      injector.clipboardManager.setClipboardText(textContent, textContent, transferableData) as TextBlockTransferable
+      injector.clipboardManager.setClipboardText(
+      text.text,
+      transferableData = text.transferableData,
+    ) as TextBlockTransferable
     val allContentsAfter = CopyPasteManager.getInstance().allContents
     val sizeAfterInsert = allContentsAfter.size
     try {
@@ -191,7 +192,7 @@ internal class PutGroup : VimPutBase() {
     } finally {
       val textInClipboard = (firstItemBefore as? TextBlockTransferable)
         ?.getTransferData(DataFlavor.stringFlavor) as? String
-      val textOnTop = textInClipboard != null && textInClipboard != text.copiedText.text
+      val textOnTop = textInClipboard != null && textInClipboard != text.text
       if (sizeBeforeInsert != sizeAfterInsert || textOnTop) {
         // Sometimes an inserted text replaces an existing one. E.g. on insert with + or * register
         (CopyPasteManager.getInstance() as? CopyPasteManagerEx)?.run { removeContent(origContent) }

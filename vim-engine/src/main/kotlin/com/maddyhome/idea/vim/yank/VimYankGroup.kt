@@ -31,8 +31,23 @@ interface VimYankGroup {
     operatorArguments: OperatorArguments,
   ): Boolean
 
+  /**
+   * This yanks count lines of text
+   *
+   * @param editor The editor to yank from
+   * @param count  The number of lines to yank
+   * @return true if able to yank the lines, false if not
+   */
   fun yankLine(editor: VimEditor, context: ExecutionContext, count: Int): Boolean
 
+  /**
+   * This yanks a range of text
+   *
+   * @param editor The editor to yank from
+   * @param range  The range of text to yank
+   * @param type   The type of yank
+   * @return true if able to yank the range, false if not
+   */
   fun yankRange(
     editor: VimEditor,
     context: ExecutionContext,

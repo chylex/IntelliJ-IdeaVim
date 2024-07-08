@@ -107,7 +107,7 @@ class CaretReadImpl(
       val isVisualBlockMode = mode is Mode.VISUAL && mode.selectionType == SelectionType.BLOCK_WISE
 
       return if (isVisualBlockMode) {
-        val ranges = vimEditor.nativeCarets().mapNotNull { 
+        val ranges = vimEditor.nativeCarets().mapNotNull {
           val marks = injector.markService.getVisualSelectionMarks(it) ?: return@mapNotNull null
           Range.Simple(marks.startOffset, marks.endOffset)
         }.toTypedArray()
@@ -132,7 +132,7 @@ class CaretReadImpl(
     val context = injector.executionContextManager.getEditorExecutionContext(vimEditor)
     val caret: VimCaret = vimEditor.carets().find { it.id == caretId.id } ?: return null
     val register: Register = caret.registerStorage.getRegister(vimEditor, context, register) ?: return null
-    return RegisterData(register.text, register.type.toTextSelectionType())
+    return RegisterData(register.text ?: return null, register.type.toTextSelectionType())
   }
 
   override fun getReg(register: Char): String? {

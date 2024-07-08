@@ -165,7 +165,7 @@ class ChangeGroup : VimChangeGroupBase() {
     var copiedText: IjVimCopiedText? = null
     try {
       if (injector.registerGroup.isPrimaryRegisterSupported()) {
-        copiedText = injector.clipboardManager.getPrimaryContent(editor, context) as IjVimCopiedText
+        copiedText = injector.clipboardManager.getPrimaryContent() as IjVimCopiedText
       }
     } catch (e: Exception) {
       // FIXME: [isPrimaryRegisterSupported()] is not implemented perfectly, so there might be thrown an exception after trying to access the primary selection
