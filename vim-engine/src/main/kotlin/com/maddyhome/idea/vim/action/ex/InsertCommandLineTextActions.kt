@@ -118,7 +118,7 @@ open class InsertRegisterActionBase(insertLiterally: Boolean) : InsertCommandLin
       replayKeys(editor, context, register.keys)
     }
     else {
-      insertText(commandLine, commandLine.caret.offset, register.text)
+      insertText(commandLine, commandLine.caret.offset, register.text ?: return false)
     }
     return true
   }

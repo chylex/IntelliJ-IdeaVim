@@ -24,9 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
-import static com.maddyhome.idea.vim.api.VimInjectorKt.injector;
 
 /**
  * This group works with command associated with copying and pasting text
@@ -128,7 +127,7 @@ public class RegisterGroup extends VimRegisterGroupBase
           final String text = XMLGroup.getInstance().getSafeXmlText(textElement);
           if (text != null) {
             logger.trace("Register data parsed");
-            register = new Register(key, injector.getClipboardManager().dumbCopiedText(text), type);
+            register = new Register(key, type, text, Collections.emptyList());
           }
           else {
             logger.trace("Cannot parse register data");
