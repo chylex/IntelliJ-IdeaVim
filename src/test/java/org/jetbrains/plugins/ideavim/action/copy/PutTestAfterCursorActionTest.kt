@@ -88,7 +88,7 @@ class PutTestAfterCursorActionTest : VimTestCase() {
     val editor = configureByText(before)
     val vimEditor = editor.vim
     VimPlugin.getRegister()
-      .storeText(vimEditor, vimEditor.primaryCaret(), before rangeOf "A Discovery\n", SelectionType.LINE_WISE, false)
+      .storeText(vimEditor, before rangeOf "A Discovery\n", SelectionType.LINE_WISE, false)
     typeText(injector.parser.parseKeys("p"))
     val after = """
             A Discovery
@@ -127,7 +127,6 @@ class PutTestAfterCursorActionTest : VimTestCase() {
     val vimEditor = editor.vim
     injector.registerGroup.storeText(
       vimEditor,
-      vimEditor.primaryCaret(),
       before rangeOf "I found it in a legendary land\n",
       SelectionType.LINE_WISE,
       false,
@@ -157,7 +156,7 @@ class PutTestAfterCursorActionTest : VimTestCase() {
     val editor = configureByText(before)
     val vimEditor = editor.vim
     VimPlugin.getRegister()
-      .storeText(vimEditor, vimEditor.primaryCaret(), before rangeOf "Discovery", SelectionType.CHARACTER_WISE, false)
+      .storeText(vimEditor, before rangeOf "Discovery", SelectionType.CHARACTER_WISE, false)
     typeText(injector.parser.parseKeys("vep"))
     val after = """
             A Discovery

@@ -9,7 +9,6 @@
 package org.jetbrains.plugins.ideavim.ex.implementation.commands
 
 import com.maddyhome.idea.vim.VimPlugin
-import com.maddyhome.idea.vim.newapi.vim
 import com.maddyhome.idea.vim.register.RegisterConstants
 import org.jetbrains.plugins.ideavim.VimTestCase
 import org.junit.jupiter.api.Test
@@ -302,34 +301,5 @@ class YankLinesCommandTest : VimTestCase() {
         |Ut id dapibus augue.
         |Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
         |""".trimMargin())
-  }
-
-  @Test
-  fun `test multicaret yank`() {
-    configureByText(
-      """
-        |Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        |${c}Morbi nec luctus tortor, id venenatis lacus.
-        |${c}Nunc sit amet tellus vel purus cursus posuere et at purus.
-        |${c}Ut id dapibus augue.
-        |Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-        |Pellentesque orci dolor, tristique quis rutrum non, scelerisque id dui.
-      """.trimMargin()
-    )
-    enterCommand("y")
-    val carets = fixture.editor.vim.carets()
-    assertEquals(3, carets.size)
-    assertEquals(
-      "Morbi nec luctus tortor, id venenatis lacus.\n",
-      carets[0].registerStorage.getRegister(RegisterConstants.UNNAMED_REGISTER)?.text
-    )
-    assertEquals(
-      "Nunc sit amet tellus vel purus cursus posuere et at purus.\n",
-      carets[1].registerStorage.getRegister(RegisterConstants.UNNAMED_REGISTER)?.text
-    )
-    assertEquals(
-      "Ut id dapibus augue.\n",
-      carets[2].registerStorage.getRegister(RegisterConstants.UNNAMED_REGISTER)?.text
-    )
   }
 }
