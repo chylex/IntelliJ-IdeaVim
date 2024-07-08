@@ -141,7 +141,6 @@ abstract class VimPutBase : VimPut {
 
     if (data.visualSelection?.typeInEditor?.isLine == true && data.textData.typeInRegister.isChar) text += "\n"
 
-    // TODO: shouldn't it be adjusted when we are storing the text?
     if (data.textData.typeInRegister.isLine && text.isNotEmpty() && text.last() != '\n') text += '\n'
 
     if (data.textData.typeInRegister.isChar && text.lastOrNull() == '\n' && data.visualSelection?.typeInEditor?.isLine == false) {
@@ -150,9 +149,10 @@ abstract class VimPutBase : VimPut {
     }
 
     return ProcessedTextData(
-      data.textData.registerChar,
-      data.textData.copiedText.updateText(text),
+      text,
       data.textData.typeInRegister,
+      data.textData.transferableData,
+      data.textData.registerChar,
     )
   }
 
@@ -512,7 +512,7 @@ abstract class VimPutBase : VimPut {
     startOffsets.forEach { startOffset ->
       val selectionType = data.visualSelection?.typeInEditor ?: SelectionType.CHARACTER_WISE
       val (endOffset, updatedCaret) = putTextInternal(
-        editor, updated, context, text.copiedText.text, text.typeInRegister, selectionType,
+        editor, updated, context, text.text, text.typeInRegister, selectionType,
         startOffset, data.count, data.indent, data.caretAfterInsertedText,
       )
       updated = updatedCaret

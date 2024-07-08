@@ -21,9 +21,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm
 import com.intellij.util.Alarm.ThreadToUse
-import com.jetbrains.rd.util.first
 import com.maddyhome.idea.vim.VimPlugin
-import com.maddyhome.idea.vim.api.ImmutableVimCaret
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.common.ModeChangeListener
@@ -123,9 +121,9 @@ internal class VimHighlightedYank : VimExtension, VimYankListener, ModeChangeLis
     initialised = false
   }
 
-  override fun yankPerformed(caretToRange: Map<ImmutableVimCaret, TextRange>) {
+  override fun yankPerformed(editor: VimEditor, range: TextRange) {
     ensureInitialised()
-    highlightHandler.highlightYankRange(caretToRange)
+    highlightHandler.highlightYankRange(editor.ij, range)
   }
 
   override fun modeChanged(editor: VimEditor, oldMode: Mode) {
@@ -146,25 +144,22 @@ internal class VimHighlightedYank : VimExtension, VimYankListener, ModeChangeLis
     private var lastEditor: Editor? = null
     private val highlighters = mutableSetOf<RangeHighlighter>()
 
-    fun highlightYankRange(caretToRange: Map<ImmutableVimCaret, TextRange>) {
+    fun highlightYankRange(editor: Editor, range: TextRange) {
       // from vim-highlightedyank docs: When a new text is yanked or user starts editing, the old highlighting would be deleted
       clearYankHighlighters()
 
-      val editor = caretToRange.first().key.editor.ij
       lastEditor = editor
 
       val attributes = getHighlightTextAttributes(editor)
-      for (range in caretToRange.values) {
-        for (i in 0 until range.size()) {
-          val highlighter = editor.markupModel.addRangeHighlighter(
-            range.startOffsets[i],
-            range.endOffsets[i],
-            HighlighterLayer.SELECTION,
-            attributes,
-            HighlighterTargetArea.EXACT_RANGE,
-          )
-          highlighters.add(highlighter)
-        }
+      for (i in 0 until range.size()) {
+        val highlighter = editor.markupModel.addRangeHighlighter(
+          range.startOffsets[i],
+          range.endOffsets[i],
+          HighlighterLayer.SELECTION,
+          attributes,
+          HighlighterTargetArea.EXACT_RANGE,
+        )
+        highlighters.add(highlighter)
       }
 
       // from vim-highlightedyank docs: A negative number makes the highlight persistent.
