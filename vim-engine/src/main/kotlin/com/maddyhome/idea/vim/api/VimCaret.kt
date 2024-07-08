@@ -9,20 +9,16 @@
 package com.maddyhome.idea.vim.api
 
 import com.maddyhome.idea.vim.common.LiveRange
-import com.maddyhome.idea.vim.common.TextRange
 import com.maddyhome.idea.vim.group.visual.VisualChange
 import com.maddyhome.idea.vim.group.visual.vimMoveBlockSelectionToOffset
 import com.maddyhome.idea.vim.group.visual.vimMoveSelectionToCaret
 import com.maddyhome.idea.vim.handler.Motion
 import com.maddyhome.idea.vim.helper.StrictMode
 import com.maddyhome.idea.vim.helper.exitVisualMode
-import com.maddyhome.idea.vim.register.Register
-import com.maddyhome.idea.vim.state.mode.SelectionType
 import com.maddyhome.idea.vim.state.mode.inBlockSelection
 import com.maddyhome.idea.vim.state.mode.inCommandLineMode
 import com.maddyhome.idea.vim.state.mode.inSelectMode
 import com.maddyhome.idea.vim.state.mode.inVisualMode
-import javax.swing.KeyStroke
 
 /**
  * Immutable interface of the caret. Immutable caret is an important concept of Fleet.
@@ -61,7 +57,6 @@ interface ImmutableVimCaret {
   fun hasSelection(): Boolean
 
   var lastSelectionInfo: SelectionInfo
-  val registerStorage: CaretRegisterStorage
   val markStorage: LocalMarkStorage
 }
 
@@ -146,22 +141,4 @@ fun VimCaret.moveToMotion(motion: Motion): VimCaret {
     // todo what should we do if it is a error motion?
     this
   }
-}
-
-interface CaretRegisterStorage {
-  val caret: ImmutableVimCaret
-
-  /**
-   * Stores text to caret's recordable (named/numbered/unnamed) register
-   */
-  fun storeText(editor: VimEditor, range: TextRange, type: SelectionType, isDelete: Boolean): Boolean
-
-  /**
-   * Gets text from caret's recordable register
-   * If the register is not recordable - global text state will be returned
-   */
-  fun getRegister(r: Char): Register?
-
-  fun setKeys(register: Char, keys: List<KeyStroke>)
-  fun saveRegister(r: Char, register: Register)
 }

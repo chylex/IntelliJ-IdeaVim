@@ -13,7 +13,6 @@ import com.maddyhome.idea.vim.action.motion.search.SearchWholeWordForwardAction
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.common.TextRange
 import com.maddyhome.idea.vim.newapi.IjVimEditor
-import com.maddyhome.idea.vim.newapi.vim
 import com.maddyhome.idea.vim.state.mode.SelectionType
 import org.jetbrains.plugins.ideavim.VimBehaviorDiffers
 import org.jetbrains.plugins.ideavim.VimTestCase
@@ -2173,7 +2172,7 @@ rtyfg${c}hzxc"""
     val editor = configureByText(before)
     injector.registerGroup.storeText('*', "fgh")
     VimPlugin.getRegister()
-      .storeText(IjVimEditor(editor), editor.vim.primaryCaret(), TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
+      .storeText(IjVimEditor(editor), TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
     typeText(injector.parser.parseKeys("\"*P"))
     val after = "fg${c}hqfg${c}hwe asd zxc rty fg${c}hfgh vbn"
     assertState(after)

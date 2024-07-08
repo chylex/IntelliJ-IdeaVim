@@ -54,7 +54,7 @@ class PutViaIdeaTest : VimTestCase() {
 
     val vimEditor = fixture.editor.vim
     VimPlugin.getRegister()
-      .storeText(vimEditor, vimEditor.primaryCaret(), before rangeOf "legendary", SelectionType.CHARACTER_WISE, false)
+      .storeText(vimEditor, before rangeOf "legendary", SelectionType.CHARACTER_WISE, false)
 
     typeText("ppp")
     val after = "Ilegendarylegendarylegendar${c}y found it in a legendary land"
@@ -74,7 +74,6 @@ class PutViaIdeaTest : VimTestCase() {
     VimPlugin.getRegister()
       .storeText(
         vimEditor,
-        vimEditor.primaryCaret(),
         before rangeOf "legendary$randomUUID",
         SelectionType.CHARACTER_WISE,
         false,
@@ -100,7 +99,6 @@ class PutViaIdeaTest : VimTestCase() {
     val vimEditor = fixture.editor.vim
     VimPlugin.getRegister().storeText(
       vimEditor,
-      vimEditor.primaryCaret(),
       before rangeOf "\nLorem ipsum dolor sit amet,\n",
       SelectionType.CHARACTER_WISE,
       false,

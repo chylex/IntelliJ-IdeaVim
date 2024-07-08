@@ -151,21 +151,40 @@ internal class IjVimEditor(editor: Editor) : MutableLinearEditor() {
     return editor.caretModel.allCarets.map { IjVimCaret(it) }
   }
 
+  override var isFirstCaret = false
+  override var isReversingCarets = false
+  
   @Suppress("ideavimRunForEachCaret")
   override fun forEachCaret(action: (VimCaret) -> Unit) {
     if (editor.vim.inBlockSelection) {
       action(IjVimCaret(editor.caretModel.primaryCaret))
     } else {
-      editor.caretModel.runForEachCaret({
-        if (it.isValid) {
-          action(IjVimCaret(it))
-        }
-      }, false)
+      isFirstCaret = true
+      try {
+        editor.caretModel.runForEachCaret({
+          if (it.isValid) {
+            action(IjVimCaret(it))
+            isFirstCaret = false
+          }
+        }, false)
+      } finally {
+        isFirstCaret = false
+      }
     }
   }
 
   override fun forEachNativeCaret(action: (VimCaret) -> Unit, reverse: Boolean) {
-    editor.caretModel.runForEachCaret({ action(IjVimCaret(it)) }, reverse)
+    isFirstCaret = true
+    isReversingCarets = reverse
+    try {
+      editor.caretModel.runForEachCaret({
+        action(IjVimCaret(it))
+        isFirstCaret = false
+      }, reverse)
+    } finally {
+      isFirstCaret = false
+      isReversingCarets = false
+    }
   }
 
   override fun isInForEachCaretScope(): Boolean {
