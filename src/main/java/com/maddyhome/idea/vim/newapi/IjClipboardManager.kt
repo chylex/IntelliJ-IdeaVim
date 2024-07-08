@@ -39,7 +39,7 @@ import java.io.IOException
 
 @Service
 internal class IjClipboardManager : VimClipboardManager {
-  override fun getPrimaryContent(editor: VimEditor, context: ExecutionContext): IjVimCopiedText? {
+  override fun getPrimaryContent(): IjVimCopiedText? {
     val clipboard = Toolkit.getDefaultToolkit()?.systemSelection ?: return null
     val contents = clipboard.getContents(null) ?: return null
     val (text, transferableData) = getTextAndTransferableData(contents) ?: return null
@@ -242,6 +242,6 @@ internal class IjClipboardManager : VimClipboardManager {
   }
 }
 
-data class IjVimCopiedText(override val text: String, val transferableData: List<Any>) : VimCopiedText {
+data class IjVimCopiedText(override val text: String, override val transferableData: List<Any>) : VimCopiedText {
   override fun updateText(newText: String): VimCopiedText = IjVimCopiedText(newText, transferableData)
 }
