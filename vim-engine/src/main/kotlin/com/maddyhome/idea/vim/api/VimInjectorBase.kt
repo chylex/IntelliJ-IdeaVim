@@ -17,8 +17,6 @@ import com.maddyhome.idea.vim.common.VimListenersNotifier
 import com.maddyhome.idea.vim.diagnostic.VimLogger
 import com.maddyhome.idea.vim.diagnostic.vimLogger
 import com.maddyhome.idea.vim.impl.state.VimStateMachineImpl
-import com.maddyhome.idea.vim.register.VimRegisterGroup
-import com.maddyhome.idea.vim.register.VimRegisterGroupBase
 import com.maddyhome.idea.vim.state.VimStateMachine
 import com.maddyhome.idea.vim.vimscript.services.VariableService
 import com.maddyhome.idea.vim.vimscript.services.VimVariableServiceBase
@@ -28,7 +26,6 @@ import com.maddyhome.idea.vim.yank.YankGroupBase
 abstract class VimInjectorBase : VimInjector {
   companion object {
     val logger: VimLogger by lazy { vimLogger<VimInjectorBase>() }
-    val registerGroupStub: VimRegisterGroupBase by lazy { object : VimRegisterGroupBase() {} }
   }
 
   override val vimState: VimStateMachine = VimStateMachineImpl()
@@ -38,8 +35,6 @@ abstract class VimInjectorBase : VimInjector {
 
   override val variableService: VariableService by lazy { object : VimVariableServiceBase() {} }
 
-  override val registerGroup: VimRegisterGroup by lazy { registerGroupStub }
-  override val registerGroupIfCreated: VimRegisterGroup? by lazy { registerGroupStub }
   override val messages: VimMessages by lazy { VimMessagesStub() }
   override val processGroup: VimProcessGroup by lazy { VimProcessGroupStub() }
   override val application: VimApplication by lazy { VimApplicationStub() }

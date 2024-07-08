@@ -20,7 +20,7 @@ import java.awt.datatransfer.Transferable
  * - **Clipboard**: This is supported by all operating systems. It functions as a storage for the common 'copy and paste' operations typically done with Ctrl-C and Ctrl-V.
  */
 interface VimClipboardManager {
-  fun getPrimaryContent(editor: VimEditor, context: ExecutionContext): VimCopiedText?
+  fun getPrimaryContent(): VimCopiedText?
 
   fun getClipboardContent(editor: VimEditor, context: ExecutionContext): VimCopiedText?
 

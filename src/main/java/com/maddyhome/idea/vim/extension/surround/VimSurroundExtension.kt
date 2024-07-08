@@ -212,7 +212,7 @@ internal class VimSurroundExtension : VimExtension {
               val trimmedValue = if (newSurround.shouldTrim) innerValue.trim() else innerValue
               it.first + trimmedValue + it.second
             } ?: innerValue
-            val textData = PutData.TextData(null, injector.clipboardManager.dumbCopiedText(text), SelectionType.CHARACTER_WISE)
+            val textData = PutData.TextData(text, SelectionType.CHARACTER_WISE, emptyList(), null)
             val putData = PutData(textData, null, 1, insertTextBeforeCaret = true, rawIndent = true, caretAfterInsertedText = false)
 
             surrounding.caret to putData
