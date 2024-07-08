@@ -608,7 +608,7 @@ class NavigateBetweenFoldsTest : FoldActionTestBase() {
     typeText("yzj")
 
     val context = injector.executionContextManager.getEditorExecutionContext(fixture.editor.vim)
-    val regText = injector.registerGroup.getRegister(fixture.editor.vim, context, '0')!!.text
+    val regText = injector.registerGroup.getRegister(fixture.editor.vim, context, '0')!!.text!!
     // Linewise yank includes all lines from cursor to fold start (inclusive)
     assertEquals(true, regText.contains("int x = 5"))
     assertEquals(true, regText.contains("int y = 10"))
