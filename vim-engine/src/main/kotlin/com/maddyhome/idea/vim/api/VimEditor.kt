@@ -189,7 +189,8 @@ interface VimEditor {
    * This method should perform caret merging after the operations. This is similar to IJ runForEachCaret
    * TODO review
    */
-
+  val isFirstCaret: Boolean
+  val isReversingCarets: Boolean
   fun forEachCaret(action: (VimCaret) -> Unit)
   fun forEachNativeCaret(action: (VimCaret) -> Unit, reverse: Boolean = false)
   fun isInForEachCaretScope(): Boolean

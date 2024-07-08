@@ -8,7 +8,6 @@
 
 package com.maddyhome.idea.vim.register
 
-import com.maddyhome.idea.vim.api.ImmutableVimCaret
 import com.maddyhome.idea.vim.api.Options
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.getText
@@ -171,12 +170,13 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
 
   fun storeTextInternal(
     editor: VimEditor,
-    caret: ImmutableVimCaret,
     range: TextRange,
     text: String,
     type: SelectionType,
     register: Char,
     isDelete: Boolean,
+    forceAppend: Boolean,
+    prependInsteadOfAppend: Boolean,
   ): Boolean {
     // Null register doesn't get saved, but acts like it was
     if (lastRegisterChar == BLACK_HOLE_REGISTER) return true
@@ -198,18 +198,29 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
     // If this is an uppercase register, we need to append the text to the corresponding lowercase register
     val transferableData: List<Any> =
       if (start != -1) injector.clipboardManager.getTransferableData(editor, range, text) else ArrayList()
-    val processedText =
+    var processedText =
       if (start != -1) injector.clipboardManager.preprocessText(editor, range, text, transferableData) else text
     logger.debug {
       val transferableClasses = transferableData.joinToString(",") { it.javaClass.name }
       "Copy to '$lastRegister' with transferable data: $transferableClasses"
     }
-    if (Character.isUpperCase(register)) {
+    if (Character.isUpperCase(register) || forceAppend) {
+      if (forceAppend && type == SelectionType.CHARACTER_WISE) {
+        processedText = if (prependInsteadOfAppend)
+          processedText + '\n'
+        else
+          '\n' + processedText
+      }
       val lreg = Character.toLowerCase(register)
       val r = myRegisters[lreg]
       // Append the text if the lowercase register existed
       if (r != null) {
-        r.addTextAndResetTransferableData(processedText)
+        if (prependInsteadOfAppend) {
+          r.prependTextAndResetTransferableData(processedText)
+        }
+        else {
+          r.addTextAndResetTransferableData(processedText)
+        }
       } else {
         myRegisters[lreg] = Register(lreg, type, processedText, ArrayList(transferableData))
         logger.debug { "register '$register' contains: \"$processedText\"" }
@@ -290,14 +301,15 @@ abstract class VimRegisterGroupBase : VimRegisterGroup {
    */
   override fun storeText(
     editor: VimEditor,
-    caret: ImmutableVimCaret,
     range: TextRange,
     type: SelectionType,
     isDelete: Boolean,
+    forceAppend: Boolean,
+    prependInsteadOfAppend: Boolean
   ): Boolean {
     if (isRegisterWritable()) {
       val text = preprocessTextBeforeStoring(editor.getText(range), type)
-      return storeTextInternal(editor, caret, range, text, type, lastRegisterChar, isDelete)
+      return storeTextInternal(editor, range, text, type, lastRegisterChar, isDelete, forceAppend, prependInsteadOfAppend)
     }
 
     return false

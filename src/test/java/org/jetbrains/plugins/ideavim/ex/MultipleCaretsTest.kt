@@ -130,7 +130,7 @@ class MultipleCaretsTest : VimTestCase() {
     val editor = configureByText(before)
     val vimEditor = editor.vim
     VimPlugin.getRegister()
-      .storeText(vimEditor, vimEditor.primaryCaret(), TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
+      .storeText(vimEditor, TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
     typeText(commandToKeys("pu"))
     val after = """
           qwe
@@ -165,7 +165,7 @@ class MultipleCaretsTest : VimTestCase() {
     val editor = configureByText(before)
     val vimEditor = editor.vim
     VimPlugin.getRegister()
-      .storeText(vimEditor, vimEditor.primaryCaret(), TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
+      .storeText(vimEditor, TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
     typeText(commandToKeys("pu"))
     val after = """
           qwe
@@ -201,7 +201,7 @@ class MultipleCaretsTest : VimTestCase() {
     val editor = configureByText(before)
     val vimEditor = editor.vim
     VimPlugin.getRegister()
-      .storeText(vimEditor, vimEditor.primaryCaret(), TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
+      .storeText(vimEditor, TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
     typeText(commandToKeys("4pu"))
     val after = """
           qwe
@@ -237,7 +237,7 @@ class MultipleCaretsTest : VimTestCase() {
     val editor = configureByText(before)
     val vimEditor = editor.vim
     VimPlugin.getRegister()
-      .storeText(vimEditor, vimEditor.primaryCaret(), TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
+      .storeText(vimEditor, TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
     typeText(commandToKeys("4pu"))
     val after = """
           qwe
@@ -258,7 +258,7 @@ class MultipleCaretsTest : VimTestCase() {
     val before = "${c}qwe\n" + "rty\n" + "as${c}d\n" + "fgh\n" + "zxc\n" + "vbn\n"
     val editor = configureByText(before)
     VimPlugin.getRegister()
-      .storeText(editor.vim, editor.vim.primaryCaret(), TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
+      .storeText(editor.vim, TextRange(16, 19), SelectionType.CHARACTER_WISE, false)
 
     typeText("vj")
     typeText(commandToKeys("pu"))
