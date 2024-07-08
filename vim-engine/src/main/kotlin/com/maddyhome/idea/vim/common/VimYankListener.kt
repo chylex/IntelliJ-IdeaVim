@@ -8,8 +8,8 @@
 
 package com.maddyhome.idea.vim.common
 
-import com.maddyhome.idea.vim.api.ImmutableVimCaret
+import com.maddyhome.idea.vim.api.VimEditor
 
 interface VimYankListener: Listener {
-  fun yankPerformed(caretToRange: Map<ImmutableVimCaret, TextRange>)
+  fun yankPerformed(editor: VimEditor, range: TextRange)
 }
