@@ -625,7 +625,13 @@ class VimRegex(pattern: String) {
     override fun carets(): List<VimCaret> = emptyList()
 
     override fun nativeCarets(): List<VimCaret> = emptyList()
+    
+    override val isFirstCaret: Boolean
+      get() = false
 
+    override val isReversingCarets: Boolean
+      get() = false
+    
     override fun forEachCaret(action: (VimCaret) -> Unit) {}
 
     override fun forEachNativeCaret(action: (VimCaret) -> Unit, reverse: Boolean) {}

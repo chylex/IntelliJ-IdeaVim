@@ -75,6 +75,11 @@ class Register {
     addKeys(injector.parser.stringToKeys(text))
     transferableData.clear()
   }
+  
+  fun prependTextAndResetTransferableData(text: String) {
+    this.keys.addAll(0, injector.parser.stringToKeys(text))
+    transferableData.clear()
+  }
 
   fun addKeys(keys: List<KeyStroke>) {
     this.keys.addAll(keys)

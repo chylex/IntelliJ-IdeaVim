@@ -69,7 +69,8 @@ object VimExtensionFacade {
 
 
   @JvmStatic
-  @Deprecated("Use VimPlugin.getKey().putKeyMapping(modes, fromKeys, pluginOwner, extensionHandler, recursive)",
+  @Deprecated(
+    "Use VimPlugin.getKey().putKeyMapping(modes, fromKeys, pluginOwner, extensionHandler, recursive)",
     ReplaceWith(
       "VimPlugin.getKey().putKeyMapping(modes, fromKeys, pluginOwner, extensionHandler, recursive)",
       "com.maddyhome.idea.vim.VimPlugin"
@@ -195,7 +196,7 @@ object VimExtensionFacade {
 
   @JvmStatic
   fun getRegisterForCaret(register: Char, caret: VimCaret): List<KeyStroke>? {
-    val reg = caret.registerStorage.getRegister(register) ?: return null
+    val reg = injector.registerGroup.getRegister(register) ?: return null
     return reg.keys
   }
 
@@ -208,7 +209,7 @@ object VimExtensionFacade {
   /** Set the current contents of the given register */
   @JvmStatic
   fun setRegisterForCaret(register: Char, caret: ImmutableVimCaret, keys: List<KeyStroke?>?) {
-    caret.registerStorage.setKeys(register, keys?.filterNotNull() ?: emptyList())
+    injector.registerGroup.setKeys(register, keys?.filterNotNull() ?: emptyList())
   }
 
   /** Set the current contents of the given register */
