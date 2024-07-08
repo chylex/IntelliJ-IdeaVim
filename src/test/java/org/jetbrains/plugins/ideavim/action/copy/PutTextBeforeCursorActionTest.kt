@@ -31,7 +31,7 @@ class PutTextBeforeCursorActionTest : VimTestCase() {
     """.trimIndent()
     val editor = configureByText(before)
     val vimEditor = editor.vim
-    injector.registerGroup.storeText(vimEditor, vimEditor.primaryCaret(), before rangeOf "Discovery", SelectionType.CHARACTER_WISE, false)
+    injector.registerGroup.storeText(vimEditor, before rangeOf "Discovery", SelectionType.CHARACTER_WISE, false)
     typeText(injector.parser.parseKeys("V" + "P"))
     typeText(injector.parser.parseKeys("V" + "P"))
     val after = """

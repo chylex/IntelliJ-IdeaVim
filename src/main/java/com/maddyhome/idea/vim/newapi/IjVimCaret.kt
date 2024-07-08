@@ -12,8 +12,6 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
 import com.maddyhome.idea.vim.api.BufferPosition
-import com.maddyhome.idea.vim.api.CaretRegisterStorage
-import com.maddyhome.idea.vim.api.CaretRegisterStorageBase
 import com.maddyhome.idea.vim.api.ImmutableVimCaret
 import com.maddyhome.idea.vim.api.LocalMarkStorage
 import com.maddyhome.idea.vim.api.SelectionInfo
@@ -29,7 +27,6 @@ import com.maddyhome.idea.vim.helper.insertHistory
 import com.maddyhome.idea.vim.helper.lastSelectionInfo
 import com.maddyhome.idea.vim.helper.markStorage
 import com.maddyhome.idea.vim.helper.moveToInlayAwareOffset
-import com.maddyhome.idea.vim.helper.registerStorage
 import com.maddyhome.idea.vim.helper.resetVimLastColumn
 import com.maddyhome.idea.vim.helper.vimInsertStart
 import com.maddyhome.idea.vim.helper.vimLastColumn
@@ -41,18 +38,6 @@ import com.maddyhome.idea.vim.state.mode.SelectionType
 
 internal class IjVimCaret(val caret: Caret) : VimCaretBase() {
 
-  override val registerStorage: CaretRegisterStorage
-    get() {
-      var storage = this.caret.registerStorage
-      if (storage == null) {
-        initInjector() // To initialize injector used in CaretRegisterStorageBase
-        storage = CaretRegisterStorageBase(this)
-        this.caret.registerStorage = storage
-      } else if (storage.caret != this) {
-        storage.caret = this
-      }
-      return storage
-    }
   override val markStorage: LocalMarkStorage
     get() {
       var storage = this.caret.markStorage

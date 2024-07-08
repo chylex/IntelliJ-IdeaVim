@@ -7,10 +7,9 @@
  */
 package com.maddyhome.idea.vim.register
 
-import com.maddyhome.idea.vim.api.ImmutableVimCaret
 import com.maddyhome.idea.vim.api.VimEditor
-import com.maddyhome.idea.vim.state.mode.SelectionType
 import com.maddyhome.idea.vim.common.TextRange
+import com.maddyhome.idea.vim.state.mode.SelectionType
 import org.jetbrains.annotations.TestOnly
 import javax.swing.KeyStroke
 
@@ -48,10 +47,11 @@ interface VimRegisterGroup {
   /** Store text into the last register. */
   fun storeText(
     editor: VimEditor,
-    caret: ImmutableVimCaret,
     range: TextRange,
     type: SelectionType,
     isDelete: Boolean,
+    forceAppend: Boolean = false,
+    prependInsteadOfAppend: Boolean = false
   ): Boolean
 
   /**

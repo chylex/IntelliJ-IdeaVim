@@ -10,7 +10,6 @@ package com.maddyhome.idea.vim.action.copy
 import com.intellij.vim.annotations.CommandOrMotion
 import com.intellij.vim.annotations.Mode
 import com.maddyhome.idea.vim.api.ExecutionContext
-import com.maddyhome.idea.vim.api.ImmutableVimCaret
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.command.Argument
@@ -36,7 +35,15 @@ sealed class PutTextBaseAction(
     val count = operatorArguments.count1
     val sortedCarets = editor.sortedCarets()
     return if (sortedCarets.size > 1) {
-      val caretToPutData = sortedCarets.associateWith { getPutDataForCaret(it, count) }
+      val putData = getPutData(count)
+
+      val splitText = putData.textData?.rawText?.split('\n')?.dropLastWhile(String::isEmpty)
+      val caretToPutData = if (splitText != null && splitText.size == sortedCarets.size) {
+        sortedCarets.mapIndexed { index, caret -> caret to putData.copy(textData = putData.textData.copy(rawText = splitText[splitText.lastIndex - index])) }.toMap()
+      } else {
+        sortedCarets.associateWith { putData }
+      }
+      
       var result = true
       injector.application.runWriteAction {
         caretToPutData.forEach {
@@ -45,28 +52,24 @@ sealed class PutTextBaseAction(
       }
       result
     } else {
-      val putData = getPutDataForCaret(sortedCarets.single(), count)
-      injector.put.putText(editor, context, putData, operatorArguments)
+      injector.put.putText(editor, context, getPutData(count), operatorArguments)
     }
   }
 
-  private fun getPutDataForCaret(caret: ImmutableVimCaret, count: Int): PutData {
-    val registerService = injector.registerGroup
-    val registerChar = if (caret.editor.carets().size == 1) {
-      registerService.currentRegister
-    } else {
-      registerService.getCurrentRegisterForMulticaret()
-    }
-    val register = caret.registerStorage.getRegister(registerChar)
-    val textData = register?.let {
-      TextData(
-        register.text ?: injector.parser.toPrintableString(register.keys),
-        register.type,
-        register.transferableData,
-        register.name,
-      )
-    }
-    return PutData(textData, null, count, insertTextBeforeCaret, indent, caretAfterInsertedText, -1)
+  private fun getPutData(count: Int): PutData {
+    return PutData(getRegisterTextData(), null, count, insertTextBeforeCaret, indent, caretAfterInsertedText, -1)
+  }
+}
+
+fun getRegisterTextData(): TextData? {
+  val register = injector.registerGroup.getRegister(injector.registerGroup.currentRegister)
+  return register?.let {
+    TextData(
+      register.text ?: injector.parser.toPrintableString(register.keys),
+      register.type,
+      register.transferableData,
+      register.name,
+    )
   }
 }
 
