@@ -18,13 +18,12 @@ import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
-import com.maddyhome.idea.vim.api.CaretRegisterStorageBase
 import com.maddyhome.idea.vim.api.LocalMarkStorage
 import com.maddyhome.idea.vim.api.SelectionInfo
+import com.maddyhome.idea.vim.common.InsertSequence
 import com.maddyhome.idea.vim.ex.ExOutputModel
 import com.maddyhome.idea.vim.group.visual.VisualChange
 import com.maddyhome.idea.vim.group.visual.vimLeadSelectionOffset
-import com.maddyhome.idea.vim.common.InsertSequence
 import com.maddyhome.idea.vim.common.VimEditorReplaceMask
 import com.maddyhome.idea.vim.newapi.vim
 import com.maddyhome.idea.vim.state.VimStateMachine
@@ -97,7 +96,6 @@ internal var Caret.vimInsertStart: RangeMarker by userDataOr {
 }
 
 // TODO: Data could be lost during visual block motion
-internal var Caret.registerStorage: CaretRegisterStorageBase? by userDataCaretToEditor()
 internal var Caret.markStorage: LocalMarkStorage? by userDataCaretToEditor()
 internal var Caret.lastSelectionInfo: SelectionInfo? by userDataCaretToEditor()
 

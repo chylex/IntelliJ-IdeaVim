@@ -180,7 +180,7 @@ abstract class VimChangeGroupBase : VimChangeGroup {
     if (type == null ||
       (mode == Mode.INSERT || mode == Mode.REPLACE) ||
       !saveToRegister ||
-      caret.registerStorage.storeText(editor, updatedRange, type, true)
+      injector.registerGroup.storeText(editor, updatedRange, type, true, !editor.isFirstCaret, editor.isReversingCarets)
     ) {
       val startOffsets = updatedRange.startOffsets
       val endOffsets = updatedRange.endOffsets
