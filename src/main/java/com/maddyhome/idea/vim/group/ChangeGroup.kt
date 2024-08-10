@@ -39,7 +39,6 @@ import com.maddyhome.idea.vim.newapi.IjVimCaret
 import com.maddyhome.idea.vim.newapi.IjVimEditor
 import com.maddyhome.idea.vim.newapi.ij
 import com.maddyhome.idea.vim.state.mode.Mode
-import kotlin.math.min
 
 /**
  * Provides all the insert/replace related functionality
@@ -130,6 +129,7 @@ class ChangeGroup : VimChangeGroupBase() {
     context: ExecutionContext,
     range: TextRange,
   ) {
+    val startPos = editor.offsetToBufferPosition(caret.offset)
     val startOffset = editor.getLineStartForOffset(range.startOffset)
     val endOffset = editor.getLineEndForOffset(range.endOffset)
     val ijEditor = (editor as IjVimEditor).editor
@@ -154,11 +154,7 @@ class ChangeGroup : VimChangeGroupBase() {
       }
     }
     val afterAction = {
-      val firstLine = editor.offsetToBufferPosition(
-        min(startOffset.toDouble(), endOffset.toDouble()).toInt()
-      ).line
-      val newOffset = injector.motion.moveCaretToLineStartSkipLeading(editor, firstLine)
-      caret.moveToOffset(newOffset)
+      caret.moveToOffset(injector.motion.moveCaretToLineStartSkipLeading(editor, startPos.line))
       restoreCursor(editor, caret, (caret as IjVimCaret).caret.logicalPosition.line)
     }
     if (project != null) {
