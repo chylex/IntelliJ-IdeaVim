@@ -10,15 +10,12 @@ package com.maddyhome.idea.vim.listener
 
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorKind
 import com.maddyhome.idea.vim.KeyHandler
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.common.EditorListener
-import com.maddyhome.idea.vim.helper.EditorHelper
 import com.maddyhome.idea.vim.helper.inInsertMode
 import com.maddyhome.idea.vim.newapi.ij
 import com.maddyhome.idea.vim.state.mode.Mode
@@ -31,8 +28,8 @@ import com.maddyhome.idea.vim.state.mode.Mode
  */
 class IJEditorFocusListener : EditorListener {
   override fun focusGained(editor: VimEditor) {
-    val oldEditor = KeyHandler.getInstance().editorInFocus
-    if (oldEditor != null && oldEditor.ij == editor.ij) return
+    val editorInFocus = KeyHandler.getInstance().editorInFocus
+    if (editorInFocus != null && editorInFocus.ij == editor.ij) return
 
     KeyHandler.getInstance().editorInFocus = editor
 
@@ -63,9 +60,7 @@ class IJEditorFocusListener : EditorListener {
       val context: ExecutionContext = injector.executionContextManager.getEditorExecutionContext(editor)
       VimPlugin.getChange().insertBeforeCursor(editor, context)
     }
-    if (isTerminal(ijEditor) && !ijEditor.inInsertMode) {
-      switchToInsertMode.run()
-    } else if (ijEditor.isInsertMode && ((oldEditor != null && isTerminal(oldEditor.ij)) || !ijEditor.document.isWritable)) {
+    if (!ijEditor.document.isWritable) {
       val context: ExecutionContext = injector.executionContextManager.getEditorExecutionContext(editor)
       val mode = injector.vimState.mode
       when (mode) {
@@ -82,12 +77,5 @@ class IJEditorFocusListener : EditorListener {
     }
     KeyHandler.getInstance().reset(editor)
   }
-
-  // By "terminal" we refer to some editor that should switch to INSERT mode on focus
-  private fun isTerminal(ijEditor: Editor): Boolean {
-    return !ijEditor.isViewer &&
-      !EditorHelper.isFileEditor(ijEditor) &&
-      ijEditor.document.isWritable &&
-      ijEditor.editorKind != EditorKind.DIFF
-  }
 }
+
