@@ -10,7 +10,6 @@ package com.maddyhome.idea.vim.listener
 
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.EditorKind
 import com.maddyhome.idea.vim.KeyHandler
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.api.ExecutionContext
@@ -18,7 +17,6 @@ import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.command.OperatorArguments
 import com.maddyhome.idea.vim.common.EditorListener
-import com.maddyhome.idea.vim.helper.EditorHelper
 import com.maddyhome.idea.vim.helper.inInsertMode
 import com.maddyhome.idea.vim.newapi.ij
 import com.maddyhome.idea.vim.state.mode.Mode
@@ -63,13 +61,7 @@ class IJEditorFocusListener : EditorListener {
       val context: ExecutionContext = injector.executionContextManager.getEditorExecutionContext(editor)
       VimPlugin.getChange().insertBeforeCursor(editor, context)
     }
-    if (!ijEditor.isViewer &&
-      !EditorHelper.isFileEditor(ijEditor) &&
-      ijEditor.document.isWritable &&
-      !ijEditor.inInsertMode && ijEditor.editorKind != EditorKind.DIFF
-    ) {
-      switchToInsertMode.run()
-    } else if (!ijEditor.document.isWritable) {
+    if (!ijEditor.document.isWritable) {
       val context: ExecutionContext = injector.executionContextManager.getEditorExecutionContext(editor)
       val mode = injector.vimState.mode
       when (mode) {
