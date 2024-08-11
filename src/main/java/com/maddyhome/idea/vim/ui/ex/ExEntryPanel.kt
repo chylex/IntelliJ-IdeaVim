@@ -297,7 +297,7 @@ class ExEntryPanel private constructor() : JPanel(), VimCommandLine {
             .calculateCount0Snapshot()
         )
 
-        if (labelText == "/" || labelText == "?" || searchCommand) {
+        if ((labelText == "/" || labelText == "?" || searchCommand) && !injector.macro.isExecutingMacro) {
           val forwards = labelText != "?" // :s, :g, :v are treated as forwards
           val patternEnd: Int = injector.searchGroup.findEndOfPattern(searchText, separator, 0)
           val pattern = searchText.take(patternEnd)
