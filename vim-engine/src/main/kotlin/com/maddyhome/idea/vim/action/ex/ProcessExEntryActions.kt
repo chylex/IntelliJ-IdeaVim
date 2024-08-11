@@ -115,8 +115,7 @@ class ProcessSearchEntryAction(private val parentAction: ProcessExEntryAction) :
     val offsetAndMotion = injector.searchGroup.processSearchCommand(
       editor, argument.string, caret.offset, count, direction
     )
-    // Vim doesn't treat not finding something as an error, although it might report either an error or warning message
-    if (offsetAndMotion == null) return Motion.NoMotion
+    if (offsetAndMotion == null) return Motion.Error
     parentAction.motionType = offsetAndMotion.second
     return offsetAndMotion.first.toMotionOrError()
   }
