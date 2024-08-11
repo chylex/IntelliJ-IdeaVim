@@ -88,8 +88,7 @@ class ProcessSearchEntryAction(private val parentAction: ProcessExEntryAction) :
 
       else -> throw ExException("Unexpected search label ${argument.label}")
     }
-    // Vim doesn't treat not finding something as an error, although it might report either an error or warning message
-    if (offsetAndMotion == null) return Motion.NoMotion
+    if (offsetAndMotion == null) return Motion.Error
     parentAction.motionType = offsetAndMotion.second
     return offsetAndMotion.first.toMotionOrError()
   }
