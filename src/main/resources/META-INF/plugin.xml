@@ -142,10 +142,12 @@
   <xi:include href="/META-INF/includes/VimListeners.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions resource-bundle="messages.IdeaVimBundle">
-    <action id="VimPluginToggle" class="com.maddyhome.idea.vim.action.VimPluginToggleAction">
+    <group id="com.chylex.intellij.vim" text="Vim" popup="true">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
-
+      <action id="VimPluginToggle" class="com.maddyhome.idea.vim.action.VimPluginToggleAction"/>
+      <action id="VimRunLastMacroInOpenFiles" class="com.maddyhome.idea.vim.action.VimRunLastMacroInOpenFiles"/>
+    </group>
+    
     <!-- Internal -->
     <!--suppress PluginXmlI18n -->
     <action id="VimInternalAddBlockInlays" class="com.maddyhome.idea.vim.action.internal.AddBlockInlaysAction" text="Add Test Block Inlays | IdeaVim Internal" internal="true"/>
