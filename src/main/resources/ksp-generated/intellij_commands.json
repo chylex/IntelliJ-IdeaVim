@@ -78,5 +78,10 @@
         "keys": "gJ",
         "class": "com.maddyhome.idea.vim.action.change.delete.DeleteJoinVisualLinesAction",
         "modes": "X"
+    },
+    {
+        "keys": "z@",
+        "class": "com.maddyhome.idea.vim.action.macro.PlaybackRegisterInOpenFilesAction",
+        "modes": "N"
     }
 ]
