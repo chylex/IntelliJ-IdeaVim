@@ -23,7 +23,10 @@ import com.maddyhome.idea.vim.EventFacade;
 import com.maddyhome.idea.vim.KeyHandler;
 import com.maddyhome.idea.vim.VimPlugin;
 import com.maddyhome.idea.vim.action.VimShortcutKeyAction;
-import com.maddyhome.idea.vim.api.*;
+import com.maddyhome.idea.vim.api.VimCommandLine;
+import com.maddyhome.idea.vim.api.VimCommandLineCaret;
+import com.maddyhome.idea.vim.api.VimEditor;
+import com.maddyhome.idea.vim.api.VimKeyGroupBase;
 import com.maddyhome.idea.vim.ex.ranges.LineRange;
 import com.maddyhome.idea.vim.helper.SearchHighlightsHelper;
 import com.maddyhome.idea.vim.helper.UiHelper;
@@ -348,7 +351,7 @@ public class ExEntryPanel extends JPanel implements VimCommandLine {
         // coerced to at least 1.
         int count1 = KeyHandler.getInstance().getKeyHandlerState().getEditorCommandBuilder().getAggregatedUncommittedCount();
 
-        if (labelText.equals("/") || labelText.equals("?") || searchCommand) {
+        if ((labelText.equals("/") || labelText.equals("?") || searchCommand) && !injector.getMacro().isExecutingMacro()) {
           final boolean forwards = !labelText.equals("?");  // :s, :g, :v are treated as forwards
           int pattenEnd = injector.getSearchGroup().findEndOfPattern(searchText, separator, 0);
           final String pattern = searchText.substring(0, pattenEnd);
