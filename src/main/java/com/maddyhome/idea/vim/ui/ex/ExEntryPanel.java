@@ -353,7 +353,7 @@ public class ExEntryPanel extends JPanel implements VimCommandLine {
         int count1 = Math.max(1, KeyHandler.getInstance().getKeyHandlerState().getEditorCommandBuilder()
           .calculateCount0Snapshot());
 
-        if (labelText.equals("/") || labelText.equals("?") || searchCommand) {
+        if ((labelText.equals("/") || labelText.equals("?") || searchCommand) && !injector.getMacro().isExecutingMacro()) {
           final boolean forwards = !labelText.equals("?");  // :s, :g, :v are treated as forwards
           int patternEnd = injector.getSearchGroup().findEndOfPattern(searchText, separator, 0);
           final String pattern = searchText.substring(0, patternEnd);
