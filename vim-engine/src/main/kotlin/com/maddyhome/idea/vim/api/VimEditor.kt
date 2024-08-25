@@ -11,7 +11,6 @@ package com.maddyhome.idea.vim.api
 import com.maddyhome.idea.vim.command.OperatorArguments
 import com.maddyhome.idea.vim.common.LiveRange
 import com.maddyhome.idea.vim.common.TextRange
-import com.maddyhome.idea.vim.common.VimEditorReplaceMask
 import com.maddyhome.idea.vim.state.mode.Mode
 import com.maddyhome.idea.vim.state.mode.ReturnTo
 import com.maddyhome.idea.vim.state.mode.SelectionType
@@ -129,7 +128,6 @@ interface VimEditor {
   val lfMakesNewLine: Boolean
   var vimChangeActionSwitchMode: Mode?
   val indentConfig: VimIndentConfig
-  var replaceMask: VimEditorReplaceMask?
 
   fun fileSize(): Long
 

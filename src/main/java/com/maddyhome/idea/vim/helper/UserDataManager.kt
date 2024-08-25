@@ -24,9 +24,7 @@ import com.maddyhome.idea.vim.common.InsertSequence
 import com.maddyhome.idea.vim.ex.ExOutputModel
 import com.maddyhome.idea.vim.group.visual.VisualChange
 import com.maddyhome.idea.vim.group.visual.vimLeadSelectionOffset
-import com.maddyhome.idea.vim.common.VimEditorReplaceMask
 import com.maddyhome.idea.vim.newapi.vim
-import com.maddyhome.idea.vim.state.VimStateMachine
 import com.maddyhome.idea.vim.state.mode.Mode
 import com.maddyhome.idea.vim.state.mode.SelectionType
 import com.maddyhome.idea.vim.ui.ExOutputPanel
@@ -125,7 +123,6 @@ internal var Editor.vimExOutput: ExOutputModel? by userData()
 internal var Editor.vimTestInputModel: TestInputModel? by userData()
 
 internal var Editor.vimChangeActionSwitchMode: Mode? by userData()
-internal var Editor.replaceMask: VimEditorReplaceMask? by userData()
 
 internal var Caret.currentInsert: InsertSequence? by userData()
 internal val Caret.insertHistory: MutableList<InsertSequence> by userDataOr { mutableListOf() }

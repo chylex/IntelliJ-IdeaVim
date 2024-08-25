@@ -41,7 +41,6 @@ interface VimChangeGroup {
 
   fun processEnter(editor: VimEditor, caret: VimCaret, context: ExecutionContext)
   fun processEnter(editor: VimEditor, context: ExecutionContext)
-  fun processBackspace(editor: VimEditor, context: ExecutionContext)
 
   fun processPostChangeModeSwitch(editor: VimEditor, context: ExecutionContext, toSwitch: Mode)
 

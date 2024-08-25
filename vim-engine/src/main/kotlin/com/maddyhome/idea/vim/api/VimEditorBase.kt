@@ -8,7 +8,6 @@
 
 package com.maddyhome.idea.vim.api
 
-import com.maddyhome.idea.vim.common.forgetAllReplaceMasks
 import com.maddyhome.idea.vim.state.mode.Mode
 
 abstract class VimEditorBase : VimEditor {
@@ -19,9 +18,6 @@ abstract class VimEditorBase : VimEditor {
       if (vimState.mode == value) return
 
       val oldValue = vimState.mode
-      if (oldValue == Mode.REPLACE) {
-        forgetAllReplaceMasks()
-      }
       updateMode(value)
       injector.listenersNotifier.notifyModeChanged(this, oldValue)
     }

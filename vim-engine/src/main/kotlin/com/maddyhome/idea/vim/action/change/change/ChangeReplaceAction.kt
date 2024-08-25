@@ -15,7 +15,6 @@ import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.command.Command
 import com.maddyhome.idea.vim.command.OperatorArguments
-import com.maddyhome.idea.vim.common.VimEditorReplaceMask
 import com.maddyhome.idea.vim.handler.ChangeEditorActionHandler
 
 @CommandOrMotion(keys = ["R"], modes = [Mode.NORMAL])
@@ -40,5 +39,4 @@ class ChangeReplaceAction : ChangeEditorActionHandler.SingleExecution() {
  */
 private fun changeReplace(editor: VimEditor, context: ExecutionContext) {
   injector.changeGroup.initInsert(editor, context, com.maddyhome.idea.vim.state.mode.Mode.REPLACE)
-  editor.replaceMask = VimEditorReplaceMask()
 }
