@@ -16,7 +16,9 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManagerListener
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.codeInsight.template.impl.actions.NextVariableAction
 import com.intellij.find.FindModelListener
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -165,6 +167,10 @@ internal object IdeaSpecifics {
             VimPlugin.getChange().insertBeforeCursor(it.vim, event.dataContext.vim)
             KeyHandler.getInstance().reset(it.vim)
           }
+        }
+        else if (action is NextVariableAction && TemplateManagerImpl.getTemplateState(editor) == null) {
+          editor.vim.exitInsertMode(event.dataContext.vim)
+          KeyHandler.getInstance().reset(editor.vim)
         }
         //endregion
 
