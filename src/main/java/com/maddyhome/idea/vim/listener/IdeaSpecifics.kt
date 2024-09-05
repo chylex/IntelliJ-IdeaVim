@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.TemplateManagerListener
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.codeInsight.template.impl.actions.NextVariableAction
 import com.intellij.find.FindModelListener
 import com.intellij.ide.actions.ApplyIntentionAction
 import com.intellij.openapi.Disposable
@@ -214,7 +215,11 @@ internal object IdeaSpecifics {
           KeyHandler.getInstance().reset(it.vim)
         }
       }
-      //endregion
+      else if (action is NextVariableAction && editor != null && TemplateManagerImpl.getTemplateState(editor) == null) {
+          editor.vim.exitInsertMode(event.dataContext.vim)
+          KeyHandler.getInstance().reset(editor.vim)
+        }
+        //endregion
 
       if (caretOffset != -1 && editor != null && caretOffset != editor.caretModel.offset) {
         val scrollModel = editor.scrollingModel as ScrollingModelImpl
