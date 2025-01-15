@@ -8,6 +8,7 @@
 
 package com.maddyhome.idea.vim.config
 
+import com.maddyhome.idea.vim.VimPlugin
 import org.jdom.Element
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -16,11 +17,11 @@ import kotlin.reflect.KProperty
  * @author Alex Plate
  */
 class VimState {
-  var isIdeaJoinNotified by StateProperty("idea-join")
-  var isIdeaPutNotified by StateProperty("idea-put")
-  var wasSubscribedToEAPAutomatically by StateProperty("was-automatically-subscribed-to-eap")
-  var firstIdeaVimVersion: String? by StringProperty("first-ideavim-version", null)
-  var lastIdeaVimVersion: String? by StringProperty("last-ideavim-version", null)
+  var isIdeaJoinNotified get() = true; set(_) = Unit
+  var isIdeaPutNotified get() = true; set(_) = Unit
+  var wasSubscribedToEAPAutomatically get() = false; set(_) = Unit
+  var firstIdeaVimVersion: String? get() = "1"; set(_) = Unit
+  var lastIdeaVimVersion: String? get() = VimPlugin.getVersion(); set(_) = Unit
 
   fun readData(element: Element) {
     val notifications = element.getChild("notifications")
