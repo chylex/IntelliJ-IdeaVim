@@ -34,7 +34,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.api.VimEditor
-import com.maddyhome.idea.vim.api.globalOptions
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.handler.KeyMapIssue
 import com.maddyhome.idea.vim.helper.MessageHelper
@@ -42,8 +41,6 @@ import com.maddyhome.idea.vim.icons.VimIcons
 import com.maddyhome.idea.vim.key.ShortcutOwner
 import com.maddyhome.idea.vim.key.ShortcutOwnerInfo
 import com.maddyhome.idea.vim.newapi.globalIjOptions
-import com.maddyhome.idea.vim.newapi.ijOptions
-import com.maddyhome.idea.vim.options.OptionConstants
 import com.maddyhome.idea.vim.statistic.ActionTracker
 import com.maddyhome.idea.vim.ui.VimEmulationConfigurable
 import com.maddyhome.idea.vim.vimscript.services.VimRcService
@@ -63,55 +60,11 @@ internal class NotificationService(private val project: Project?) {
   @Suppress("unused")
   constructor() : this(null)
 
-  fun notifyAboutIdeaPut() {
-    val notification = Notification(
-      IDEAVIM_NOTIFICATION_ID,
-      IDEAVIM_NOTIFICATION_TITLE,
-      """Add <code>ideaput</code> to <code>clipboard</code> option to perform a put via the IDE<br/><b><code>set clipboard+=ideaput</code></b>""",
-      NotificationType.INFORMATION,
-    )
+  fun notifyAboutNewUndo() {}
 
-    notification.addAction(OpenIdeaVimRcAction(notification))
+  fun notifyAboutIdeaPut() {}
 
-    notification.addAction(
-      AppendToIdeaVimRcAction(
-        notification,
-        "set clipboard^=ideaput",
-        "ideaput",
-      ) {
-        // Technically, we're supposed to prepend values to clipboard so that it's not added to the "exclude" item.
-        // Since we don't handle exclude, it's safe to append. But let's be clean.
-        injector.globalOptions().clipboard.prependValue(OptionConstants.clipboard_ideaput)
-      },
-    )
-
-    notification.notify(project)
-  }
-
-  fun notifyAboutIdeaJoin(editor: VimEditor) {
-    val notification = Notification(
-      IDEAVIM_NOTIFICATION_ID,
-      IDEAVIM_NOTIFICATION_TITLE,
-      """Put <b><code>set ideajoin</code></b> into your <code>~/.ideavimrc</code> to perform a join via the IDE""",
-      NotificationType.INFORMATION,
-    )
-
-    notification.addAction(OpenIdeaVimRcAction(notification))
-
-    notification.addAction(
-      AppendToIdeaVimRcAction(
-        notification,
-        "set ideajoin",
-        "ideajoin"
-      ) {
-        // This is a global-local option. Setting it will always set the global value
-        injector.ijOptions(editor).ideajoin = true
-      },
-    )
-
-    notification.addAction(HelpLink(ideajoinExamplesUrl))
-    notification.notify(project)
-  }
+  fun notifyAboutIdeaJoin(editor: VimEditor) {}
 
   fun enableRepeatingMode() = Messages.showYesNoDialog(
     "Do you want to enable repeating keys in macOS on press and hold?\n\n" +
@@ -219,7 +172,7 @@ internal class NotificationService(private val project: Project?) {
           is KeyMapIssue.AddShortcut -> {
             appendLine("- ${it.key} key is not assigned to the ${it.action} action.<br/>")
           }
-
+          
           is KeyMapIssue.RemoveShortcut -> {
             appendLine("- ${it.shortcut} key is incorrectly assigned to the ${it.action} action.<br/>")
           }
@@ -306,15 +259,15 @@ internal class NotificationService(private val project: Project?) {
 
       notification =
         Notification(IDEAVIM_NOTIFICATION_ID, IDEAVIM_NOTIFICATION_TITLE, content, NotificationType.INFORMATION).also {
-          it.whenExpired { notification = null }
-          it.addAction(StopTracking())
+        it.whenExpired { notification = null }
+        it.addAction(StopTracking())
 
-          if (id != null || possibleIDs?.size == 1) {
-            it.addAction(CopyActionId(id ?: possibleIDs?.get(0), project))
-          }
-
-          it.notify(project)
+        if (id != null || possibleIDs?.size == 1) {
+          it.addAction(CopyActionId(id ?: possibleIDs?.get(0), project))
         }
+
+        it.notify(project)
+      }
 
       if (id != null) {
         ActionTracker.Util.logTrackedAction(id)
