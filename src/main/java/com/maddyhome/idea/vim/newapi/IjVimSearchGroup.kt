@@ -78,7 +78,7 @@ open class IjVimSearchGroup : VimSearchGroupBase(), PersistentStateComponent<Ele
         editor, pattern, startLine, endLine,
         shouldIgnoreCase(pattern, lastIgnoreSmartCase)
       )
-      highlightSearchResults(editor.ij, pattern, results, -1)
+      highlightSearchResults(editor.ij, results, -1)
     }
   }
 
