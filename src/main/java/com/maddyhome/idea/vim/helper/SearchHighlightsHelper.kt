@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.util.application
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.globalOptions
 import com.maddyhome.idea.vim.api.injector
@@ -30,6 +31,7 @@ import com.maddyhome.idea.vim.state.mode.inVisualMode
 import org.jetbrains.annotations.Contract
 import java.awt.Font
 import java.util.*
+import javax.swing.Timer
 
 internal fun updateSearchHighlights(
   pattern: String?,
@@ -84,6 +86,12 @@ internal fun addSubstitutionConfirmationHighlight(editor: Editor, start: Int, en
   )
 }
 
+val removeHighlightsEditors = mutableListOf<Editor>()
+val removeHighlightsTimer = Timer(400) {
+  removeHighlightsEditors.forEach(::removeSearchHighlights)
+  removeHighlightsEditors.clear()
+}
+
 /**
  * Refreshes current search highlights for all visible editors
  */
@@ -125,27 +133,43 @@ private fun updateSearchHighlights(
       // hlsearch (+ incsearch/noincsearch)
       // Make sure the range fits this editor. Note that Vim will use the same range for all windows. E.g., given
       // `:1,5s/foo`, Vim will highlight all occurrences of `foo` in the first five lines of all visible windows
-      val vimEditor = editor.vim
-      val editorLastLine = vimEditor.lineCount() - 1
-      val searchStartLine = searchRange?.startLine ?: 0
-      val searchEndLine = (searchRange?.endLine ?: -1).coerceAtMost(editorLastLine)
-      if (searchStartLine <= editorLastLine) {
-        val results =
-          injector.searchHelper.findAll(
-            vimEditor,
-            pattern,
-            searchStartLine,
-            searchEndLine,
-            shouldIgnoreCase(pattern, shouldIgnoreSmartCase)
-          )
-        if (results.isNotEmpty()) {
-          if (editor === currentEditor?.ij) {
-            currentMatchOffset = findClosestMatch(results, initialOffset, count1, forwards)
+      val isSearching = injector.commandLine.getActiveCommandLine() != null
+      application.invokeLater {
+        val vimEditor = editor.vim
+        val editorLastLine = vimEditor.lineCount() - 1
+        val searchStartLine = searchRange?.startLine ?: 0
+        val searchEndLine = (searchRange?.endLine ?: -1).coerceAtMost(editorLastLine)
+        if (searchStartLine <= editorLastLine) {
+          val visibleArea = editor.scrollingModel.visibleAreaOnScrollingFinished
+          val visibleTopLeft = visibleArea.location
+          val visibleBottomRight = visibleArea.location.apply { translate(visibleArea.width, visibleArea.height) }
+          val visibleStartOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(visibleTopLeft))
+          val visibleEndOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(visibleBottomRight))
+          val visibleStartLine = editor.document.getLineNumber(visibleStartOffset)
+          val visibleEndLine = editor.document.getLineNumber(visibleEndOffset)
+          removeSearchHighlights(editor)
+
+          val results =
+            injector.searchHelper.findAll(
+              vimEditor,
+              pattern,
+              searchStartLine.coerceAtLeast(visibleStartLine),
+              searchEndLine.coerceAtMost(visibleEndLine),
+              shouldIgnoreCase(pattern, shouldIgnoreSmartCase)
+            )
+          if (results.isNotEmpty()) {
+            if (editor === currentEditor?.ij) {
+              currentMatchOffset = findClosestMatch(results, initialOffset, count1, forwards)
+            }
+            highlightSearchResults(editor, pattern, results, currentMatchOffset)
+            if (!isSearching) {
+              removeHighlightsEditors.add(editor)
+              removeHighlightsTimer.restart()
+            }
           }
-          highlightSearchResults(editor, pattern, results, currentMatchOffset)
         }
+        editor.vimLastSearch = pattern
       }
-      editor.vimLastSearch = pattern
     } else if (shouldAddCurrentMatchSearchHighlight(pattern, showHighlights, initialOffset)) {
       // nohlsearch + incsearch. Even though search highlights are disabled, we still show a highlight (current editor
       // only), because 'incsearch' is active. But we don't show a search if Visual is active (behind Command-line of
@@ -179,6 +203,7 @@ private fun updateSearchHighlights(
     }
   }
 
+  removeHighlightsTimer.restart()
   return currentEditorCurrentMatchOffset
 }
 
@@ -204,7 +229,7 @@ private fun removeSearchHighlights(editor: Editor) {
  */
 @Contract("_, _, false -> false; _, null, true -> false")
 private fun shouldAddAllSearchHighlights(editor: Editor, newPattern: String?, hlSearch: Boolean): Boolean {
-  return hlSearch && newPattern != null && newPattern != editor.vimLastSearch && newPattern != ""
+  return hlSearch && newPattern != null && newPattern != ""
 }
 
 private fun findClosestMatch(
