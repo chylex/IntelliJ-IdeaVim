@@ -425,7 +425,7 @@ internal object VimListenerManager {
       
       MotionGroup.fileEditorManagerSelectionChangedCallback(event)
       FileGroup.fileEditorManagerSelectionChangedCallback(event)
-      VimPlugin.getSearch().fileEditorManagerSelectionChangedCallback(event)
+//      VimPlugin.getSearch().fileEditorManagerSelectionChangedCallback(event)
       IjVimRedrawService.fileEditorManagerSelectionChangedCallback(event)
       VimLastSelectedEditorTracker.setLastSelectedEditor(event.newEditor)
     }
