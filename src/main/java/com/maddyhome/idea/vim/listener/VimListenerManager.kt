@@ -460,7 +460,7 @@ object VimListenerManager {
       }
       MotionGroup.fileEditorManagerSelectionChangedCallback(event)
       FileGroupHelper.fileEditorManagerSelectionChangedCallback(event)
-      (VimPlugin.getSearch() as IjVimSearchGroup).fileEditorManagerSelectionChangedCallback(event)
+//      (VimPlugin.getSearch() as IjVimSearchGroup).fileEditorManagerSelectionChangedCallback(event)
       IjVimRedrawService.fileEditorManagerSelectionChangedCallback(event)
       VimLastSelectedEditorTracker.setLastSelectedEditor(event.newEditor)
     }

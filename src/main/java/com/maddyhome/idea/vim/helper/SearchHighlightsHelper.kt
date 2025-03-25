@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.util.application
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.globalOptions
 import com.maddyhome.idea.vim.api.injector
@@ -28,8 +29,10 @@ import com.maddyhome.idea.vim.newapi.vim
 import com.maddyhome.idea.vim.state.mode.inCommandLineModeWithVisual
 import com.maddyhome.idea.vim.state.mode.inVisualMode
 import org.jetbrains.annotations.Contract
+import java.awt.Color
 import java.awt.Font
 import java.util.*
+import javax.swing.Timer
 
 fun updateSearchHighlights(
   pattern: String?,
@@ -84,6 +87,12 @@ fun addSubstitutionConfirmationHighlight(editor: Editor, start: Int, end: Int): 
   )
 }
 
+val removeHighlightsEditors = mutableListOf<Editor>()
+val removeHighlightsTimer = Timer(450) {
+  removeHighlightsEditors.forEach(::removeSearchHighlights)
+  removeHighlightsEditors.clear()
+}
+
 /**
  * Refreshes current search highlights for all visible editors
  */
@@ -125,27 +134,43 @@ private fun updateSearchHighlights(
       // hlsearch (+ incsearch/noincsearch)
       // Make sure the range fits this editor. Note that Vim will use the same range for all windows. E.g., given
       // `:1,5s/foo`, Vim will highlight all occurrences of `foo` in the first five lines of all visible windows
-      val vimEditor = editor.vim
-      val editorLastLine = vimEditor.lineCount() - 1
-      val searchStartLine = searchRange?.startLine ?: 0
-      val searchEndLine = (searchRange?.endLine ?: -1).coerceAtMost(editorLastLine)
-      if (searchStartLine <= editorLastLine) {
-        val results =
-          injector.searchHelper.findAll(
-            vimEditor,
-            pattern,
-            searchStartLine,
-            searchEndLine,
-            shouldIgnoreCase(pattern, shouldIgnoreSmartCase)
-          )
-        if (results.isNotEmpty()) {
-          if (editor === currentEditor?.ij) {
-            currentMatchOffset = findClosestMatch(results, initialOffset, count1, forwards)
+      val isSearching = injector.commandLine.getActiveCommandLine() != null
+      application.invokeLater {
+        val vimEditor = editor.vim
+        val editorLastLine = vimEditor.lineCount() - 1
+        val searchStartLine = searchRange?.startLine ?: 0
+        val searchEndLine = (searchRange?.endLine ?: -1).coerceAtMost(editorLastLine)
+        if (searchStartLine <= editorLastLine) {
+          val visibleArea = editor.scrollingModel.visibleAreaOnScrollingFinished
+          val visibleTopLeft = visibleArea.location
+          val visibleBottomRight = visibleArea.location.apply { translate(visibleArea.width, visibleArea.height) }
+          val visibleStartOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(visibleTopLeft))
+          val visibleEndOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(visibleBottomRight))
+          val visibleStartLine = editor.document.getLineNumber(visibleStartOffset)
+          val visibleEndLine = editor.document.getLineNumber(visibleEndOffset)
+          removeSearchHighlights(editor)
+
+          val results =
+            injector.searchHelper.findAll(
+              vimEditor,
+              pattern,
+              searchStartLine.coerceAtLeast(visibleStartLine),
+              searchEndLine.coerceAtMost(visibleEndLine),
+              shouldIgnoreCase(pattern, shouldIgnoreSmartCase)
+            )
+          if (results.isNotEmpty()) {
+            if (editor === currentEditor?.ij) {
+              currentMatchOffset = findClosestMatch(results, initialOffset, count1, forwards)
+            }
+            highlightSearchResults(editor, results, currentMatchOffset)
+            if (!isSearching) {
+              removeHighlightsEditors.add(editor)
+              removeHighlightsTimer.restart()
+            }
           }
-          highlightSearchResults(editor, pattern, results, currentMatchOffset)
         }
+        editor.vimLastSearch = pattern
       }
-      editor.vimLastSearch = pattern
     } else if (shouldAddCurrentMatchSearchHighlight(pattern, showHighlights, initialOffset)) {
       // nohlsearch + incsearch. Even though search highlights are disabled, we still show a highlight (current editor
       // only), because 'incsearch' is active. But we don't show a search if Visual is active (behind Command-line of
@@ -160,7 +185,7 @@ private fun updateSearchHighlights(
         if (result != null) {
           if (!it.inVisualMode && !it.inCommandLineModeWithVisual) {
             val results = listOf(result)
-            highlightSearchResults(editor, pattern, results, result.startOffset)
+            highlightSearchResults(editor, results, result.startOffset)
           }
           currentMatchOffset = result.startOffset
         }
@@ -179,6 +204,7 @@ private fun updateSearchHighlights(
     }
   }
 
+  removeHighlightsTimer.restart()
   return currentEditorCurrentMatchOffset
 }
 
@@ -204,7 +230,7 @@ private fun removeSearchHighlights(editor: Editor) {
  */
 @Contract("_, _, false -> false; _, null, true -> false")
 private fun shouldAddAllSearchHighlights(editor: Editor, newPattern: String?, hlSearch: Boolean): Boolean {
-  return hlSearch && newPattern != null && newPattern != editor.vimLastSearch && newPattern != ""
+  return hlSearch && newPattern != null && newPattern != ""
 }
 
 private fun findClosestMatch(
@@ -240,9 +266,18 @@ private fun findClosestMatch(
   return sortedResults[nextIndex % results.size].startOffset
 }
 
+@Suppress("UseJBColor")
+private val DEFAULT_RESULT_ATTRIBUTES = TextAttributes().apply {
+  backgroundColor = Color(50, 81, 61)
+}
+
+@Suppress("UseJBColor")
+private val NEARBY_RESULT_ATTRIBUTES = TextAttributes().apply {
+  backgroundColor = Color(89, 80, 50)
+}
+
 fun highlightSearchResults(
   editor: Editor,
-  pattern: String,
   results: List<TextRange>,
   currentMatchOffset: Int,
 ) {
@@ -251,38 +286,28 @@ fun highlightSearchResults(
     highlighters = mutableListOf()
     editor.vimLastHighlighters = highlighters
   }
-  for (range in results) {
-    val current = range.startOffset == currentMatchOffset
-    val highlighter = highlightMatch(editor, range.startOffset, range.endOffset, current, pattern)
-    highlighters.add(highlighter)
+
+  val allCaretOffsets = editor.caretModel.allCarets.map { it.offset }
+
+  for ((index, range) in results.withIndex()) {
+    if (allCaretOffsets.any { range.startOffset == it }) {
+      continue
+    }
+
+    val attributes = if (allCaretOffsets.any { (index > 0 && results[index - 1].startOffset == it) || (index < results.lastIndex && results[index + 1].startOffset == it) })
+      NEARBY_RESULT_ATTRIBUTES
+    else
+      DEFAULT_RESULT_ATTRIBUTES
+
+    highlighters.add(highlightMatch(editor, range.startOffset, range.endOffset, attributes))
   }
   editor.vimIncsearchCurrentMatchOffset = currentMatchOffset
 }
 
-private fun highlightMatch(editor: Editor, start: Int, end: Int, current: Boolean, tooltip: String): RangeHighlighter {
+private fun highlightMatch(editor: Editor, start: Int, end: Int, attributes: TextAttributes): RangeHighlighter {
   val layer = HighlighterLayer.SELECTION - 1
   val targetArea = HighlighterTargetArea.EXACT_RANGE
-  if (!current) {
-    // If we use a text attribute key, it will update automatically when the editor's colour scheme changes
-    val highlighter =
-      editor.markupModel.addRangeHighlighter(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES, start, end, layer, targetArea)
-    highlighter.errorStripeTooltip = tooltip
-    return highlighter
-  }
-
-  // There isn't a text attribute key for current selection. This means we won't update automatically when the editor's
-  // colour scheme changes. However, this is only used during incsearch, so it should be replaced pretty quickly. It's a
-  // small visual glitch that will fix itself quickly. Let's not bother implementing an editor colour scheme listener
-  // just for this.
-  // These are the same modifications that the Find live preview does. We could look at using LivePreviewPresentation,
-  // which might also be useful for text attributes in selection (if we supported that)
-  val attributes = editor.colorsScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES).clone().apply {
-    effectType = EffectType.ROUNDED_BOX
-    effectColor = editor.colorsScheme.getColor(EditorColors.CARET_COLOR)
-  }
-  return editor.markupModel.addRangeHighlighter(start, end, layer, attributes, targetArea).apply {
-    errorStripeTooltip = tooltip
-  }
+  return editor.markupModel.addRangeHighlighter(start, end, layer, attributes, targetArea)
 }
 
 /**
