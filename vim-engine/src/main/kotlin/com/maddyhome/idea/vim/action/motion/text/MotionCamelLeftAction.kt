@@ -31,6 +31,12 @@ class MotionCamelLeftAction : MotionActionHandler.ForEachCaret() {
     argument: Argument?,
     operatorArguments: OperatorArguments,
   ): Motion {
+    if (caret.hasSelection() && caret.offset > caret.vimSelectionStart) {
+      val target = injector.searchHelper.findPreviousCamelEnd(editor.text(), caret.offset, operatorArguments.count1)
+      if (target != null && target > caret.vimSelectionStart) {
+        return target.toMotionOrError()
+      }
+    }
     return injector.searchHelper.findPreviousCamelStart(editor.text(), caret.offset, operatorArguments.count1)
       ?.toMotionOrError() ?: Motion.Error
   }
@@ -47,6 +53,10 @@ class MotionCamelRightAction : MotionActionHandler.ForEachCaret() {
     argument: Argument?,
     operatorArguments: OperatorArguments,
   ): Motion {
+    if (caret.hasSelection() && caret.offset >= caret.vimSelectionStart) {
+      return injector.searchHelper.findNextCamelEnd(editor.text(), caret.offset + 1, operatorArguments.count1)
+        ?.toMotionOrError() ?: Motion.Error
+    }
     return injector.searchHelper.findNextCamelStart(editor.text(), caret.offset + 1, operatorArguments.count1)
       ?.toMotionOrError() ?: Motion.Error
   }
