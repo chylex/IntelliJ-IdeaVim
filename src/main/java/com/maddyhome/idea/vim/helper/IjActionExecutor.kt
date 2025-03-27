@@ -38,6 +38,7 @@ import com.maddyhome.idea.vim.api.VimActionExecutor
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.command.OperatorArguments
 import com.maddyhome.idea.vim.handler.EditorActionHandlerBase
+import com.maddyhome.idea.vim.ide.isRider
 import com.maddyhome.idea.vim.newapi.IjNativeAction
 import com.maddyhome.idea.vim.newapi.ij
 import com.maddyhome.idea.vim.newapi.runFromVimKey
@@ -76,7 +77,7 @@ internal class IjActionExecutor : VimActionExecutor {
     }
 
     val ijAction = (action as IjNativeAction).action
-    if (Registry.`is`("ideavim.old.action.execution", true)) {
+    if (Registry.`is`("ideavim.old.action.execution", true) || isRider()) {
       return manualActionExecution(context, ijAction)
     } else {
       try {

@@ -182,6 +182,9 @@ class VimShortcutKeyAction : AnAction(), DumbAware/*, LightEditCompatible*/ {
     }
 
     if (editor.inInsertMode) {
+      if (keyCode == KeyEvent.VK_ENTER) {
+        return ActionEnableStatus.no("Enter action in insert mode", LogLevel.INFO)
+      }
       if (keyCode == KeyEvent.VK_TAB) {
         // TODO: This stops VimEditorTab seeing <Tab> in insert mode and correctly scrolling the view
         // There are multiple actions registered for VK_TAB. The important items, in order, are this, the Live
