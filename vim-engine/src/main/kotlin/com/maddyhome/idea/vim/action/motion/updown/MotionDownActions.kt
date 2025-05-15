@@ -70,6 +70,6 @@ class MotionDownNotLineWiseAction : MotionActionHandler.ForEachCaret() {
     argument: Argument?,
     operatorArguments: OperatorArguments,
   ): Motion {
-    return injector.motion.getVerticalMotionOffset(editor, caret, operatorArguments.count1)
+    return injector.motion.getVerticalMotionOffset(editor, caret, operatorArguments.count1, bufferLines = true)
   }
 }
