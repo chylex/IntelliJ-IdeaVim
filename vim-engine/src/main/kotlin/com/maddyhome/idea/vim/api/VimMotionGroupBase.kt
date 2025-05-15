@@ -33,14 +33,18 @@ abstract class VimMotionGroupBase : VimMotionGroup {
   override var lastFTCmd: TillCharacterMotionType = TillCharacterMotionType.LAST_SMALL_T
   override var lastFTChar: Char = ' '
 
-  override fun getVerticalMotionOffset(editor: VimEditor, caret: ImmutableVimCaret, count: Int): Motion {
+  override fun getVerticalMotionOffset(editor: VimEditor, caret: ImmutableVimCaret, count: Int, bufferLines: Boolean): Motion {
     val pos = caret.getVisualPosition()
     if ((pos.line == 0 && count < 0) || (pos.line >= editor.getVisualLineCount() - 1 && count > 0)) {
       return Motion.Error
     }
 
     val intendedColumn = caret.vimLastColumn
-    val line = editor.normalizeVisualLine(pos.line + count)
+    val line = if (bufferLines)
+      // TODO Does not work with folds, but I don't use those.
+      editor.normalizeVisualLine(editor.bufferLineToVisualLine(editor.visualLineToBufferLine(pos.line) + count))
+    else
+      editor.normalizeVisualLine(pos.line + count)
 
     if (intendedColumn == LAST_COLUMN) {
       val normalisedColumn = editor.normalizeVisualColumn(
