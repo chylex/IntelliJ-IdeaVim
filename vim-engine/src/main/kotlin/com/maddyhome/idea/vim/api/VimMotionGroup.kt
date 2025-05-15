@@ -25,7 +25,7 @@ interface VimMotionGroup {
     allowWrap: Boolean = false,
   ): Motion
 
-  fun getVerticalMotionOffset(editor: VimEditor, caret: ImmutableVimCaret, count: Int): Motion
+  fun getVerticalMotionOffset(editor: VimEditor, caret: ImmutableVimCaret, count: Int, bufferLines: Boolean = false): Motion
 
 // TODO: Consider naming. These don't move the caret, but calculate offsets. Also consider returning Motion
 
