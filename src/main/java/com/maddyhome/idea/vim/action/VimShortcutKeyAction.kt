@@ -8,6 +8,7 @@
 package com.maddyhome.idea.vim.action
 
 import com.google.common.collect.ImmutableSet
+import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -208,6 +209,10 @@ class VimShortcutKeyAction : AnAction(), DumbAware/*, LightEditCompatible*/ {
       return ActionEnableStatus.yes("Vim only editor keys", LogLevel.INFO)
     }
 
+    if (CompletionService.getCompletionService().currentCompletion != null) {
+      return ActionEnableStatus.no("Code completion active", LogLevel.INFO)
+    }
+    
     val savedShortcutConflicts = VimPlugin.getKey().savedShortcutConflicts
     val info = savedShortcutConflicts[keyStroke]
     return when (info?.forEditor(editor.vim)) {
