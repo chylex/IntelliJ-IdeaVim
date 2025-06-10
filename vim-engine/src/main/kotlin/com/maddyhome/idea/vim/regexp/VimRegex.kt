@@ -21,8 +21,8 @@ import com.maddyhome.idea.vim.api.VimFoldRegion
 import com.maddyhome.idea.vim.api.VimIndentConfig
 import com.maddyhome.idea.vim.api.VimScrollingModel
 import com.maddyhome.idea.vim.api.VimSelectionModel
-import com.maddyhome.idea.vim.api.VimVisualPosition
 import com.maddyhome.idea.vim.api.VimVirtualFile
+import com.maddyhome.idea.vim.api.VimVisualPosition
 import com.maddyhome.idea.vim.common.LiveRange
 import com.maddyhome.idea.vim.common.TextRange
 import com.maddyhome.idea.vim.common.VimEditorReplaceMask
@@ -787,6 +787,10 @@ class VimRegex(pattern: String) {
     }
 
     override fun getFoldRegionAtOffset(offset: Int): VimFoldRegion? {
+      return null
+    }
+
+    override fun getSoftWrapStartAtOffset(offset: Int): Int? {
       return null
     }
 

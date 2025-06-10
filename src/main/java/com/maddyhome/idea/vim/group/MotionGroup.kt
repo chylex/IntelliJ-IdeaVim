@@ -87,6 +87,9 @@ internal class MotionGroup : VimMotionGroupBase() {
   }
 
   override fun moveCaretToCurrentDisplayLineStart(editor: VimEditor, caret: ImmutableVimCaret): Motion {
+    if (editor.ij.softWrapModel.isSoftWrappingEnabled) {
+      return AbsoluteOffset(caret.ij.visualLineStart)
+    }
     val col = EditorHelper.getVisualColumnAtLeftOfDisplay(editor.ij, caret.getVisualPosition().line)
     return moveCaretToColumn(editor, caret, col, false)
   }
@@ -95,6 +98,15 @@ internal class MotionGroup : VimMotionGroupBase() {
     editor: VimEditor,
     caret: ImmutableVimCaret,
   ): @Range(from = 0, to = Int.MAX_VALUE.toLong()) Int {
+    if (editor.ij.softWrapModel.isSoftWrappingEnabled) {
+      val offset = caret.ij.visualLineStart
+      val line = editor.offsetToBufferPosition(offset).line
+      return if (offset == editor.getLineStartOffset(line)) {
+        editor.getLeadingCharacterOffset(line, 0)
+      } else {
+        offset
+      }
+    }
     val col = EditorHelper.getVisualColumnAtLeftOfDisplay(editor.ij, caret.getVisualPosition().line)
     val bufferLine = caret.getLine()
     return editor.getLeadingCharacterOffset(bufferLine, col)
@@ -105,6 +117,9 @@ internal class MotionGroup : VimMotionGroupBase() {
     caret: ImmutableVimCaret,
     allowEnd: Boolean,
   ): Motion {
+    if (editor.ij.softWrapModel.isSoftWrappingEnabled) {
+      return AbsoluteOffset(caret.ij.visualLineEnd - 1)
+    }
     val col = EditorHelper.getVisualColumnAtRightOfDisplay(editor.ij, caret.getVisualPosition().line)
     return moveCaretToColumn(editor, caret, col, allowEnd)
   }
