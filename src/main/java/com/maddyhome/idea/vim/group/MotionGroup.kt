@@ -24,12 +24,11 @@ import com.maddyhome.idea.vim.api.ImmutableVimCaret
 import com.maddyhome.idea.vim.api.VimChangeGroupBase
 import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.VimMotionGroupBase
+import com.maddyhome.idea.vim.api.VirtualBufferKind
 import com.maddyhome.idea.vim.api.anyNonWhitespace
 import com.maddyhome.idea.vim.api.getLeadingCharacterOffset
 import com.maddyhome.idea.vim.api.getVisualLineCount
-import com.maddyhome.idea.vim.api.VirtualBufferKind
 import com.maddyhome.idea.vim.api.injector
-import com.maddyhome.idea.vim.helper.CmdwinKeys
 import com.maddyhome.idea.vim.api.lineLength
 import com.maddyhome.idea.vim.api.normalizeOffset
 import com.maddyhome.idea.vim.api.visualLineToBufferLine
@@ -43,10 +42,11 @@ import com.maddyhome.idea.vim.handler.Motion
 import com.maddyhome.idea.vim.handler.Motion.AbsoluteOffset
 import com.maddyhome.idea.vim.handler.MotionActionHandler
 import com.maddyhome.idea.vim.handler.TextObjectActionHandler
+import com.maddyhome.idea.vim.helper.CmdwinKeys
 import com.maddyhome.idea.vim.helper.EditorHelper
-import com.maddyhome.idea.vim.helper.keepVisualLineInScrollOffset
 import com.maddyhome.idea.vim.helper.getNormalizedSideScrollOffset
 import com.maddyhome.idea.vim.helper.isEndAllowed
+import com.maddyhome.idea.vim.helper.keepVisualLineInScrollOffset
 import com.maddyhome.idea.vim.helper.vimLastColumn
 import com.maddyhome.idea.vim.impl.state.VimStateMachineImpl
 import com.maddyhome.idea.vim.newapi.IjEditorExecutionContext
@@ -124,6 +124,9 @@ class MotionGroup : VimMotionGroupBase() {
   }
 
   override fun moveCaretToCurrentDisplayLineStart(editor: VimEditor, caret: ImmutableVimCaret): Motion {
+    if (editor.ij.softWrapModel.isSoftWrappingEnabled) {
+      return AbsoluteOffset(caret.ij.visualLineStart)
+    }
     val col = EditorHelper.getVisualColumnAtLeftOfDisplay(editor.ij, caret.getVisualPosition().line)
     return moveCaretToColumn(editor, caret, col, false)
   }
@@ -132,6 +135,15 @@ class MotionGroup : VimMotionGroupBase() {
     editor: VimEditor,
     caret: ImmutableVimCaret,
   ): @Range(from = 0, to = Int.MAX_VALUE.toLong()) Int {
+    if (editor.ij.softWrapModel.isSoftWrappingEnabled) {
+      val offset = caret.ij.visualLineStart
+      val line = editor.offsetToBufferPosition(offset).line
+      return if (offset == editor.getLineStartOffset(line)) {
+        editor.getLeadingCharacterOffset(line, 0)
+      } else {
+        offset
+      }
+    }
     val col = EditorHelper.getVisualColumnAtLeftOfDisplay(editor.ij, caret.getVisualPosition().line)
     val bufferLine = caret.getLine()
     return editor.getLeadingCharacterOffset(bufferLine, col)
@@ -142,6 +154,11 @@ class MotionGroup : VimMotionGroupBase() {
     caret: ImmutableVimCaret,
     allowEnd: Boolean,
   ): Motion {
+    if (editor.ij.softWrapModel.isSoftWrappingEnabled) {
+      val visualLine = caret.getVisualPosition().line
+      val visualLineLength = EditorHelper.getVisualLineLength(editor.ij, visualLine).let { if (allowEnd) it else (it - 1).coerceAtLeast(0) }
+      return AbsoluteOffset(editor.ij.visualPositionToOffset(VisualPosition(visualLine, visualLineLength, false)))
+    }
     val col = EditorHelper.getVisualColumnAtRightOfDisplay(editor.ij, caret.getVisualPosition().line)
     return moveCaretToColumn(editor, caret, col, allowEnd)
   }
