@@ -182,7 +182,7 @@ class IjVimEditor(editor: Editor) : MutableLinearEditor, VimEditorBase() {
 
   override var isFirstCaret = true
   override var isReversingCarets = false
-  
+
   @Suppress("ideavimRunForEachCaret")
   override fun forEachCaret(action: (VimCaret) -> Unit) {
     if (editor.vim.inBlockSelection) {
@@ -608,6 +608,10 @@ class IjVimEditor(editor: Editor) : MutableLinearEditor, VimEditorBase() {
       get() = ijFoldRegion.startOffset
     override val endOffset: Int
       get() = ijFoldRegion.endOffset
+  }
+
+  override fun getSoftWrapStartAtOffset(offset: Int): Int? {
+    return editor.softWrapModel.getSoftWrap(offset)?.start
   }
 
   override fun <T : ImmutableVimCaret> findLastVersionOfCaret(caret: T): T {

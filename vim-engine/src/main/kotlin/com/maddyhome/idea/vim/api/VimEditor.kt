@@ -210,6 +210,7 @@ interface VimEditor {
   }
 
   fun createIndentBySize(size: Int): String
+  fun getSoftWrapStartAtOffset(offset: Int): Int?
 
   /**
    * Returns the collapsed fold region at the specified offset, if any.
