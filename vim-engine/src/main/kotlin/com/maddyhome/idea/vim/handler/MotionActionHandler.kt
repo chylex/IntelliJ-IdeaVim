@@ -13,6 +13,7 @@ import com.maddyhome.idea.vim.api.ImmutableVimCaret
 import com.maddyhome.idea.vim.api.VimCaret
 import com.maddyhome.idea.vim.api.VimCaretListener
 import com.maddyhome.idea.vim.api.VimEditor
+import com.maddyhome.idea.vim.api.VimMotionGroupBase
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.api.normalizeOffset
 import com.maddyhome.idea.vim.command.Argument
@@ -226,7 +227,15 @@ sealed class MotionActionHandler : EditorActionHandlerBase(false) {
       StrictMode.assert(caret.isPrimary, "Block selection mode must only operate on primary caret")
     }
 
-    val normalisedOffset = prepareMoveToAbsoluteOffset(editor, cmd, offset)
+    val normalisedOffset = prepareMoveToAbsoluteOffset(editor, cmd, offset).let {
+      if (offset.intendedColumn == VimMotionGroupBase.LAST_COLUMN) {
+        val softWrapStart = editor.getSoftWrapStartAtOffset(it)
+        if (softWrapStart != null) softWrapStart - 1 else it
+      }
+      else {
+        it
+      }
+    }
     StrictMode.assert(normalisedOffset == offset.offset, "Adjusted offset should be normalised by action")
 
     // Set before moving, so it can be applied during move, especially important for LAST_COLUMN and visual block mode
@@ -274,7 +283,7 @@ sealed class MotionActionHandler : EditorActionHandlerBase(false) {
         foldRegion.isExpanded = true
       }
     }
-
+    
     return resultOffset
   }
 

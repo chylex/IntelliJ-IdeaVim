@@ -35,8 +35,8 @@ import com.maddyhome.idea.vim.api.VimFoldRegion
 import com.maddyhome.idea.vim.api.VimIndentConfig
 import com.maddyhome.idea.vim.api.VimScrollingModel
 import com.maddyhome.idea.vim.api.VimSelectionModel
-import com.maddyhome.idea.vim.api.VimVisualPosition
 import com.maddyhome.idea.vim.api.VimVirtualFile
+import com.maddyhome.idea.vim.api.VimVisualPosition
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.common.IndentConfig
 import com.maddyhome.idea.vim.common.LiveRange
@@ -512,6 +512,10 @@ internal class IjVimEditor(editor: Editor) : MutableLinearEditor, VimEditorBase(
         get() = ijFoldRegion.endOffset
 
     }
+  }
+
+  override fun getSoftWrapStartAtOffset(offset: Int): Int? {
+    return editor.softWrapModel.getSoftWrap(offset)?.start
   }
 
   override fun <T : ImmutableVimCaret> findLastVersionOfCaret(caret: T): T {
