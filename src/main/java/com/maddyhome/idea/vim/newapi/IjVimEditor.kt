@@ -657,6 +657,10 @@ class IjVimEditor(editor: Editor) : MutableLinearEditor, VimEditorBase() {
       get() = ijFoldRegion.endOffset
   }
 
+  override fun getSoftWrapStartAtOffset(offset: Int): Int? {
+    return editor.softWrapModel.getSoftWrap(offset)?.start
+  }
+
   override fun <T : ImmutableVimCaret> findLastVersionOfCaret(caret: T): T {
     return caret
   }

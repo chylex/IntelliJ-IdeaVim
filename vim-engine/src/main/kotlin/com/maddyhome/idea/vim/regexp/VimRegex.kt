@@ -792,6 +792,10 @@ class VimRegex(pattern: String) {
       return null
     }
 
+    override fun getSoftWrapStartAtOffset(offset: Int): Int? {
+      return null
+    }
+
     override fun getAllFoldRegions(): List<VimFoldRegion> {
       return emptyList()
     }
