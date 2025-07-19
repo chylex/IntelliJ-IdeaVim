@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.ScrollingModelEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.CaretModelImpl
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.maddyhome.idea.vim.api.BufferPosition
 import com.maddyhome.idea.vim.api.ExecutionContext
@@ -150,7 +151,7 @@ internal class IjVimEditor(editor: Editor) : MutableLinearEditor, VimEditorBase(
         }
       }
     }
-    editor.document.insertString(atPosition, text)
+    editor.document.insertString(atPosition, StringUtil.convertLineSeparators(text, "\n"))
   }
 
   override fun replaceString(start: Int, end: Int, newString: String) {
