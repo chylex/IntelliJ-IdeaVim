@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.refactoring.actions.BaseRefactoringAction
 import com.maddyhome.idea.vim.RegisterActions
 import com.maddyhome.idea.vim.api.ExecutionContext
 import com.maddyhome.idea.vim.api.NativeAction
@@ -35,6 +36,8 @@ import com.maddyhome.idea.vim.handler.EditorActionHandlerBase
 import com.maddyhome.idea.vim.newapi.IjNativeAction
 import com.maddyhome.idea.vim.newapi.IjVimDocument
 import com.maddyhome.idea.vim.newapi.ij
+import com.maddyhome.idea.vim.state.mode.Mode
+import com.maddyhome.idea.vim.state.mode.inVisualMode
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import javax.swing.JComponent
@@ -70,15 +73,35 @@ class IjActionExecutor : VimActionExecutor {
       thisLogger().error("Actions cannot be updated when write-action is running or pending")
     }
 
-    return executeAction((action as IjNativeAction).action, editor?.ij?.contentComponent)
+    return executeAction(editor, (action as IjNativeAction).action, editor?.ij?.contentComponent)
   }
 
-  private fun executeAction(ijAction: AnAction, contextComponent: Component?): Boolean {
+  private fun executeAction(editor: VimEditor?, ijAction: AnAction, contextComponent: Component?): Boolean {
+    val startVisualModeType = (editor?.mode as? Mode.VISUAL)?.selectionType
+    val startVisualCaretSelection = if (editor != null && startVisualModeType != null && ijAction !is BaseRefactoringAction)
+      editor.primaryCaret().let { Triple(it.offset, it.selectionStart, it.selectionEnd) }
+    else
+      null
+
     try {
       isRunningActionFromVim = true
       val place = ijAction.choosePlace()
       val res = ActionManager.getInstance().tryToExecute(ijAction, null, contextComponent, place, true)
       res.waitFor(5_000)
+
+      if (startVisualModeType != null && startVisualCaretSelection != null) {
+        val primaryCaret = editor.primaryCaret()
+        val endVisualCaretOffset = primaryCaret.offset
+        if (startVisualCaretSelection.first != endVisualCaretOffset) {
+          if (!editor.inVisualMode || (editor.mode as Mode.VISUAL).selectionType != startVisualModeType) {
+            injector.visualMotionGroup.toggleVisual(editor, 1, 0, startVisualModeType)
+          }
+          primaryCaret.moveToOffset(startVisualCaretSelection.first)
+          primaryCaret.setSelection(startVisualCaretSelection.second, startVisualCaretSelection.third)
+          primaryCaret.moveToOffset(endVisualCaretOffset)
+        }
+      }
+
       return res.isDone
     } finally {
       isRunningActionFromVim = false
@@ -88,7 +111,7 @@ class IjActionExecutor : VimActionExecutor {
   override fun executeAction(editor: VimEditor?, action: NativeAction, context: ExecutionContext): Boolean {
     if (editor != null && editor === injector.fallbackWindow) {
       val contextComponent = context.ij.getData(PlatformDataKeys.CONTEXT_COMPONENT)
-      return executeAction((action as IjNativeAction).action, contextComponent)
+      return executeAction(editor, (action as IjNativeAction).action, contextComponent)
     }
     return executeAction(editor, action)
   }
