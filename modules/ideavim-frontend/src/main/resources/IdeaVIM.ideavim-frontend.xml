@@ -311,6 +311,7 @@
     </group>
 
     <action id="VimFindActionIdAction" class="com.maddyhome.idea.vim.listener.FindActionIdAction"/>
+    <action id="VimJumpToSource" class="com.intellij.diff.actions.impl.OpenInEditorAction" />
   </actions>
 
   <!-- Frontend vim extensions (editor/text manipulation, no PSI/file-system dependency) -->
