@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBPanel
@@ -102,6 +103,7 @@ class OutputPanel private constructor(
     val keyListener = OutputPanelKeyListener()
     addKeyListener(keyListener)
     textPane.addKeyListener(keyListener)
+    editor?.let { putClientProperty(ToolWindowManagerImpl.PARENT_COMPONENT, it.component) }
 
     updateUI()
   }

@@ -16,10 +16,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.maddyhome.idea.vim.ui.ToolWindowPositioningListener
-import com.intellij.util.messages.MessageBusConnection
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.IJSwingUtilities
+import com.intellij.util.messages.MessageBusConnection
 import com.maddyhome.idea.vim.EventFacade
 import com.maddyhome.idea.vim.KeyHandler.Companion.getInstance
 import com.maddyhome.idea.vim.VimPlugin
@@ -41,6 +41,7 @@ import com.maddyhome.idea.vim.key.interceptors.VimInputInterceptor
 import com.maddyhome.idea.vim.newapi.IjVimCaret
 import com.maddyhome.idea.vim.newapi.IjVimEditor
 import com.maddyhome.idea.vim.ui.ExPanelBorder
+import com.maddyhome.idea.vim.ui.ToolWindowPositioningListener
 import com.maddyhome.idea.vim.vimscript.model.commands.Command
 import com.maddyhome.idea.vim.vimscript.model.commands.GlobalCommand
 import com.maddyhome.idea.vim.vimscript.model.commands.SubstituteCommand
@@ -152,6 +153,7 @@ class ExEntryPanel private constructor() : JPanel(), VimCommandLine {
       }
       positionPanel()
       glassPane.isVisible = true
+      putClientProperty(ToolWindowManagerImpl.PARENT_COMPONENT, parent)
       entry.requestFocusInWindow()
     }
     this.isActive = true
@@ -199,6 +201,7 @@ class ExEntryPanel private constructor() : JPanel(), VimCommandLine {
           requestFocus(parent!!)
         }
 
+        putClientProperty(ToolWindowManagerImpl.PARENT_COMPONENT, null)
         oldGlass!!.removeComponentListener(resizePanelListener)
         toolWindowListenerConnection?.disconnect()
         toolWindowListenerConnection = null
