@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBPanel
@@ -183,6 +184,8 @@ internal class OutputPanel private constructor(private val editor: Editor) : JBP
         updatePrompt()
       }
     }
+
+    putClientProperty(ToolWindowManagerImpl.PARENT_COMPONENT, editor.component)
 
     updateUI()
 
