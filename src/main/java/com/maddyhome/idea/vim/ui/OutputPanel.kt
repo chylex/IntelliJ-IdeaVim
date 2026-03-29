@@ -12,6 +12,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBPanel
@@ -90,6 +91,7 @@ class OutputPanel private constructor(
 
     // Suppress the fancy frame background used in the Islands theme
     ClientProperty.putRecursive(this, IdeBackgroundUtil.NO_BACKGROUND, true)
+    putClientProperty(ToolWindowManagerImpl.PARENT_COMPONENT, editor.component)
 
     // Initialize panel
     setLayout(BorderLayout(0, 0))
