@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.IJSwingUtilities
 import com.maddyhome.idea.vim.EventFacade
@@ -201,6 +202,7 @@ class ExEntryPanel private constructor() : JPanel(), VimCommandLine {
       glassPaneManager.activate(editor, this)
       positionPanel()
       glassPaneManager.show()
+      putClientProperty(ToolWindowManagerImpl.PARENT_COMPONENT, parent)
       SwingUtilities.invokeLater { entry.requestFocusInWindow() }
     }
     isActive = true
@@ -268,6 +270,7 @@ class ExEntryPanel private constructor() : JPanel(), VimCommandLine {
           requestFocus(parent!!)
         }
 
+        putClientProperty(ToolWindowManagerImpl.PARENT_COMPONENT, null)
         glassPaneManager.deactivate()
       }
 
