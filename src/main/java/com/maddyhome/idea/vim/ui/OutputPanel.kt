@@ -12,6 +12,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
@@ -95,6 +96,7 @@ class OutputPanel(editorRef: WeakReference<Editor>) : JBPanel<OutputPanel?>(), V
     // applied to the IdeRoot, and used to paint all children, including this panel. This client property is checked by
     // JBPanel.getComponentGraphics to give us the original Graphics, opting out of the fancy painting.
     ClientProperty.putRecursive<Boolean?>(this, IdeBackgroundUtil.NO_BACKGROUND, true)
+    editor?.let { putClientProperty(ToolWindowManagerImpl.PARENT_COMPONENT, it.component) }
 
     updateUI()
   }
