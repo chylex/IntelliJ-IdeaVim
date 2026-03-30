@@ -51,7 +51,6 @@ import com.maddyhome.idea.vim.group.NotificationService
 import com.maddyhome.idea.vim.group.visual.IdeaSelectionControl
 import com.maddyhome.idea.vim.helper.exitSelectMode
 import com.maddyhome.idea.vim.helper.exitVisualMode
-import com.maddyhome.idea.vim.helper.hasVisualSelection
 import com.maddyhome.idea.vim.helper.isIdeaVimDisabledHere
 import com.maddyhome.idea.vim.ide.isClionNova
 import com.maddyhome.idea.vim.ide.isRider
@@ -355,23 +354,6 @@ internal object IdeaSpecifics {
               if (vimEditor.mode !is Mode.NORMAL) {
                 vimEditor.exitMode()
                 vimEditor.mode = Mode.NORMAL()
-              }
-            } else {
-              // IdeaSelectionControl will not be called if we're moving to a new variable with no change in selection.
-              // And if we're moving to the end of the template, the change in selection will reset us to Normal because
-              // IdeaSelectionControl will be called when the template is no longer active.
-              if ((!editor.selectionModel.hasSelection() && !vimEditor.mode.hasVisualSelection) || newIndex == -1) {
-                if (vimEditor.isIdeaRefactorModeSelect) {
-                  if (vimEditor.mode !is Mode.INSERT) {
-                    vimEditor.exitMode()
-                    injector.application.runReadAction {
-                      val context = injector.executionContextManager.getEditorExecutionContext(editor.vim)
-                      VimPlugin.getChange().insertBeforeCaret(editor.vim, context)
-                    }
-                  }
-                } else {
-                  vimEditor.mode = Mode.NORMAL()
-                }
               }
             }
           }
