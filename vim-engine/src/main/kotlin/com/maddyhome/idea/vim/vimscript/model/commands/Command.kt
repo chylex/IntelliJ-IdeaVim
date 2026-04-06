@@ -83,7 +83,7 @@ sealed class Command(
     if (Flag.SAVE_SELECTION !in argFlags.flags) {
       // Editor.inBlockSelection is not available, because we're not in Visual mode anymore. Check if the primary caret
       // currently has a selection and if (when we still in Visual) it was a block selection.
-      injector.application.runReadAction {
+      injector.application.runWriteAction {
         if (editor.primaryCaret().hasSelection() && editor.primaryCaret().lastSelectionInfo.selectionType.isBlock) {
           editor.removeSecondaryCarets()
         }
