@@ -1,4 +1,5 @@
 {
   "has": "com.maddyhome.idea.vim.vimscript.model.functions.handlers.HasFunctionHandler",
+  "isactionenabled": "com.maddyhome.idea.vim.vimscript.model.functions.handlers.IsActionEnabled",
   "pumvisible": "com.maddyhome.idea.vim.vimscript.model.functions.handlers.PopupMenuVisibleFunctionHandler"
 }
