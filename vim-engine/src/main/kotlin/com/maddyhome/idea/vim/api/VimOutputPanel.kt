@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2026 The IdeaVim authors
+ * Copyright 2003-2024 The IdeaVim authors
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE.txt file or at
@@ -29,8 +29,7 @@ interface VimOutputPanel {
    * Note: The full text content is not updated in the display until [show] is invoked.
    *
    * @param text The text to append.
-   * @param isNewLine Whether to start the appended text on a new line.
-   * @param messageType The type of message, used to determine text styling.
+   * @param isNewLine Whether to start the appended text on a new line. Defaults to true.
    */
   fun addText(text: String, isNewLine: Boolean = true, messageType: MessageType = MessageType.STANDARD)
 

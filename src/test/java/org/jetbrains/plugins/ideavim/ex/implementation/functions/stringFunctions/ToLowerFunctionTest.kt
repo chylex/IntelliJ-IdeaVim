@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2026 The IdeaVim authors
+ * Copyright 2003-2025 The IdeaVim authors
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE.txt file or at
@@ -33,6 +33,7 @@ class ToLowerFunctionTest : VimTestCase() {
   @Test
   fun `test tolower with list causes error`() {
     enterCommand("echo tolower([1, 2, 3])")
+    assertNoExOutput()
     assertPluginError(true)
     assertPluginErrorMessage("E730: Using a List as a String")
   }
@@ -40,6 +41,7 @@ class ToLowerFunctionTest : VimTestCase() {
   @Test
   fun `test tolower with dict causes error`() {
     enterCommand("echo tolower({1: 2, 3: 4})")
+    assertNoExOutput()
     assertPluginError(true)
     assertPluginErrorMessage("E731: Using a Dictionary as a String")
   }

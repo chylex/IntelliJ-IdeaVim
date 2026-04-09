@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2026 The IdeaVim authors
+ * Copyright 2003-2023 The IdeaVim authors
  *
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE.txt file or at
@@ -12,25 +12,7 @@ import com.maddyhome.idea.vim.helper.EngineMessageHelper
 import org.jetbrains.annotations.PropertyKey
 
 interface VimMessages {
-  /**
-   * Displays an informational message to the user.
-   * The message panel closes on any keystroke and passes the key through to the editor.
-   */
-  fun showMessage(editor: VimEditor, message: String?)
-
-  /**
-   * Displays an error message to the user (typically in red).
-   * The message panel closes on any keystroke and passes the key through to the editor.
-   */
-  fun showErrorMessage(editor: VimEditor, message: String?)
-
-  /**
-   * Legacy method for displaying messages.
-   * @deprecated Use [showMessage] or [showErrorMessage] instead.
-   */
-  @Deprecated("Use showMessage or showErrorMessage instead", ReplaceWith("showMessage(editor, message)"))
   fun showStatusBarMessage(editor: VimEditor?, message: String?)
-
   fun getStatusBarMessage(): String?
   fun clearStatusBarMessage()
   fun indicateError()
@@ -46,4 +28,13 @@ interface VimMessages {
   fun message(@PropertyKey(resourceBundle = EngineMessageHelper.BUNDLE) key: String, vararg params: Any): String
 
   fun updateStatusBar(editor: VimEditor)
+
+  fun showMessage(editor: VimEditor, message: String) {
+    showStatusBarMessage(editor, message)
+  }
+
+  fun showErrorMessage(editor: VimEditor, message: String?) {
+    showStatusBarMessage(editor, message)
+    indicateError()
+  }
 }

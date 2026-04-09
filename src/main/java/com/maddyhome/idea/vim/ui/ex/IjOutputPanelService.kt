@@ -22,11 +22,11 @@ class IjOutputPanelService : VimOutputPanelServiceBase() {
   private var activeOutputPanel: WeakReference<VimOutputPanel>? = null
 
   override fun getCurrentOutputPanel(): VimOutputPanel? {
-    return activeOutputPanel?.get()?.takeIf { (it as OutputPanel).active }
+    return activeOutputPanel?.get()?.takeIf { (it as OutputPanel).isActive }
   }
 
   override fun create(editor: VimEditor, context: ExecutionContext): VimOutputPanel {
-    val panel = OutputPanel.getInstance(editor.ij)
+    val panel = OutputPanel(WeakReference(editor.ij))
     activeOutputPanel = WeakReference(panel)
     return panel
   }
