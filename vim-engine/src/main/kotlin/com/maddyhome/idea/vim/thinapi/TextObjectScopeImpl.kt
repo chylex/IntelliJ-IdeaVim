@@ -9,6 +9,7 @@
 package com.maddyhome.idea.vim.thinapi
 
 import com.intellij.vim.api.VimApi
+import com.intellij.vim.api.models.CaretId
 import com.intellij.vim.api.scopes.TextObjectRange
 import com.intellij.vim.api.scopes.TextObjectScope
 import com.maddyhome.idea.vim.KeyHandler
@@ -41,7 +42,7 @@ internal class TextObjectScopeImpl(
     keys: String,
     registerDefaultMapping: Boolean,
     preserveSelectionAnchor: Boolean,
-    rangeProvider: suspend VimApi.(count: Int) -> TextObjectRange?,
+    rangeProvider: suspend VimApi.(caret: CaretId, count: Int) -> TextObjectRange?,
   ) {
     val plugKeys = "<Plug>($pluginName-$keys)"
 
@@ -88,7 +89,7 @@ private class TextObjectExtensionHandler(
   private val listenerOwner: ListenerOwner,
   private val mappingOwner: MappingOwner,
   private val preserveSelectionAnchor: Boolean,
-  private val rangeProvider: suspend VimApi.(count: Int) -> TextObjectRange?,
+  private val rangeProvider: suspend VimApi.(caret: CaretId, count: Int) -> TextObjectRange?,
 ) : ExtensionHandler {
 
   override val isRepeatable: Boolean = false
@@ -130,7 +131,7 @@ private class ApiTextObjectActionHandler(
   private val listenerOwner: ListenerOwner,
   private val mappingOwner: MappingOwner,
   override val preserveSelectionAnchor: Boolean,
-  private val rangeProvider: suspend VimApi.(count: Int) -> TextObjectRange?,
+  private val rangeProvider: suspend VimApi.(caret: CaretId, count: Int) -> TextObjectRange?,
 ) : TextObjectActionHandler() {
 
   // Will be set based on the result of rangeProvider
@@ -149,7 +150,7 @@ private class ApiTextObjectActionHandler(
     val vimApi = VimApiImpl(listenerOwner, mappingOwner, editor.projectId)
 
     // Execute the range provider (suspend lambda bridged via runBlocking for now)
-    val apiRange = kotlinx.coroutines.runBlocking { vimApi.rangeProvider(count) } ?: return null
+    val apiRange = kotlinx.coroutines.runBlocking { vimApi.rangeProvider(CaretId(caret.id), count) } ?: return null
 
     // Convert API range to internal TextRange and set visual type
     return when (apiRange) {

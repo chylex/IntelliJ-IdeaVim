@@ -9,6 +9,7 @@ package com.maddyhome.idea.vim.extension.argtextobj
 
 import com.intellij.vim.api.VimApi
 import com.intellij.vim.api.VimInitApi
+import com.intellij.vim.api.models.CaretId
 import com.intellij.vim.api.scopes.TextObjectRange
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.extension.VimExtension
@@ -121,11 +122,11 @@ class VimArgTextObjExtension : VimExtension {
 
   override fun init(initApi: VimInitApi) {
     initApi.textObjects {
-      register("ia", preserveSelectionAnchor = false) { count ->
-        findArgumentRange(isInner = true, count)
+      register("ia", preserveSelectionAnchor = false) { caret, count ->
+        findArgumentRange(isInner = true, caret, count)
       }
-      register("aa", preserveSelectionAnchor = false) { count ->
-        findArgumentRange(isInner = false, count)
+      register("aa", preserveSelectionAnchor = false) { caret, count ->
+        findArgumentRange(isInner = false, caret, count)
       }
     }
   }
@@ -610,7 +611,7 @@ private object ArgTextObjUtil {
 /**
  * Find argument range using the new VimApi.
  */
-private suspend fun VimApi.findArgumentRange(isInner: Boolean, count: Int): TextObjectRange? {
+private suspend fun VimApi.findArgumentRange(isInner: Boolean, caret: CaretId, count: Int): TextObjectRange? {
   var bracketPairs: BracketPairs = ArgTextObjUtil.DEFAULT_BRACKET_PAIRS
   val bracketPairsVar: String? = ArgTextObjUtil.bracketPairsVariable()
   if (bracketPairsVar != null) {
@@ -625,7 +626,7 @@ private suspend fun VimApi.findArgumentRange(isInner: Boolean, count: Int): Text
     }
   }
 
-  val (text, caretOffset) = editor { read { text to withPrimaryCaret { offset } } }
+  val (text, caretOffset) = editor { read { text to with(caret) { offset } } }
   val finder = ArgBoundsFinder(text, this, bracketPairs)
   var pos = caretOffset
 

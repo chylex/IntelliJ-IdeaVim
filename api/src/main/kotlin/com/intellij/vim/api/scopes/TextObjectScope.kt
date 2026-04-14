@@ -9,6 +9,7 @@
 package com.intellij.vim.api.scopes
 
 import com.intellij.vim.api.VimApi
+import com.intellij.vim.api.models.CaretId
 
 /**
  * Represents the range of a text object selection.
@@ -113,6 +114,15 @@ interface TextObjectScope {
     keys: String,
     registerDefaultMapping: Boolean = true,
     preserveSelectionAnchor: Boolean = true,
-    rangeProvider: suspend VimApi.(count: Int) -> TextObjectRange?,
+    rangeProvider: suspend VimApi.(caret: CaretId, count: Int) -> TextObjectRange?,
   )
+
+  fun register(
+    keys: String,
+    registerDefaultMapping: Boolean = true,
+    preserveSelectionAnchor: Boolean = true,
+    rangeProvider: suspend VimApi.(count: Int) -> TextObjectRange?,
+  ) {
+    register(keys, registerDefaultMapping, preserveSelectionAnchor) { _, count -> rangeProvider(count) }
+  }
 }
