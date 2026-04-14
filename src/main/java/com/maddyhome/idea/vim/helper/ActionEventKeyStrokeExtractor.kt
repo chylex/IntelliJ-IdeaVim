@@ -9,7 +9,10 @@
 package com.maddyhome.idea.vim.helper
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.KeyStrokeAdapter
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
@@ -24,12 +27,30 @@ internal class ActionEventKeyStrokeExtractor {
     val defaultKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(inputEvent)
     val strokeCache = keyStrokeCache
     if (defaultKeyStroke != null) {
-      keyStrokeCache = inputEvent.`when` to defaultKeyStroke
-      return defaultKeyStroke
+      val fixedKeyStroke = fixKeyStroke(defaultKeyStroke)
+      keyStrokeCache = inputEvent.`when` to fixedKeyStroke
+      return fixedKeyStroke
     } else if (strokeCache.first == inputEvent.`when`) {
       keyStrokeCache = null to null
       return strokeCache.second
     }
     return KeyStroke.getKeyStrokeForEvent(inputEvent)
+  }
+
+  private fun fixKeyStroke(key: KeyStroke): KeyStroke {
+    return if (
+      key.modifiers and CTRL_ALT_MASK != 0 &&
+      key.isOnKeyRelease &&
+      SystemInfoRt.isWindows &&
+      Registry.`is`("actionSystem.fix.alt.gr", true)
+    ) {
+      KeyStroke.getKeyStroke(key.keyCode, key.modifiers)
+    } else {
+      key
+    }
+  }
+
+  companion object {
+    private const val CTRL_ALT_MASK = InputEvent.CTRL_DOWN_MASK or InputEvent.ALT_DOWN_MASK
   }
 }
