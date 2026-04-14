@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.KeyStrokeAdapter
 import com.maddyhome.idea.vim.KeyHandler
@@ -226,8 +227,9 @@ class VimShortcutKeyAction : AnAction(), DumbAware/*, LightEditCompatible*/ {
       val defaultKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(inputEvent)
       val strokeCache = keyStrokeCache
       if (defaultKeyStroke != null) {
-        keyStrokeCache = inputEvent.`when` to defaultKeyStroke
-        return defaultKeyStroke
+        val fixedKeyStroke = fixKeyStroke(defaultKeyStroke)
+        keyStrokeCache = inputEvent.`when` to fixedKeyStroke
+        return fixedKeyStroke
       } else if (strokeCache.first == inputEvent.`when`) {
         keyStrokeCache = null to null
         return strokeCache.second
@@ -235,6 +237,19 @@ class VimShortcutKeyAction : AnAction(), DumbAware/*, LightEditCompatible*/ {
       return KeyStroke.getKeyStrokeForEvent(inputEvent)
     }
     return null
+  }
+
+  private fun fixKeyStroke(key: KeyStroke): KeyStroke {
+    return if (
+      key.modifiers and CTRL_ALT_MASK != 0 &&
+      key.isOnKeyRelease &&
+      SystemInfoRt.isWindows &&
+      Registry.`is`("actionSystem.fix.alt.gr", true)
+    ) {
+      KeyStroke.getKeyStroke(key.keyCode, key.modifiers)
+    } else {
+      key
+    }
   }
 
   private fun getEditor(e: AnActionEvent): Editor? {
@@ -317,6 +332,7 @@ class VimShortcutKeyAction : AnAction(), DumbAware/*, LightEditCompatible*/ {
         ).build()
 
     private const val ACTION_ID = "VimShortcutKeyAction"
+    private const val CTRL_ALT_MASK = InputEvent.CTRL_DOWN_MASK or InputEvent.ALT_DOWN_MASK
 
     private val LOG = logger<VimShortcutKeyAction>()
 
