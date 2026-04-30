@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.util.ui.table.JBTableRowEditor
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.api.StringListOptionValue
@@ -74,6 +75,10 @@ internal val Editor.isIdeaVimDisabledHere: Boolean
  * allowed again, because blocking every non-file editor also took Vim away from the process console.
  */
 private fun Editor.isAllowedFileEditor(): Boolean {
+  if (EditorHelper.getVirtualFile(this)?.name?.contains("Dummy.txt") == true) {
+    return PopupUtil.getPopupContainerFor(component) == null
+  }
+
   return EditorHelper.isCommitWindowEditor(this)
     || EditorHelper.isKotlinClassDecompiledToJavaFile(this)
     || EditorHelper.isDiffEditor(this)
