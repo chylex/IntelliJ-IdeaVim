@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.util.ui.table.JBTableRowEditor
 import com.maddyhome.idea.vim.VimPlugin
 import com.maddyhome.idea.vim.api.StringListOptionValue
@@ -73,6 +74,9 @@ internal val Editor.isIdeaVimDisabledHere: Boolean
  * AI chat prompt inputs  are opt-in via the `chat` value of 'ideaeditor'.
  */
 private fun Editor.isAllowedFileEditor(): Boolean {
+  if (EditorHelper.getVirtualFile(this)?.name?.contains("Dummy.txt") == true) {
+    return PopupUtil.getPopupContainerFor(component) == null
+  }
   // This runs on every keystroke, so the cheap and most common checks go first
   return EditorHelper.isFileEditor(this)
     || EditorHelper.isDiffEditor(this)
