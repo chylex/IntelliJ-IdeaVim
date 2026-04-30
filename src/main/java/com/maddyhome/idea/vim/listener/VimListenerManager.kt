@@ -417,16 +417,18 @@ object VimListenerManager {
           editorGroup?.editorDeinit(editor.vim)
         }
       }
+
+      ApplicationManager.getApplication().invokeLater {
+        if (vimDisabled(editor)) {
+          remove(editor)
+        }
+      }
     }
 
     fun remove(editor: Editor) {
       val editorDisposable = editor.removeUserData(editorListenersDisposableKey)
       if (editorDisposable != null) {
         Disposer.dispose(editorDisposable)
-      } else if (!EditorHelper.isCommandHistoryWindow(editor)) {
-        // Cmdwin editors (q:, q/, q?) may bypass `add` in some test paths; that's expected.
-        // We definitely do not expect this to happen for any other editor.
-        StrictMode.fail("Editor doesn't have disposable attached. $editor")
       }
     }
   }
