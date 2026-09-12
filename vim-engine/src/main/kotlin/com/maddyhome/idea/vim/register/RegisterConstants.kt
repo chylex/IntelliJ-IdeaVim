@@ -24,7 +24,8 @@ object RegisterConstants {
   const val CLIPBOARD_REGISTERS: String = CLIPBOARD_REGISTER.toString() + PRIMARY_REGISTER
 
   const val NUMBERED_REGISTERS: String = "0123456789"
-  const val NAMED_REGISTERS: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  const val MULTICARET_JOIN_REGISTER: Char = '\u0000'
+  const val NAMED_REGISTERS: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" + MULTICARET_JOIN_REGISTER
 
   const val WRITABLE_REGISTERS: String = (
     NUMBERED_REGISTERS + NAMED_REGISTERS + CLIPBOARD_REGISTERS +
