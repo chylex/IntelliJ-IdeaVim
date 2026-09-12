@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import com.maddyhome.idea.vim.api.CaretRegisterStorageBase
 import com.maddyhome.idea.vim.api.LocalMarkStorage
 import com.maddyhome.idea.vim.api.SelectionInfo
@@ -97,7 +98,7 @@ var Caret.vimInsertStart: RangeMarker by userDataOr {
 }
 
 // TODO: Data could be lost during visual block motion
-var Caret.registerStorage: CaretRegisterStorageBase? by userDataCaretToEditor()
+var Caret.registerStorage: CaretRegisterStorageBase? by GlobalCaretData.userData()
 var Caret.markStorage: LocalMarkStorage? by userDataCaretToEditor()
 var Caret.lastSelectionInfo: SelectionInfo? by userDataCaretToEditor()
 
@@ -143,6 +144,39 @@ fun <T> userData(): ReadWriteProperty<UserDataHolder, T?> =
       thisRef.putUserData(getKey(property), value)
     }
   }
+
+object GlobalCaretData {
+  private val holders = mutableListOf<UserDataHolderBase>()
+
+  private fun getHolder(caretIndex: Int): UserDataHolderBase {
+    while (holders.lastIndex < caretIndex) {
+      holders.add(UserDataHolderBase())
+    }
+    return holders[caretIndex]
+  }
+
+  fun <T> userData(): ReadWriteProperty<Caret, T?> = object : UserDataReadWriteProperty<Caret, T?>() {
+      override fun getValue(thisRef: Caret, property: KProperty<*>): T? {
+        return getCaretData(thisRef).getUserData(getKey(property))
+      }
+
+      override fun setValue(thisRef: Caret, property: KProperty<*>, value: T?) {
+        getCaretData(thisRef).putUserData(getKey(property), value)
+      }
+
+      private fun getCaretData(caret: Caret): UserDataHolder {
+        if (caret == caret.caretModel.primaryCaret) {
+          return caret.editor
+        }
+
+        val caretIndex = caret.caretModel.allCarets.indexOf(caret)
+        return if (caretIndex == -1)
+          caret.editor
+        else
+          getHolder(caretIndex)
+      }
+    }
+}
 
 /**
  * Function for delegated properties.
