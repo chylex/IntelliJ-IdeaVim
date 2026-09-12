@@ -16,12 +16,15 @@ import com.maddyhome.idea.vim.api.VimEditor
 import com.maddyhome.idea.vim.api.anyNonWhitespace
 import com.maddyhome.idea.vim.api.getLineEndForOffset
 import com.maddyhome.idea.vim.api.getLineStartForOffset
+import com.maddyhome.idea.vim.api.getText
 import com.maddyhome.idea.vim.api.injector
 import com.maddyhome.idea.vim.command.Argument
 import com.maddyhome.idea.vim.command.MotionType
 import com.maddyhome.idea.vim.command.OperatorArguments
 import com.maddyhome.idea.vim.common.TextRange
 import com.maddyhome.idea.vim.handler.MotionActionHandler
+import com.maddyhome.idea.vim.register.Register
+import com.maddyhome.idea.vim.register.RegisterConstants
 import com.maddyhome.idea.vim.state.mode.SelectionType
 import kotlin.math.min
 
@@ -42,6 +45,20 @@ open class YankGroupBase : VimYankGroup {
     for ((caret, myRange) in caretToRange) {
       result = caret.registerStorage.storeText(editor, context, myRange.first, myRange.second, false) && result
     }
+
+    val selectionType = caretToRange.values.first().second
+    val multiCaretJoinedText: MultiCaretJoinedText
+    if (result && caretToRange.size > 1) {
+      val joinedText = caretToRange.entries.sortedBy { it.key.offset }.joinToString("\n") { editor.getText(it.value.first).trimEnd('\n') }
+      multiCaretJoinedText = MultiCaretJoinedText(caretToRange.size, joinedText)
+    }
+    else {
+      multiCaretJoinedText = MultiCaretJoinedText.EMPTY
+    }
+    injector.registerGroup.saveRegister(editor, context, RegisterConstants.MULTICARET_JOIN_REGISTER, Register(
+      RegisterConstants.MULTICARET_JOIN_REGISTER, multiCaretJoinedText, selectionType)
+    )
+
     return result
   }
 

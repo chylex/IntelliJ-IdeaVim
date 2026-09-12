@@ -13,6 +13,7 @@ import com.maddyhome.idea.vim.register.Register
 import com.maddyhome.idea.vim.register.RegisterConstants
 import com.maddyhome.idea.vim.register.VimRegisterGroupBase
 import com.maddyhome.idea.vim.state.mode.SelectionType
+import com.maddyhome.idea.vim.yank.MultiCaretJoinedText
 import javax.swing.KeyStroke
 
 abstract class VimCaretBase : VimCaret
@@ -67,6 +68,11 @@ open class CaretRegisterStorageBase(override var caret: ImmutableVimCaret) : Car
   }
 
   override fun getRegister(editor: VimEditor, context: ExecutionContext, r: Char): Register? {
+    val multiCaretJoinRegister = injector.registerGroup.getRegister(editor, context, RegisterConstants.MULTICARET_JOIN_REGISTER)
+    val multiCaretJoinedText = multiCaretJoinRegister?.copiedText as? MultiCaretJoinedText
+    if (multiCaretJoinedText != null && multiCaretJoinedText.carets.let { it > 0 && it != editor.carets().size }) {
+      return multiCaretJoinRegister
+    }
     if (caret.isPrimary || !RegisterConstants.RECORDABLE_REGISTERS.contains(r)) {
       return injector.registerGroup.getRegister(editor, context, r)
     }
