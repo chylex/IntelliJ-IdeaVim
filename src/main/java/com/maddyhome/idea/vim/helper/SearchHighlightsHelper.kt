@@ -198,6 +198,11 @@ private fun updateSearchHighlights(
       currentMatchOffset,
       editor
     )
+
+    if (!isIncsearch) {
+      removeHighlightsEditors.add(editor)
+      removeHighlightsTimer.restart()
+    }
   }
 
   return currentEditorCurrentMatchOffset
@@ -377,3 +382,9 @@ private fun shouldAddCurrentMatchSearchHighlight(pattern: String?, hlSearch: Boo
  */
 @Contract(pure = true)
 private fun isIncrementalSearchHighlights(initialOffset: Int) = initialOffset != -1
+
+val removeHighlightsEditors = mutableListOf<Editor>()
+val removeHighlightsTimer = javax.swing.Timer(450) {
+  removeHighlightsEditors.forEach(::removeSearchHighlights)
+  removeHighlightsEditors.clear()
+}
