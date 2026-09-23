@@ -388,8 +388,10 @@ abstract class VimChangeGroupBase : VimChangeGroup {
           caret.moveToOffset(position)
         } else {
           repeatInsertText(editor, context, count)
-          val position = injector.motion.getHorizontalMotion(editor, caret, -1, false)
-          caret.moveToMotion(position)
+          if (!(editor.charAt(caret.offset) == '\n' && editor.charAt(caret.offset - 1).let { it == ' ' || it == '\t' })) {
+            val position = injector.motion.getHorizontalMotion(editor, caret, -1, false)
+            caret.moveToMotion(position)
+          }
         }
       }
     }
