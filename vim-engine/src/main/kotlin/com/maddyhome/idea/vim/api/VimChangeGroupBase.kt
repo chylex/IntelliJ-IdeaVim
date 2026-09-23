@@ -100,8 +100,7 @@ abstract class VimChangeGroupBase : VimChangeGroup {
    * Vim's `did_ai`: the indent on the caret's line was inserted automatically and nothing has been typed since, so it
    * is removed again when Insert mode is left. Only valid for the current insert session
    */
-  @JvmField
-  protected var didAutoIndent: Boolean = false
+  protected var didAutoIndent: Boolean get() = false; set(_) = Unit
 
   /**
    * The value [didAutoIndent] gets when the next insert session starts.
