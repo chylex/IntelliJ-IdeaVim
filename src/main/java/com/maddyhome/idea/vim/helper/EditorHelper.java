@@ -91,24 +91,12 @@ public class EditorHelper {
   }
 
   public static boolean scrollVertically(@NotNull Editor editor, int verticalOffset) {
-    final ScrollingModel scrollingModel = editor.getScrollingModel();
-    final Rectangle area = scrollingModel.getVisibleAreaOnScrollingFinished();
-    scrollingModel.scroll(area.x, verticalOffset);
-    // Simulate Vim's redraw (essentially to clear messages) if the screen is scrolled
-    if (area.y != verticalOffset && area.y >= 0) {
-      injector.getRedrawService().redraw();
-    }
-    return scrollingModel.getVisibleAreaOnScrollingFinished().y != area.y;
+    BufferedScrolling.get(editor).scrollVertically(verticalOffset);
+    return true;
   }
 
   public static void scrollHorizontally(@NotNull Editor editor, int horizontalOffset) {
-    final ScrollingModel scrollingModel = editor.getScrollingModel();
-    final Rectangle area = scrollingModel.getVisibleAreaOnScrollingFinished();
-    scrollingModel.scroll(horizontalOffset, area.y);
-    // Simulate Vim's redraw (essentially to clear messages) if the screen is scrolled
-    if (area.x != horizontalOffset && area.x >= 0) {
-      injector.getRedrawService().redraw();
-    }
+    BufferedScrolling.get(editor).scrollHorizontally(horizontalOffset);
   }
 
   public static int getVisualLineAtTopOfScreen(final @NotNull Editor editor) {
@@ -441,7 +429,7 @@ public class EditorHelper {
 
   private static int getStickyLinesPanelHeight(final @NotNull Editor editor) {
     if (editor instanceof EditorImpl editorImpl) {
-      return editorImpl.getStickyLinesPanelHeight();
+      return 0;
     }
     return 0;
   }

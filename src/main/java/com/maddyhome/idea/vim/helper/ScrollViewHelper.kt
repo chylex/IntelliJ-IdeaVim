@@ -155,7 +155,7 @@ internal object ScrollViewHelper {
   }
 
   private fun isScreenHeightReliableForCentering(height: Int, inlayAwareMinHeightFudge: Int): Boolean =
-    height > inlayAwareMinHeightFudge
+    true
 
   private fun shouldCenterCaretDueToLargeScrollOffset(
     height: Int,
