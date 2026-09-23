@@ -32,6 +32,7 @@ import com.maddyhome.idea.vim.helper.CharacterHelper.charType
 import com.maddyhome.idea.vim.helper.NumberType
 import com.maddyhome.idea.vim.helper.StrictMode
 import com.maddyhome.idea.vim.helper.endOffsetInclusive
+import com.maddyhome.idea.vim.helper.isCaretAtLineEnd
 import com.maddyhome.idea.vim.helper.usesVirtualSpace
 import com.maddyhome.idea.vim.key.AbbreviationContext
 import com.maddyhome.idea.vim.key.findAndResolveAbbreviation
@@ -388,8 +389,10 @@ abstract class VimChangeGroupBase : VimChangeGroup {
           caret.moveToOffset(position)
         } else {
           repeatInsertText(editor, context, count)
-          val position = injector.motion.getHorizontalMotion(editor, caret, -1, false)
-          caret.moveToMotion(position)
+          if (!(editor.isCaretAtLineEnd(caret, true) && editor.charAt(caret.offset - 1).let { it == ' ' || it == '\t' })) {
+            val position = injector.motion.getHorizontalMotion(editor, caret, -1, false)
+            caret.moveToMotion(position)
+          }
         }
       }
     }
