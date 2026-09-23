@@ -436,7 +436,7 @@ public class EditorHelper {
 
   private static int getStickyLinesPanelHeight(final @NotNull Editor editor) {
     if (editor instanceof EditorImpl editorImpl) {
-      return editorImpl.getStickyLinesPanelHeight();
+      return 0;
     }
     return 0;
   }
