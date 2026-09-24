@@ -1,5 +1,6 @@
 {
   "has": "com.maddyhome.idea.vim.vimscript.model.functions.handlers.HasFunctionHandler",
   "isactionenabled": "com.maddyhome.idea.vim.vimscript.model.functions.handlers.IsActionEnabled",
+  "isinplacerenaming": "com.maddyhome.idea.vim.vimscript.model.functions.handlers.IsInPlaceRenaming",
   "pumvisible": "com.maddyhome.idea.vim.vimscript.model.functions.handlers.PopupMenuVisibleFunctionHandler"
 }
