@@ -66,7 +66,7 @@ enum class MappingMode {
 
     // This requires the JvmField annotation as it is used (in Java) by an external plugin
     @JvmField
-    val NVO: EnumSet<MappingMode> = EnumSet.of(NORMAL, VISUAL, OP_PENDING, SELECT)
+    val NVO: EnumSet<MappingMode> = EnumSet.of(NORMAL, VISUAL, OP_PENDING/*, SELECT*/)
 
     // TODO: Consider removing/depracting XO, NV and NXO. They're not typical Vim modes that have a map command
     // E.g. `xmap` is for Visual, `vmap` is for Visual and Select. `map` is NVO and `map!` is IC
