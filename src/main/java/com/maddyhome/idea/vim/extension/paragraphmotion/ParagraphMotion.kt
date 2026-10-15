@@ -12,7 +12,6 @@ import com.intellij.vim.api.VimApi
 import com.intellij.vim.api.VimInitApi
 import com.intellij.vim.api.getVariable
 import com.intellij.vim.api.scopes.nmapPluginAction
-import com.intellij.vim.api.scopes.omapPluginAction
 import com.intellij.vim.api.scopes.xmapPluginAction
 import com.maddyhome.idea.vim.extension.VimExtension
 
@@ -33,12 +32,12 @@ internal class ParagraphMotion : VimExtension {
       xmapPluginAction("{", "<Plug>(ParagraphPrevMotion)", keepDefaultMapping = true) {
         moveParagraph(-1)
       }
-      omapPluginAction("}", "<Plug>(ParagraphNextMotion)", keepDefaultMapping = true) {
-        moveParagraph(1)
-      }
-      omapPluginAction("{", "<Plug>(ParagraphPrevMotion)", keepDefaultMapping = true) {
-        moveParagraph(-1)
-      }
+//      omapPluginAction("}", "<Plug>(ParagraphNextMotion)", keepDefaultMapping = true) {
+//        moveParagraph(1)
+//      }
+//      omapPluginAction("{", "<Plug>(ParagraphPrevMotion)", keepDefaultMapping = true) {
+//        moveParagraph(-1)
+//      }
     }
   }
 }
