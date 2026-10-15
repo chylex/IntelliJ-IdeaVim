@@ -24,7 +24,7 @@ import com.maddyhome.idea.vim.handler.toMotionOrError
 import com.maddyhome.idea.vim.helper.enumSetOf
 import java.util.*
 
-sealed class MotionUnmatchedAction(private val motionChar: Char) : MotionActionHandler.ForEachCaret() {
+sealed class MotionUnmatchedAction(private val motionChar: Char, private val isBackwardsMotion: Boolean) : MotionActionHandler.ForEachCaret() {
   override val flags: EnumSet<CommandFlags> = enumSetOf(CommandFlags.FLAG_SAVE_JUMP)
 
   override val motionType: MotionType = MotionType.EXCLUSIVE
@@ -36,7 +36,9 @@ sealed class MotionUnmatchedAction(private val motionChar: Char) : MotionActionH
     argument: Argument?,
     operatorArguments: OperatorArguments,
   ): Motion {
-    return moveCaretToUnmatchedBlock(editor, caret, operatorArguments.count1, motionChar)?.toMotionOrError()
+    return moveCaretToUnmatchedBlock(editor, caret, operatorArguments.count1, motionChar)
+      ?.let { if (isBackwardsMotion) it + 1 else it }
+      ?.toMotionOrError()
       ?: Motion.Error
   }
 }
@@ -46,28 +48,28 @@ sealed class MotionUnmatchedAction(private val motionChar: Char) : MotionActionH
   modes = [Mode.NORMAL, Mode.VISUAL, Mode.OP_PENDING],
   description = "Go to the [count]'th next unmatched '}'."
 )
-class MotionUnmatchedBraceCloseAction : MotionUnmatchedAction('}')
+class MotionUnmatchedBraceCloseAction : MotionUnmatchedAction('}', isBackwardsMotion = false)
 
 @CommandOrMotion(
   keys = ["[{"],
   modes = [Mode.NORMAL, Mode.VISUAL, Mode.OP_PENDING],
   description = "Go to the [count]'th previous unmatched '{'."
 )
-class MotionUnmatchedBraceOpenAction : MotionUnmatchedAction('{')
+class MotionUnmatchedBraceOpenAction : MotionUnmatchedAction('{', isBackwardsMotion = true)
 
 @CommandOrMotion(
   keys = ["])"],
   modes = [Mode.NORMAL, Mode.VISUAL, Mode.OP_PENDING],
   description = "Go to the [count]'th next unmatched ')'."
 )
-class MotionUnmatchedParenCloseAction : MotionUnmatchedAction(')')
+class MotionUnmatchedParenCloseAction : MotionUnmatchedAction(')', isBackwardsMotion = false)
 
 @CommandOrMotion(
   keys = ["[("],
   modes = [Mode.NORMAL, Mode.VISUAL, Mode.OP_PENDING],
   description = "Go to the [count]'th previous unmatched '('."
 )
-class MotionUnmatchedParenOpenAction : MotionUnmatchedAction('(')
+class MotionUnmatchedParenOpenAction : MotionUnmatchedAction('(', isBackwardsMotion = true)
 
 private fun moveCaretToUnmatchedBlock(editor: VimEditor, caret: ImmutableVimCaret, count: Int, type: Char): Int? {
   return if (editor.currentCaret().offset == 0 && count < 0 || editor.currentCaret().offset >= editor.fileSize() - 1 && count > 0) {
