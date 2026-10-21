@@ -19,7 +19,8 @@ import com.maddyhome.idea.vim.state.mode.Mode
 
 fun charToNativeSelection(editor: VimEditor, start: Int, end: Int, mode: Mode): Pair<Int, Int> {
   val (nativeStart, nativeEnd) = sort(start, end)
-  val adj = if (isExclusiveSelection() || mode is Mode.SELECT) 0 else 1
+  val lineEnd = editor.getLineEndForOffset(nativeEnd)
+  val adj = if (isExclusiveSelection() || nativeEnd == lineEnd || mode is Mode.SELECT) 0 else 1
   val adjEnd = (nativeEnd + adj).coerceAtMost(editor.fileSize().toInt())
   return nativeStart to adjEnd
 }
