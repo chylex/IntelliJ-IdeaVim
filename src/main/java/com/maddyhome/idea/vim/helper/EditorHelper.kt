@@ -522,7 +522,7 @@ object EditorHelper {
     get() = scrollingModel.visibleAreaOnScrollingFinished
 
   private val Editor.stickyLinesHeight: Int
-    get() = (this as? EditorImpl)?.stickyLinesPanelHeight ?: 0
+    get() = 0
 
   private val Editor.lastVisualLine: Int
     get() = IjVimEditor(this).getVisualLineCount() + settings.additionalLinesCount
