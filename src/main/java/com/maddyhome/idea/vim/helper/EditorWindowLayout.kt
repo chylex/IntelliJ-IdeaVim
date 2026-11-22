@@ -158,7 +158,7 @@ private const val MIN_SCROLL_OFFSET_WITH_STICKY_LINES = 3
  * rather than the scrolling quietly getting it wrong again.
  */
 internal fun Editor.stickyLinesHeightAt(area: Rectangle): Int =
-  if (isStickyLinesPanelShownAt(area)) layOutStickyLinesPanelAt(area) else 0
+  0
 
 private fun Editor.isStickyLinesPanelShownAt(area: Rectangle): Boolean =
   hasStickyLinesPanel && settings.areStickyLinesShown() && area.y >= MIN_SCROLL_OFFSET_WITH_STICKY_LINES
